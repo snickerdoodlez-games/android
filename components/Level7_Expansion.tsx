@@ -583,19 +583,21 @@ const Level7_Expansion: React.FC<LevelProps> = ({
 
     if (neutralInRow.length === 1) {
         // --- SINGLE TILE HINT (Solve the row) ---
+        // Find a matching tile from outside the row to move in, or use the one already there if it's the right category
         const slotToSolve = neutralInRow[0];
         const correctTileGlobal = neutralGlobal.find(t => t.id !== slotToSolve.id) || slotToSolve;
         
-        // Find position of correctTileGlobal in "next" array
+        // Find positions
         const currentPos = next.findIndex(t => t.id === correctTileGlobal.id);
         const targetPos = next.findIndex(t => t.id === slotToSolve.id);
 
         if (currentPos !== -1 && targetPos !== -1 && currentPos !== targetPos) {
-            // Swap it in
+            // Swap it into the empty slot
             const temp = next[targetPos];
             next[targetPos] = { ...next[currentPos], status: 'locked' };
             next[currentPos] = { ...temp, status: temp.status === 'locked' ? 'locked' : 'neutral' };
-        } else {
+        } else if (targetPos !== -1) {
+            // Already in place, just lock it
             next[targetPos] = { ...next[targetPos], status: 'locked' };
         }
 
@@ -604,19 +606,20 @@ const Level7_Expansion: React.FC<LevelProps> = ({
         setHintTriggerCount(prev => prev + 1);
         lastProgressTimeRef.current = Date.now();
 
-        // 1.5 second delay before solving the row
+        // Specific visual requirement: turn yellow for 1.5s then fade into row color
         setTimeout(() => {
             setTiles(prev => {
                 const final = [...prev];
-                checkMatches(final);
+                checkMatches(final); // checkMatches handles turning them into 'solved' and assign color
                 return final;
             });
         }, 1500);
 
     } else {
         // --- TWO TILE HINT (Classic behavior) ---
+        // Lock up to 2 tiles in this row
         const pairToLock = neutralGlobal.slice(0, 2);
-        if (pairToLock.length < 2) return;
+        if (pairToLock.length < 1) return;
 
         pairToLock.forEach((tileToLock) => {
             let targetSlot = -1;
@@ -689,7 +692,7 @@ const Level7_Expansion: React.FC<LevelProps> = ({
             className={`w-full h-full flex flex-col gap-2 p-2 transition-all duration-700 ease-in-out`}
             transition={{ duration: 0.8, type: "spring", bounce: 0.2 }}
          >
-             {Array.from({ length: tiles.length / currentConfig.cols }).map((_, r) => {
+             {Array.from({ length: Math.ceil(tiles.length / currentConfig.cols) }).map((_, r) => {
                  const row = tiles.slice(r * currentConfig.cols, r * currentConfig.cols + currentConfig.cols);
                  if (row.length === 0) return null;
                  

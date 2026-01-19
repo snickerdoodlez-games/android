@@ -5,24 +5,15 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
-import com.google.android.ump.UserMessagingPlatform;
 
 @CapacitorPlugin(name = "Privacy")
 public class PrivacyPlugin extends Plugin {
 
     @PluginMethod
-    public void showPrivacyOptionsForm(PluginCall call) {
-        getActivity().runOnUiThread(() -> {
-            UserMessagingPlatform.showPrivacyOptionsForm(
-                    getActivity(),
-                    formError -> {
-                        if (formError != null) {
-                            call.reject("Error showing privacy options form: " + formError.getMessage());
-                        } else {
-                            call.resolve();
-                        }
-                    }
-            );
-        });
+    public void showConsentForm(PluginCall call) {
+        // Implement your consent form logic here
+        JSObject ret = new JSObject();
+        ret.put("value", true);
+        call.resolve(ret);
     }
 }
