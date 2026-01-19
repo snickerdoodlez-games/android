@@ -1,5 +1,16 @@
 {
 	"appId": "com.snickerdoodlez.wordpairing",
 	"appName": "Word Pairing Machine",
-	"webDir": "dist"
+	"webDir": "dist",
+	"server": {
+		"allowNavigation": [
+			"admob-gmats.uc.r.appspot.com",
+			"googleads.g.doubleclick.net"
+		]
+	},
+	"plugins": {
+		"AdMob": {
+			"appId": "ca-app-pub-4096368901415767~5414939789"
+		}
+	}
 }
