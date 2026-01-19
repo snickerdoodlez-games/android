@@ -1,0 +1,2 @@
+
+export const CSV_EASY_DATA = ``;

@@ -1,0 +1,153 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Word Pairing Machine</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              neon: {
+                red: '#FF073A',        // Fluorescent Red
+                orange: '#FF5F1F',     // Neon Orange
+                yellow: '#F9FF00',     // Lemon Glacier
+                lime: '#39FF14',       // Neon Lime
+                green: '#00F000',      // Electric Green
+                mint: '#00FF9F',       // Neon Mint
+                cyan: '#00FFFF',       // Electric Cyan
+                'sky-blue': '#00BFFF', // Deep Sky Blue
+                blue: '#0066FF',       // Electric Blue
+                violet: '#B026FF',     // Neon Violet
+                purple: '#D400FF',     // Electric Purple
+                magenta: '#FF00FF',    // Magenta
+                pink: '#FF1FBF',       // Shocking Pink
+                rose: '#FF0055',       // Neon Rose
+                white: '#FFFFFF',
+              },
+              'deco-gold': '#FFD700',
+              theme: {
+                primary: '#00E5FF',
+                secondary: '#FF1FBF',
+                tertiary: '#FF9900',
+                background: '#000000',
+                surface: '#000000',
+                outline: '#00FF66',
+                'outline-variant': '#D400FF',
+              }
+            },
+            borderRadius: {
+              'small': '8px',
+              'medium': '14px',
+              'large': '22px',
+            },
+            fontFamily: {
+              sans: ['Oswald', 'sans-serif'],
+              oswald: ['Oswald', 'sans-serif']
+            },
+            animation: {
+              'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'fade-out': 'fadeOut 0.4s ease-out forwards',
+              'slide-up': 'slideUp 0.5s ease-out forwards',
+              'zoom-in': 'zoomIn 0.5s ease-out forwards',
+              'gradient-shift': 'gradient-shift 4s ease infinite',
+              'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'shimmer': 'shimmer 2.5s linear infinite',
+              'pulse-highlight': 'pulse-highlight 5s ease-in-out infinite',
+              'border-pulse': 'borderPulse 0.6s ease-in-out infinite',
+            },
+            keyframes: {
+              pop: { '0%': { transform: 'scale(0.8)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+              fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+              fadeOut: { '0%': { opacity: '1' }, '100%': { opacity: '0' } },
+              slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+              zoomIn: { '0%': { transform: 'scale(0.5)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+              shimmer: { '0%': { transform: 'translateX(-150%) skewX(-12deg)' }, '100%': { transform: 'translateX(150%) skewX(-12deg)' } },
+              'gradient-shift': { '0%': { backgroundPosition: '0% 50%' }, '50%': { backgroundPosition: '100% 50%' }, '100%': { backgroundPosition: '0% 50%' } },
+              'pulse-highlight': { 
+                '0%': { opacity: '0' }, 
+                '20%': { opacity: '0.3' }, 
+                '40%': { opacity: '0' }, 
+                '100%': { opacity: '0' } 
+              },
+              borderPulse: {
+                '0%': { borderColor: 'rgba(255,255,255,0.4)' },
+                '50%': { borderColor: 'rgba(255,255,255,1)' },
+                '100%': { borderColor: 'rgba(255,255,255,0.4)' }
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Oswald', sans-serif;
+      }
+      * {
+        font-family: 'Oswald', sans-serif !important;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #000000;
+        color: #FFFFFF;
+        overscroll-behavior: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+      /* Allow scrolling on desktop or large viewports if the UI doesn't fit */
+      @media (min-width: 1024px) {
+        body {
+          overflow: auto;
+        }
+      }
+      /* Mobile specific override to ensure absolutely no bounce/scroll */
+      @media (max-width: 1023px) {
+        body {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+        }
+      }
+      #root {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .next-puzzle-overlay { background: radial-gradient(circle at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.85) 100%); }
+      
+      .pt-safe { padding-top: env(safe-area-inset-top); }
+      .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+      .h-viewport { height: 100dvh; }
+    </style>
+ 
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

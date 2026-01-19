@@ -1,0 +1,5 @@
+{
+  "name": "Word Pairing Machine",
+  "description": "A sleek, dark-mode word association puzzle game featuring multiple logic modes and deterministic loops.",
+  "requestFramePermissions": []
+}
