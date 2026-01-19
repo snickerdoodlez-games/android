@@ -1,0 +1,9 @@
+include ':app'
+include ':capacitor-android'
+project(':capacitor-android').projectDir = new File(rootProject.projectDir, '../node_modules/@capacitor/android/capacitor')
+
+include ':capacitor-community-admob'
+project(':capacitor-community-admob').projectDir = new File(rootProject.projectDir, '../node_modules/@capacitor-community/admob/android')
+
+include ':capacitor-cordova-android-plugins'
+project(':capacitor-cordova-android-plugins').projectDir = new File(rootProject.projectDir, '../node_modules/capacitor-cordova-android-plugins')
