@@ -42,11 +42,9 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   
   if (isSolved) {
     // CONTINUOUS GRADIENT LOGIC
-    // Using background-attachment: fixed allows the gradient to flow seamlessly across all solved tiles in the same row group (if sharing color)
-    // Updated to use diverse neon gradients based on the specific row color assigned
     const colorClass = data.color || targetColor;
     styleOverride.background = getSolvedGradient(colorClass, data.categoryId);
-    styleOverride.backgroundSize = '100% 100vh'; // Ensure it covers the viewport height
+    styleOverride.backgroundSize = '100% 100vh'; 
     styleOverride.backgroundRepeat = 'no-repeat';
   } else if (isSelected || data.status === 'swapping') {
     styleOverride.backgroundColor = '#00E5FF'; // Neon Blue
@@ -57,10 +55,8 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   } else if (isCorrectPreview) {
     styleOverride.backgroundColor = '#39FF14'; // Neon Lime
   } else if (isFadingBg) {
-    // When fading out, we want to animate back to black or neutral
     styleOverride.backgroundColor = '#000000';
   } else {
-    // Default neutral
     styleOverride.backgroundColor = '#000000';
   }
 
@@ -96,8 +92,8 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
         style={{
           ...FONT_STYLE,
           ...styleOverride,
-          // Transition the background color specifically for the "fade in 0.25s" effect (fade out to neutral)
-          transition: 'background-color 0.25s ease-in-out, border-color 0.25s ease-in-out, box-shadow 0.25s ease-in-out'
+          // Transition the background color and background (gradient) for visual fade
+          transition: 'background-color 0.25s ease-in-out, background 0.25s ease-in-out, border-color 0.25s ease-in-out, box-shadow 0.25s ease-in-out'
         }}
         {...props}
       >
@@ -108,12 +104,9 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ 
-                duration: 0.2, // Fade out/in duration
+                duration: 0.2, 
                 ease: "easeInOut"
               }}
-              // Removed text-white here because it might conflict with ARCADE_OUTLINE text-stroke if not handled carefully,
-              // but mostly to rely on ARCADE_OUTLINE settings. Actually, text-white is good for fill.
-              // ARCADE_OUTLINE provides textShadow. We need explicit white fill.
               className={`${textClasses} text-white z-30 text-center px-1 pointer-events-none w-full flex flex-col items-center justify-center`}
               style={{
                 ...(data.isEmoji ? EMOJI_OUTLINE : ARCADE_OUTLINE),

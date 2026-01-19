@@ -11,8 +11,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // The AdMob plugin now handles all initialization from the web view.
-        // All UMP consent flow and MobileAds.initialize() calls have been removed.
         registerPlugin(AdMob.class);
+        registerPlugin(PrivacyPlugin.class);
     }
 }

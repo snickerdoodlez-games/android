@@ -164,9 +164,9 @@ export const App: React.FC = () => {
 
     const admobPlugin = AdMob as any;
     
-    // Explicit existence check to provide better debugging info
+    // Existence check to prevent bridge failures before calling
     if (typeof admobPlugin.openAdInspector !== 'function') {
-        alert("Inspector unavailable: Method missing in bridge. Run 'npx cap sync android' and rebuild.");
+        alert("Inspector failed: Method not found in native bridge. Verify Capacitor sync and project build.");
         return;
     }
 
@@ -177,7 +177,7 @@ export const App: React.FC = () => {
     } catch (e: any) {
         const msg = (e.message || e);
         console.error('AdMob: Ad Inspector error: ' + msg);
-        alert("Inspector failed: " + msg + "\n\nTry running 'npx cap sync android'.");
+        alert("Inspector error: " + msg);
     }
   };
 
