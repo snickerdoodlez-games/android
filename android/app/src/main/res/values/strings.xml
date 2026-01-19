@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Word Pairing: Category Match</string>
+    <string name="app_name">WordPairing</string>
+    <string name="title_activity_main">WordPairing</string>
 </resources>

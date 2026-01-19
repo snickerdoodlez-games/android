@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1079794258930",
+    "project_id": "word-pairing-category-match",
+    "storage_bucket": "word-pairing-category-match.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1079794258930:android:34a5748967c9cbbcb4916b",
+        "android_client_info": {
+          "package_name": "com.snickerdoodlez.wordpairing"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcutHG4X75Y1jGxSugHT8vz14tr41AVyw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-4096368901415767~5414939789"
+    }
+  ],
+  "configuration_version": "1"
+}

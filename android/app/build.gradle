@@ -1,53 +1,62 @@
-
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.firebase-perf'
+apply plugin: 'com.google.firebase.crashlytics'
 
 android {
-    compileSdkVersion 35
+    namespace "com.snickerdoodlez.wordpairing"
+    compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.snickerdoodlez.wordpairing"
-        minSdkVersion 23
-        targetSdkVersion 35
-        versionCode 50033
-        versionName "50033"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 50035
+        versionName "50035"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments clearPackageData: 'true'
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    lintOptions {
-        abortOnError false
+    testOptions {
+        execution 'ANDROID_TEST_ORCHESTRATOR'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.core:core-ktx:1.9.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation "com.google.android.gms:play-services-ads:$playServicesAdsVersion"
+    implementation "com.google.android.ump:user-messaging-platform:$userMessagingPlatformVersion"
+    implementation project(':capacitor-community-admob')
+    implementation platform('com.google.firebase:firebase-bom:34.7.0')
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-perf'
+    implementation 'com.google.firebase:firebase-crashlytics'
+    implementation 'com.google.firebase:firebase-config'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation "androidx.webkit:webkit:$androidxWebkitVersion"
     implementation project(':capacitor-android')
-    implementation 'com.google.android.ump:user-messaging-platform:4.0.0'
-    implementation 'com.google.android.gms:play-services-tasks:18.4.0'
-    implementation 'com.google.android.gms:play-services-stats:17.0.2'
-    implementation 'com.google.android.gms:play-services-measurement:23.0.0'
-    implementation 'com.google.android.gms:play-services-measurement-sdk:23.0.0'
-    implementation 'com.google.android.gms:play-services-measurement-sdk-api:23.0.0'
-    implementation 'com.google.android.gms:play-services-measurement-impl:23.0.0'
-    implementation 'com.google.android.gms:play-services-measurement-base:23.0.0'
-    implementation 'com.google.android.gms:play-services-measurement-api:23.0.0'
-    implementation 'com.google.android.gms:play-services-basement:18.9.0'
-    implementation 'com.google.android.gms:play-services-base:18.5.0'
-    implementation 'com.google.android.gms:play-services-appset:16.0.1'
-    implementation 'com.google.android.gms:play-services-ads:24.9.0'
-    implementation 'com.google.android.gms:play-services-ads-identifier:18.0.0'
-    implementation 'com.google.android.gms:play-services-ads-api:24.9.0'
-    implementation 'com.google.firebase:firebase-measurement-connector:20.0.1'
-    implementation 'com.google.firebase:firebase-encoders:17.0.0'
-    implementation 'com.google.firebase:firebase-encoders-proto:16.0.0'
-    implementation 'com.google.firebase:firebase-analytics:23.0.0'
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    androidTestUtil 'androidx.test:orchestrator:1.4.2'
+    implementation 'androidx.test:runner:1.5.2'
+    implementation project(':capacitor-cordova-android-plugins')
 }
+
+apply from: 'capacitor.build.gradle'
