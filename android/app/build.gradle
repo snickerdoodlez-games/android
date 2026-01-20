@@ -10,8 +10,8 @@ android {
         applicationId "com.snickerdoodlez.wordpairing"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 50035
-        versionName "50035"
+        versionCode 50050
+        versionName "50050"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
     }

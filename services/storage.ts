@@ -6,7 +6,8 @@ export const STORAGE_KEYS = {
   TUTORIAL_SEEN_L5: 'wpm_tutorial_seen_l5',
   GAME_STATS: 'wpm_game_stats',
   DAILY_HISTORY: 'wpm_daily_history',
-  ENABLED_MODES: 'wpm_enabled_modes'
+  ENABLED_MODES: 'wpm_enabled_modes',
+  CUSTOM_POOL: 'wpm_custom_pool'
 };
 
 export const getLocalISODate = (date: Date = new Date()): string => {
@@ -55,6 +56,21 @@ export const getEnabledModes = (): GameMode[] => {
 
 export const saveEnabledModes = (modes: GameMode[]) => {
   localStorage.setItem(STORAGE_KEYS.ENABLED_MODES, JSON.stringify(modes));
+};
+
+export const getCustomPool = (): string[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_POOL);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveCustomPool = (ids: string[]) => {
+  localStorage.setItem(STORAGE_KEYS.CUSTOM_POOL, JSON.stringify(ids));
 };
 
 export const isTutorialSeen = (): boolean => {

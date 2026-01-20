@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, Component, ReactNode, ErrorInfo } from 'react';
 import { GameMode } from './types';
-import { getSavedLevel, saveLevel, updateStats, getEnabledModes, saveEnabledModes, isTutorialSeen, markTutorialSeen } from './services/storage';
+import { getSavedLevel, saveLevel, updateStats, getEnabledModes, saveEnabledModes, isTutorialSeen, markTutorialSeen, getCustomPool, saveCustomPool } from './services/storage';
 import { getLevelPackage, getLevelMode, LevelPackage } from './services/levelContent';
 import { audio } from './services/audioService';
 import { Capacitor } from '@capacitor/core';
@@ -17,6 +17,8 @@ import Level1_Emoji from './components/Level1_Emoji';
 import Level2_Filter from './components/Level2_Filter';
 import Level5_Group from './components/Level5_Group';
 import Level7_Expansion from './components/Level7_Expansion';
+import Level8_Cascade from './components/Level8_Cascade';
+import CategorySelectionOverlay from './components/CategorySelectionOverlay';
 import Footer from './components/Footer';
 import { AndroidStatusBar, AndroidNavigationBar } from './components/AndroidSystemBars';
 
@@ -74,11 +76,13 @@ export const App: React.FC = () => {
   const [isMusicOn, setIsMusicOn] = useState(true); 
   const [showSettings, setShowSettings] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [showTutorial, setShowTutorial] = useState(false);
   const [activeCategories, setActiveCategories] = useState<{name: string, isSolved: boolean}[]>([]);
   const [isReviewing, setIsReviewing] = useState(false);
   const [enabledModes, setEnabledModes] = useState<GameMode[]>([]);
+  const [customPoolIds, setCustomPoolIds] = useState<string[]>([]);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [levelPackage, setLevelPackage] = useState<LevelPackage | null>(null);
   
@@ -89,6 +93,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     setLevelIndex(getSavedLevel());
     setEnabledModes(getEnabledModes());
+    setCustomPoolIds(getCustomPool());
   }, []);
 
   // Initialize AdMob and UMP
@@ -156,36 +161,11 @@ export const App: React.FC = () => {
       }
   };
 
-  const handleOpenAdInspector = async () => {
-    if (!Capacitor.isNativePlatform()) {
-        console.log('AdMob: Ad Inspector is only available on native platforms.');
-        return;
-    }
-
-    const admobPlugin = AdMob as any;
-    
-    // Existence check to prevent bridge failures before calling
-    if (typeof admobPlugin.openAdInspector !== 'function') {
-        alert("Inspector failed: Method not found in native bridge. Verify Capacitor sync and project build.");
-        return;
-    }
-
-    try {
-        console.log('AdMob: Opening Ad Inspector...');
-        await admobPlugin.openAdInspector();
-        console.log('AdMob: Ad Inspector closed normally.');
-    } catch (e: any) {
-        const msg = (e.message || e);
-        console.error('AdMob: Ad Inspector error: ' + msg);
-        alert("Inspector error: " + msg);
-    }
-  };
-
   useEffect(() => {
     let isMounted = true;
     const loadLevelData = async () => {
       try {
-        const pkg = await getLevelPackage(levelIndex, enabledModes);
+        const pkg = await getLevelPackage(levelIndex, enabledModes, customPoolIds);
         if (isMounted) {
           setLevelPackage(pkg);
         }
@@ -195,7 +175,7 @@ export const App: React.FC = () => {
     };
     loadLevelData();
     return () => { isMounted = false; };
-  }, [levelIndex, enabledModes]);
+  }, [levelIndex, enabledModes, customPoolIds]);
 
   useEffect(() => {
     if (mode !== GameMode.MENU && !isTutorialSeen()) {
@@ -221,10 +201,12 @@ export const App: React.FC = () => {
     audio.setSound(newState);
   };
 
-  const handleLevelComplete = (stats: { timeMs: number, hintsUsedCount: number, moves: number, roundsWon?: number, rowEfficiency?: number, mistakes?: number, solvedCategoryIds?: string[], solvedWords?: string[], failed?: boolean }) => {
+  const handleLevelComplete = (stats: { timeMs: number, hintsUsedCount: number, moves: number, roundsWon?: number, rowEfficiency?: number, mistakes?: number, solvedCategoryIds?: string[], solvedWords?: string[], failed?: boolean, clearedTiles?: number }) => {
     let basePoints = 0;
     if (mode === GameMode.LEVEL_MIND_MATCH) {
         basePoints = (stats.roundsWon || 0) * 5;
+    } else if (mode === GameMode.LEVEL_CASCADE) {
+        basePoints = Math.floor((stats.clearedTiles || 0) / 2);
     } else if (!stats.failed) {
         if (mode === GameMode.CLASSIC || mode === GameMode.LEVEL_THEMED) basePoints = 10;
         else if (mode === GameMode.LEVEL_SYNONYMS) basePoints = 10;
@@ -233,12 +215,12 @@ export const App: React.FC = () => {
     }
     const hintPenalty = (stats.hintsUsedCount || 0) * -5;
     let perfectRunBonus = 0;
-    if (!stats.failed && stats.mistakes === 0) {
+    if (!stats.failed && stats.mistakes === 0 && mode !== GameMode.LEVEL_CASCADE) {
         perfectRunBonus = 25;
     }
     const efficiencyBonus = (!stats.failed ? stats.rowEfficiency : 0) || 0; 
     let timeBonus = 0;
-    if (!stats.failed) {
+    if (!stats.failed && mode !== GameMode.LEVEL_CASCADE) {
         const sec = stats.timeMs / 1000;
         if (sec < 60) timeBonus = 10;
         else if (sec < 90) timeBonus = 5;
@@ -353,6 +335,16 @@ export const App: React.FC = () => {
                 isAutoPlaying={isAutoPlaying}
             />
         );
+      case GameMode.LEVEL_CASCADE:
+        return (
+            <Level8_Cascade
+                key={levelIndex}
+                csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)}
+                hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }}
+                isReviewing={isReviewing} onNext={proceedToNextLevel}
+                isAutoPlaying={isAutoPlaying}
+            />
+        );
       default:
          return (
                <Level2_Filter 
@@ -399,7 +391,19 @@ export const App: React.FC = () => {
               isAutoPlaying={isAutoPlaying} toggleAutoPlay={() => setIsAutoPlaying(!isAutoPlaying)}
               privacyOptionsRequired={privacyOptionsRequired}
               onShowPrivacyOptions={handleShowPrivacyOptions}
-              onOpenAdInspector={handleOpenAdInspector}
+              onManagePool={() => setShowCategorySelector(true)}
+              selectedCount={customPoolIds.length}
+            />
+        )}
+        {showCategorySelector && (
+            <CategorySelectionOverlay 
+                isOpen={showCategorySelector}
+                onClose={() => setShowCategorySelector(false)}
+                selectedIds={customPoolIds}
+                onToggle={(ids) => {
+                    setCustomPoolIds(ids);
+                    saveCustomPool(ids);
+                }}
             />
         )}
         {showStats && (

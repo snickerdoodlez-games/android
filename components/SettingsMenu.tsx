@@ -20,7 +20,8 @@ export interface SettingsMenuProps {
   toggleAutoPlay: () => void;
   privacyOptionsRequired?: boolean;
   onShowPrivacyOptions?: () => void;
-  onOpenAdInspector?: () => void;
+  onManagePool: () => void;
+  selectedCount: number;
 }
 
 const MODE_LABELS: Partial<Record<GameMode, string>> = {
@@ -39,7 +40,8 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
   isAutoPlaying, toggleAutoPlay,
   privacyOptionsRequired,
   onShowPrivacyOptions,
-  onOpenAdInspector
+  onManagePool,
+  selectedCount
 }) => {
   if (!isOpen) return null;
 
@@ -74,6 +76,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
             <button onClick={onMainMenu} className="col-span-2 py-2.5 bg-neon-red border-2 border-white text-white font-black font-oswald text-lg uppercase rounded-medium hover:bg-red-500 transition-all shadow-[0_0_15px_rgba(255,7,58,0.4)]">EXIT TO MAIN MENU</button>
             <button onClick={toggleMusic} className={`p-2.5 rounded-medium border-2 transition-all font-bold font-oswald text-xs uppercase ${isMusicOn ? 'bg-zinc-900 border-neon-green text-neon-green shadow-[0_0_10px_#00FF66]' : 'bg-black border-zinc-800 text-zinc-600'}`}>SOUND: {isMusicOn ? 'ON' : 'OFF'}</button>
             <button onClick={() => setHintsEnabled(!hintsEnabled)} className={`p-2.5 rounded-medium border-2 transition-all font-bold font-oswald text-xs uppercase ${hintsEnabled ? 'bg-zinc-900 border-neon-blue text-neon-blue shadow-[0_0_10px_#00E5FF]' : 'bg-black border-zinc-800 text-zinc-600'}`}>HINTS: {hintsEnabled ? 'ON' : 'OFF'}</button>
+            <button onClick={onManagePool} className={`col-span-2 p-2.5 rounded-medium border-2 transition-all font-black font-oswald text-sm uppercase ${selectedCount > 0 ? 'bg-zinc-900 border-neon-yellow text-neon-yellow shadow-[0_0_10px_rgba(249,255,0,0.3)]' : 'bg-black border-zinc-800 text-zinc-500'}`}>MANAGE CATEGORY POOL {selectedCount > 0 ? `(${selectedCount})` : ''}</button>
         </div>
 
         {hasCategories && (
@@ -106,17 +109,16 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
         </div>
 
         <div className="mt-auto flex flex-col gap-2 pt-2 border-t border-zinc-800 shrink-0">
-            <div className={`grid ${privacyOptionsRequired ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
+            <div className={`grid ${privacyOptionsRequired ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
                 <button onClick={onShowTutorial} className="py-2 bg-zinc-900 border border-neon-yellow text-neon-yellow rounded-medium font-bold text-[9px] font-oswald uppercase shadow-[0_0_8px_rgba(249,255,0,0.2)]">HOW TO PLAY</button>
                 
                 {privacyOptionsRequired && (
                   <button onClick={handleConsent} className="py-2 bg-zinc-900 border border-zinc-600 text-zinc-400 rounded-medium font-bold text-[9px] font-oswald uppercase hover:text-white hover:border-white transition-all">CONSENT</button>
                 )}
-                
-                <button onClick={onOpenAdInspector} className="py-2 bg-zinc-900 border border-zinc-600 text-zinc-400 rounded-medium font-bold text-[9px] font-oswald uppercase hover:text-white hover:border-white transition-all">ADMOB</button>
             </div>
             
             <button onClick={onResetProgress} className="w-full py-2 bg-black border border-neon-red text-neon-red rounded-medium font-bold text-[10px] font-oswald uppercase shadow-[0_0_5px_rgba(255,7,58,0.2)]">RESET PROGRESS</button>
+            {/* fixed: changed onClose to onClick as button elements do not support onClose prop */}
             <button onClick={onClose} className="w-full py-3.5 bg-white text-black font-black font-oswald text-xl uppercase rounded-medium active:scale-95 transition-all shadow-[0_0_20px_white]">RESUME PLAY</button>
         </div>
       </div>

@@ -37,7 +37,8 @@ export enum GameMode {
   LEVEL_EMOJI = 'LEVEL_EMOJI',
   LEVEL_MIND_MATCH = 'LEVEL_MIND_MATCH',
   LEVEL_SYNONYMS = 'LEVEL_SYNONYMS',
-  LEVEL_EXPANSION = 'LEVEL_EXPANSION'
+  LEVEL_EXPANSION = 'LEVEL_EXPANSION',
+  LEVEL_CASCADE = 'LEVEL_CASCADE'
 }
 
 // Layout Constants
@@ -84,7 +85,7 @@ export const SOLVED_COLORS = [
   'bg-neon-purple shadow-[0_0_15px_#D400FF] border-white',
   'bg-neon-magenta shadow-[0_0_15px_#FF00FF] border-white',
   'bg-neon-pink shadow-[0_0_15px_#FF1FBF] border-white',
-  'bg-neon-rose shadow-[0_0_15px_#FF0055] border-white'
+  'bg-neon-rose shadow-[0_0_15_#FF0055] border-white'
 ];
 
 export const THEMES: Theme[] = [
@@ -102,17 +103,17 @@ const S = GameMode.LEVEL_SYNONYMS;
 const T = GameMode.LEVEL_THEMED;
 const X = GameMode.LEVEL_EXPANSION;
 
-// Planned deterministic sequence of 100 level types looping every 100 levels
-// Order: Classic, Emoji, Mind Match, Synonyms, Expansion, Themed
+// Planned deterministic sequence of level types looping every 100 entries.
+// Removed 'K' (CASCADE) temporarily.
 export const DETERMINISTIC_LEVEL_SEQUENCE: GameMode[] = [
   C, E, M, S, X, T, C, E, M, S, 
-  X, C, E, M, S, X, C, E, M, S, 
-  C, E, M, S, X, C, E, M, S, C, 
-  C, E, M, S, X, C, E, M, S, C, 
-  C, E, M, S, X, C, E, M, S, C, 
-  C, E, M, S, X, C, E, M, S, C, 
-  C, E, M, S, X, C, E, M, S, C, 
-  C, E, M, S, X, C, E, M, S, C, 
-  C, E, M, S, X, C, E, M, S, C, 
-  C, E, M, S, X, C, E, M, S, C
+  X, T, C, E, M, S, X, T, C, E, 
+  M, S, X, T, C, E, M, S, X, T, 
+  C, E, M, S, X, T, C, E, M, S, 
+  X, T, C, E, M, S, X, T, C, E, 
+  M, S, X, T, C, E, M, S, X, T, 
+  C, E, M, S, X, T, C, E, M, S, 
+  X, T, C, E, M, S, X, T, C, E, 
+  M, S, X, T, C, E, M, S, X, T, 
+  C, E, M, S, X, T, C, E, M, S
 ];

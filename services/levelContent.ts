@@ -1,5 +1,5 @@
 
-import { GameMode, DETERMINISTIC_LEVEL_SEQUENCE } from '../types';
+import { GameMode, DETERMINISTIC_LEVEL_SEQUENCE, CSVRow } from '../types';
 import { getConsolidatedData, getGlobalData } from './csvData';
 import { getSynonymData } from './synonymData';
 import { getEmojiData } from './emojiData';
@@ -35,7 +35,7 @@ export const getLevelMode = (levelIndex: number, enabledModes: GameMode[] = []):
  * The sequence loops every 100 levels as requested.
  * Skips disabled modes by finding the next enabled one in the sequence.
  */
-export const getLevelPackage = (levelIndex: number, enabledModes: GameMode[] = []): LevelPackage => {
+export const getLevelPackage = (levelIndex: number, enabledModes: GameMode[] = [], customPoolIds: string[] = []): LevelPackage => {
   // Use the extracted getLevelMode function
   const mode = getLevelMode(levelIndex, enabledModes);
   
@@ -58,6 +58,17 @@ export const getLevelPackage = (levelIndex: number, enabledModes: GameMode[] = [
           data = [...data, ...getGlobalData()];
       }
       break;
+  }
+
+  // If user has a custom pool, filter the data to ONLY include those categories.
+  // We apply this for all modes that use ID-based categories.
+  if (customPoolIds.length > 0) {
+    const filtered = data.filter((row: CSVRow) => customPoolIds.includes(row.id));
+    // If we have enough for at least one level, use the filtered set.
+    // Otherwise, fallback to full data to avoid crashing (e.g. if user selected 0 categories).
+    if (filtered.length >= 4) {
+      data = filtered;
+    }
   }
 
   return { mode, data };
