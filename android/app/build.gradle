@@ -10,8 +10,8 @@ android {
         applicationId "com.snickerdoodlez.wordpairing"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 50050
-        versionName "50050"
+        versionCode 50052
+        versionName "50052"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
     }
@@ -39,6 +39,7 @@ repositories {
 dependencies {
     implementation "com.google.android.gms:play-services-ads:$playServicesAdsVersion"
     implementation "com.google.android.ump:user-messaging-platform:$userMessagingPlatformVersion"
+    implementation 'com.google.android.play:integrity:1.6.0'
     implementation project(':capacitor-community-admob')
     implementation platform('com.google.firebase:firebase-bom:34.7.0')
     implementation 'com.google.firebase:firebase-analytics'
