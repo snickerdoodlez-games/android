@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, Component, ReactNode, ErrorInfo } from 'react';
 import { GameMode } from './types';
 import { getSavedLevel, saveLevel, updateStats, getEnabledModes, saveEnabledModes, isTutorialSeen, markTutorialSeen, getCustomPool, saveCustomPool } from './services/storage';
@@ -85,6 +84,7 @@ export const App: React.FC = () => {
   const [customPoolIds, setCustomPoolIds] = useState<string[]>([]);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [levelPackage, setLevelPackage] = useState<LevelPackage | null>(null);
+  const [forcedMode, setForcedMode] = useState<GameMode | undefined>(undefined);
   
   // AdMob & Consent State
   const [isAdMobReady, setIsAdMobReady] = useState(false);
@@ -105,23 +105,14 @@ export const App: React.FC = () => {
       }
 
       try {
-        // 1. Initialize AdMob
         await AdMob.initialize({});
-
-        // 2. Request Consent Info
         const consentInfo = await AdMob.requestConsentInfo();
-
-        // 3. Show Consent Form if Required
         if (consentInfo.isConsentFormAvailable && consentInfo.status === AdmobConsentStatus.REQUIRED) {
           await AdMob.showConsentForm();
         }
-
-        // 4. Check if Privacy Options Button is needed (e.g. for GDPR users to re-access)
         if (consentInfo.privacyOptionsRequirementStatus === 'REQUIRED') {
             setPrivacyOptionsRequired(true);
         }
-
-        // 5. Show Banner Ad (Production Mode)
         const bottomMargin = getSafeAreaBottom();
         await AdMob.showBanner({
           adId: BANNER_AD_ID,
@@ -130,8 +121,6 @@ export const App: React.FC = () => {
           margin: bottomMargin,
           isTesting: false, 
         });
-
-        // 6. Preload Interstitial Ad
         try {
             await AdMob.prepareInterstitial({
                 adId: INTERSTITIAL_AD_ID,
@@ -140,14 +129,12 @@ export const App: React.FC = () => {
         } catch (e) {
             console.error("Interstitial prep failed", e);
         }
-
       } catch (e) {
         console.error("AdMob/UMP initialization failed", e);
       } finally {
         setIsAdMobReady(true);
       }
     };
-
     initializeAds();
   }, []);
 
@@ -163,9 +150,9 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
-    const loadLevelData = async () => {
+    const loadLevelData = () => {
       try {
-        const pkg = await getLevelPackage(levelIndex, enabledModes, customPoolIds);
+        const pkg = getLevelPackage(levelIndex, enabledModes, customPoolIds, forcedMode);
         if (isMounted) {
           setLevelPackage(pkg);
         }
@@ -175,7 +162,7 @@ export const App: React.FC = () => {
     };
     loadLevelData();
     return () => { isMounted = false; };
-  }, [levelIndex, enabledModes, customPoolIds]);
+  }, [levelIndex, enabledModes, customPoolIds, forcedMode]);
 
   useEffect(() => {
     if (mode !== GameMode.MENU && !isTutorialSeen()) {
@@ -193,6 +180,14 @@ export const App: React.FC = () => {
     }
     setEnabledModes(next);
     saveEnabledModes(next);
+  };
+
+  const handleJumpToMode = (m: GameMode) => {
+    setLevelPackage(null); 
+    setForcedMode(m);
+    setMode(m); 
+    setIsReviewing(false);
+    setShowSettings(false);
   };
 
   const handleToggleMusic = () => {
@@ -243,23 +238,19 @@ export const App: React.FC = () => {
     if (Capacitor.isNativePlatform()) {
         try {
             await AdMob.showInterstitial();
-            await AdMob.prepareInterstitial({
-                adId: INTERSTITIAL_AD_ID,
-                isTesting: false
-            });
+            await AdMob.prepareInterstitial({ adId: INTERSTITIAL_AD_ID, isTesting: false });
         } catch (e) {
             console.error("Failed to show interstitial", e);
-            try {
-                await AdMob.prepareInterstitial({
-                    adId: INTERSTITIAL_AD_ID,
-                    isTesting: false
-                });
-            } catch(e2) {}
+            try { await AdMob.prepareInterstitial({ adId: INTERSTITIAL_AD_ID, isTesting: false }); } catch(e2) {}
         }
     }
     const nextLevel = levelIndex + 1;
     setLevelIndex(nextLevel);
     saveLevel(nextLevel);
+    
+    // Core Fix: Reset forcedMode only when logically moving away from the forced puzzle
+    setForcedMode(undefined);
+    
     const nextMode = getLevelMode(nextLevel, enabledModes);
     setMode(nextMode);
     setIsReviewing(false);
@@ -267,9 +258,7 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (isAutoPlaying && isReviewing) {
-        const t = setTimeout(() => {
-            proceedToNextLevel();
-        }, 2000); 
+        const t = setTimeout(() => { proceedToNextLevel(); }, 2000); 
         return () => clearTimeout(t);
     }
   }, [isAutoPlaying, isReviewing]);
@@ -279,7 +268,7 @@ export const App: React.FC = () => {
       return (
           <LevelMenu 
             onStart={() => {
-              const startMode = levelPackage ? levelPackage.mode : getLevelMode(levelIndex, enabledModes);
+              const startMode = forcedMode || (levelPackage ? levelPackage.mode : getLevelMode(levelIndex, enabledModes));
               setMode(startMode);
             }} 
             onSettings={() => setShowSettings(true)} 
@@ -291,7 +280,7 @@ export const App: React.FC = () => {
     if (!levelPackage || levelPackage.mode !== mode) {
       return <LoadingFallback />;
     }
-    const { data } = levelPackage;
+    const { data, themeName } = levelPackage;
     switch (mode) {
       case GameMode.CLASSIC:
       case GameMode.LEVEL_THEMED:
@@ -299,17 +288,18 @@ export const App: React.FC = () => {
         return (
             <Level1_Standard 
                 key={levelIndex}
-                csvData={data} mode={mode} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)}
+                csvData={data} mode={mode} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => { setForcedMode(undefined); setMode(GameMode.MENU); }}
                 hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }}
                 isReviewing={isReviewing} onNext={proceedToNextLevel}
                 isAutoPlaying={isAutoPlaying}
+                themeName={themeName}
             />
         );
       case GameMode.LEVEL_EMOJI:
         return (
             <Level1_Emoji 
                 key={levelIndex}
-                levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} 
+                levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => { setForcedMode(undefined); setMode(GameMode.MENU); }} 
                 hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }} 
                 isReviewing={isReviewing} onNext={proceedToNextLevel}
                 isAutoPlaying={isAutoPlaying}
@@ -319,7 +309,7 @@ export const App: React.FC = () => {
         return (
             <Level5_Group 
                 key={levelIndex}
-                csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} 
+                csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => { setForcedMode(undefined); setMode(GameMode.MENU); }} 
                 hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }} 
                 isReviewing={isReviewing} onNext={proceedToNextLevel}
                 isAutoPlaying={isAutoPlaying}
@@ -329,7 +319,7 @@ export const App: React.FC = () => {
         return (
             <Level7_Expansion
                 key={levelIndex}
-                csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)}
+                csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => { setForcedMode(undefined); setMode(GameMode.MENU); }}
                 hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }}
                 isReviewing={isReviewing} onNext={proceedToNextLevel}
                 isAutoPlaying={isAutoPlaying}
@@ -339,7 +329,7 @@ export const App: React.FC = () => {
         return (
             <Level8_Cascade
                 key={levelIndex}
-                csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)}
+                csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => { setForcedMode(undefined); setMode(GameMode.MENU); }}
                 hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }}
                 isReviewing={isReviewing} onNext={proceedToNextLevel}
                 isAutoPlaying={isAutoPlaying}
@@ -352,7 +342,7 @@ export const App: React.FC = () => {
                   csvData={data} levelIndex={levelIndex} 
                   onComplete={handleLevelComplete} 
                   onGameOver={() => handleLevelComplete({ timeMs: 0, hintsUsedCount: 0, moves: 0, failed: true, mistakes: 5 })}
-                  onExit={() => setMode(GameMode.MENU)}
+                  onExit={() => { setForcedMode(undefined); setMode(GameMode.MENU); }}
                   hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled}
                   onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }}
                   isReviewing={isReviewing} onNext={proceedToNextLevel}
@@ -361,14 +351,6 @@ export const App: React.FC = () => {
          );
     }
   };
-
-  if (!isAdMobReady) {
-    return (
-      <div className="fixed inset-0 h-viewport w-screen bg-black text-white font-oswald flex items-center justify-center">
-        <LoadingFallback />
-      </div>
-    );
-  }
 
   return (
     <ErrorBoundary>
@@ -384,8 +366,9 @@ export const App: React.FC = () => {
         <AndroidNavigationBar />
         {showSettings && (
             <SettingsMenu 
-              isOpen={showSettings} onClose={() => setShowSettings(false)} onMainMenu={() => { setShowSettings(false); setMode(GameMode.MENU); }}
+              isOpen={showSettings} onClose={() => setShowSettings(false)} onMainMenu={() => { setForcedMode(undefined); setShowSettings(false); setMode(GameMode.MENU); }}
               isMusicOn={isMusicOn} toggleMusic={handleToggleMusic} enabledModes={enabledModes} toggleMode={handleToggleMode}
+              onSelectMode={handleJumpToMode}
               hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onShowTutorial={() => setShowTutorial(true)}
               onResetProgress={() => { localStorage.clear(); window.location.reload(); }} categories={activeCategories}
               isAutoPlaying={isAutoPlaying} toggleAutoPlay={() => setIsAutoPlaying(!isAutoPlaying)}

@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -92,12 +92,6 @@
       }
     </script>
     <style>
-      body {
-        font-family: 'Oswald', sans-serif;
-      }
-      * {
-        font-family: 'Oswald', sans-serif !important;
-      }
       html, body {
         margin: 0;
         padding: 0;
@@ -110,7 +104,14 @@
         height: 100%;
         width: 100%;
         overflow: hidden;
+        font-family: 'Oswald', sans-serif;
       }
+      
+      /* Explicitly target all text to inherit Oswald unless overridden by specific font classes */
+      * {
+        font-family: inherit;
+      }
+
       /* Allow scrolling on desktop or large viewports if the UI doesn't fit */
       @media (min-width: 1024px) {
         body {

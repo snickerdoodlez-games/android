@@ -103,8 +103,7 @@ const S = GameMode.LEVEL_SYNONYMS;
 const T = GameMode.LEVEL_THEMED;
 const X = GameMode.LEVEL_EXPANSION;
 
-// Planned deterministic sequence of level types looping every 100 entries.
-// Removed 'K' (CASCADE) temporarily.
+// Sequence updated to exclude Cascade (K) and re-loop across 6 modes to reach 100 entries.
 export const DETERMINISTIC_LEVEL_SEQUENCE: GameMode[] = [
   C, E, M, S, X, T, C, E, M, S, 
   X, T, C, E, M, S, X, T, C, E, 

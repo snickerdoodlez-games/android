@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { TileData, THEMES } from '../types';
 import Tile from './Tile';
@@ -336,34 +335,25 @@ const Level1_Emoji: React.FC<LevelEmojiProps> = ({
       setIsSwapping(true); 
       setMoves(m => m + 1); 
       audio.playSwap();
-      // Removed lastProgressTimeRef update here.
       
-      // 1. Set Colors: First selection (Blue) stays Blue (swapping), Second becomes Pink (swap-target)
       setTiles(prev => prev.map(t => {
         if (t.id === selectedId) return { ...t, status: 'swapping' };
         if (t.id === id) return { ...t, status: 'swap-target' };
         return t;
       }));
       
-      // 2. Perform Data Swap (Words fade out/in)
       setTimeout(() => {
           setTiles(prev => {
               const next = [...prev];
               const t1 = next[idx1];
               const t2 = next[idx2];
-              
-              // Swap content but keep statuses/ids to animate
               next[idx1] = { ...t1, word: t2.word, categoryId: t2.categoryId, categoryName: t2.categoryName, isEmoji: t2.isEmoji };
               next[idx2] = { ...t2, word: t1.word, categoryId: t1.categoryId, categoryName: t1.categoryName, isEmoji: t1.isEmoji };
-
               return next;
           });
 
-          // 3. Wait for text fade (approx 0.4s total cycle), then fade background
           setTimeout(() => {
               setTiles(prev => prev.map(t => (t.id === selectedId || t.id === id) ? { ...t, status: 'fading-out-bg' } : t));
-              
-              // 4. Fade background (0.25s) then neutralize
               setTimeout(() => {
                   setTiles(prev => {
                       const final = prev.map(t => (t.status === 'fading-out-bg') ? { ...t, status: 'neutral' as const } : t);
@@ -391,7 +381,8 @@ const Level1_Emoji: React.FC<LevelEmojiProps> = ({
       onToggleHints={() => setHintsEnabled(!hintsEnabled)}
     >
       <ParticleOverlay ref={particleRef} />
-      <div className="flex-1 flex flex-col gap-1.5 overflow-visible pointer-events-auto">
+      {/* flex-col + flex-1 on row containers ensures vertical space usage */}
+      <div className="flex-1 flex flex-col gap-1.5 overflow-visible pointer-events-auto h-full pb-2">
          {Array.from({ length: tiles.length / GRID_WIDTH }).map((_, r) => {
              const row = tiles.slice(r * GRID_WIDTH, r * GRID_WIDTH + GRID_WIDTH);
              const solved = row.every(t => t.status === 'solved');
@@ -411,6 +402,7 @@ const Level1_Emoji: React.FC<LevelEmojiProps> = ({
                       </div>
                     </div>
                   )}
+                  {/* h-full ensures the grid stretches to fill its row */}
                   <div className={`grid grid-cols-3 gap-1.5 w-full h-full relative z-10 rounded-small transition-all duration-300 ${solved ? 'p-3' : 'p-1'}`}>
                     {row.map(tile => (
                       <Tile 

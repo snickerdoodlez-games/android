@@ -14,12 +14,12 @@ const CategoryListOverlay: React.FC<CategoryListOverlayProps> = ({ categories, i
 
   return (
     <div 
-        className="absolute inset-0 z-[80] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in"
+        className="absolute inset-0 z-[80] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in font-oswald"
         onClick={onClose}
     >
       <div className="w-full max-w-md bg-zinc-900 border-2 border-white rounded-2xl p-4 shadow-2xl flex flex-col gap-3 animate-pop max-h-[85vh] overflow-y-auto no-scrollbar" onClick={(e) => e.stopPropagation()}>
          <div className="flex justify-between items-center border-b border-zinc-700 pb-2 shrink-0">
-            <h3 className="text-xl font-black font-righteous text-deco-gold uppercase tracking-wider">Categories</h3>
+            <h3 className="text-xl font-black text-deco-gold uppercase tracking-wider">Categories</h3>
             <button onClick={onClose} className="text-zinc-400 hover:text-white">✕</button>
          </div>
          
@@ -64,7 +64,7 @@ const CategoryListOverlay: React.FC<CategoryListOverlayProps> = ({ categories, i
                         OPEN SETTINGS
                     </button>
                 )}
-                <p className="text-center text-zinc-500 text-[10px] font-sans">
+                <p className="text-center text-zinc-500 text-[10px] font-oswald uppercase">
                     Tap outside to close
                 </p>
             </div>

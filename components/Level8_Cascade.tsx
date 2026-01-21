@@ -1,13 +1,11 @@
-
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CSVRow, TileData, THEMES } from '../types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Tile from './Tile';
 import LevelLayout from './LevelLayout';
 import { getValidatedLevelData } from '../services/levelPreCheck';
 import { audio } from '../services/audioService';
 import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
-import { shuffleArray } from '../services/csvUtils';
 
 const COLS = 6;
 const ROWS = 9;
@@ -16,6 +14,8 @@ const SPEED_STEP = 200; // ms decrease per speed level
 const MIN_SPAWN_INTERVAL = 800; // ms
 
 interface CascadeLevelProps {
+  // Added key to satisfy strict JSX attribute checking in App.tsx
+  key?: React.Key;
   csvData: CSVRow[];
   onComplete: (stats: any) => void;
   onExit: () => void;
@@ -30,13 +30,15 @@ interface CascadeLevelProps {
 
 type CascadeTile = TileData & { row: number; col: number };
 
-const Level8_Cascade: React.FC<CascadeLevelProps> = ({ 
-  csvData, onComplete, levelIndex, hintsEnabled, onOpenSettings, setHintsEnabled,
+export default function Level8_Cascade({ 
+  csvData, onComplete, onExit, levelIndex, hintsEnabled, onOpenSettings, setHintsEnabled,
   isReviewing, onNext, isAutoPlaying 
-}) => {
+}: CascadeLevelProps) {
   const [grid, setGrid] = useState<(CascadeTile | null)[][]>(
     Array.from({ length: ROWS }, () => Array(COLS).fill(null))
   );
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isSwapping, setIsSwapping] = useState(false);
   const [clearedCount, setClearedCount] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -44,13 +46,11 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
   
   const particleRef = useRef<ParticleHandle>(null);
   const startTimeRef = useRef(Date.now());
-  // Fix: use any for timeout ref to avoid NodeJS.Timeout namespace error in browser environment
   const spawnTimerRef = useRef<any>(null);
 
   const speedLevel = Math.floor(clearedCount / 10) + 1;
   const spawnInterval = Math.max(MIN_SPAWN_INTERVAL, INITIAL_SPAWN_INTERVAL - (speedLevel - 1) * SPEED_STEP);
 
-  // Initialize data pool
   useEffect(() => {
     const categories = getValidatedLevelData(8, csvData, 10);
     setActivePool(categories);
@@ -62,18 +62,16 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
     setIsGameOver(true);
     audio.playError();
     
-    // Total cleared tiles are the score for this mode
     onComplete({
       timeMs: Date.now() - startTimeRef.current,
       clearedTiles: clearedCount,
       speedReached: speedLevel,
-      moves: clearedCount / 2, // approximation
+      moves: clearedCount / 2,
       mistakes: 0,
-      failed: clearedCount < 20 // fail if didn't get far
+      failed: clearedCount < 20
     });
   }, [isGameOver, clearedCount, speedLevel, onComplete]);
 
-  // Spawning logic
   const spawnTile = useCallback(() => {
     if (isGameOver || isReviewing || activePool.length === 0) return;
 
@@ -110,7 +108,6 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
     });
   }, [isGameOver, isReviewing, activePool, handleGameOver]);
 
-  // Gravity logic
   useEffect(() => {
     if (isGameOver || isReviewing || isInitializing) return;
 
@@ -119,7 +116,6 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
         let changed = false;
         const next = prev.map(row => [...row]);
 
-        // Process from bottom up
         for (let r = ROWS - 2; r >= 0; r--) {
           for (let c = 0; c < COLS; c++) {
             if (next[r][c] !== null && next[r + 1][c] === null) {
@@ -137,7 +133,6 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
     return () => clearInterval(gravityInterval);
   }, [isGameOver, isReviewing, isInitializing]);
 
-  // Spawning interval
   useEffect(() => {
     if (isGameOver || isReviewing || isInitializing) return;
 
@@ -152,75 +147,162 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
     };
   }, [isGameOver, isReviewing, isInitializing, spawnInterval, spawnTile]);
 
-  // Cluster matching
   const handleTileClick = (id: string) => {
-    if (isGameOver || isReviewing) return;
+    if (isGameOver || isReviewing || isSwapping) return;
 
-    setGrid(prev => {
-      // Find the clicked tile's coordinates
-      let startR = -1, startC = -1;
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          if (prev[r][c]?.id === id) {
-            startR = r;
-            startC = c;
-            break;
-          }
+    const findTile = (tid: string): {r: number, c: number, tile: CascadeTile} | null => {
+        for(let r=0; r<ROWS; r++) {
+            for(let c=0; c<COLS; c++) {
+                if (grid[r][c]?.id === tid) return {r, c, tile: grid[r][c]!};
+            }
         }
+        return null;
+    };
+
+    const target = findTile(id);
+    if (!target) return;
+
+    if (selectedId === null) {
+      audio.playSelect();
+      setSelectedId(id);
+      setGrid(prev => prev.map(row => row.map(t => t?.id === id ? { ...t, status: 'selected' as const } : t)));
+    } else if (selectedId === id) {
+      setSelectedId(null);
+      setGrid(prev => prev.map(row => row.map(t => t?.id === id ? { ...t, status: 'neutral' as const } : t)));
+    } else {
+      const source = findTile(selectedId);
+      if (!source) {
+          setSelectedId(null);
+          return;
       }
 
-      if (startR === -1) return prev;
-      const targetCatId = prev[startR][startC]!.categoryId;
+      setIsSwapping(true);
+      audio.playSwap();
+      
+      setGrid(prev => prev.map(row => row.map(t => {
+        if (!t) return null;
+        if (t.id === selectedId) return { ...t, status: 'swapping' as const };
+        if (t.id === id) return { ...t, status: 'swap-target' as const };
+        return t;
+      })));
 
-      // DFS to find cluster
-      const cluster: { r: number, c: number }[] = [];
-      const visited = new Set<string>();
-      const stack = [{ r: startR, c: startC }];
+      setTimeout(() => {
+          setGrid(prev => {
+              const next = prev.map(row => [...row]);
+              const sTile = next[source.r][source.c];
+              const tTile = next[target.r][target.c];
 
-      while (stack.length > 0) {
-        const { r, c } = stack.pop()!;
-        const key = `${r},${c}`;
-        if (visited.has(key)) continue;
-        visited.add(key);
+              if (sTile && tTile) {
+                const sCopy = { ...sTile };
+                const tCopy = { ...tTile };
+                next[source.r][source.c] = {
+                    ...sCopy,
+                    word: tCopy.word,
+                    categoryId: tCopy.categoryId,
+                    categoryName: tCopy.categoryName,
+                    color: tCopy.color,
+                };
+                next[target.r][target.c] = {
+                    ...tCopy,
+                    word: sCopy.word,
+                    categoryId: sCopy.categoryId,
+                    categoryName: sCopy.categoryName,
+                    color: sCopy.color,
+                };
+              }
+              return next;
+          });
 
-        if (prev[r][c]?.categoryId === targetCatId) {
-          cluster.push({ r, c });
-          // Check neighbors
-          if (r > 0) stack.push({ r: r - 1, c });
-          if (r < ROWS - 1) stack.push({ r: r + 1, c });
-          if (c > 0) stack.push({ r, c: c - 1 });
-          if (c < COLS - 1) stack.push({ r, c: c + 1 });
-        }
-      }
-
-      if (cluster.length >= 2) {
-        audio.playRowSolved();
-        setClearedCount(prev => prev + cluster.length);
-        const next = prev.map(row => [...row]);
-        cluster.forEach(({ r, c }) => {
-          // Trigger particles
-          if (particleRef.current) {
-             const rect = document.querySelector(`[data-tile-id="${next[r][c]!.id}"]`)?.getBoundingClientRect();
-             if (rect) particleRef.current.explode(rect.left + rect.width / 2, rect.top + rect.height / 2, "#FFFFFF");
-          }
-          next[r][c] = null;
-        });
-        return next;
-      } else {
-        audio.playSelect();
-        return prev;
-      }
-    });
+          setTimeout(() => {
+              setGrid(prev => prev.map(row => row.map(t => {
+                if (!t) return null;
+                if (t.id === selectedId || t.id === id) {
+                  return { ...t, status: 'fading-out-bg' as const };
+                }
+                return t;
+              })));
+              
+              setTimeout(() => {
+                  setGrid(prev => {
+                      const final = prev.map(row => row.map(t => {
+                        if (!t) return null;
+                        if (t.status === 'fading-out-bg') {
+                          return { ...t, status: 'neutral' as const };
+                        }
+                        return t;
+                      }));
+                      checkClusters(final);
+                      return final;
+                  });
+                  setSelectedId(null);
+                  setIsSwapping(false);
+              }, 250);
+          }, 450);
+      }, 50);
+    }
   };
 
-  // Auto-play for CASCADE
+  const checkClusters = (currentGrid: (CascadeTile | null)[][]) => {
+      const toClear = new Set<string>();
+
+      for(let r=0; r<ROWS; r++) {
+          for(let c=0; c<COLS; c++) {
+              const startTile = currentGrid[r][c];
+              if (!startTile) continue;
+
+              const cluster: { r: number, c: number }[] = [];
+              const visited = new Set<string>();
+              const stack = [{ r, c }];
+
+              while (stack.length > 0) {
+                const curr = stack.pop()!;
+                const key = `${curr.r},${curr.c}`;
+                if (visited.has(key)) continue;
+                visited.add(key);
+
+                const currentTile = currentGrid[curr.r][curr.c];
+                if (currentTile?.categoryId === startTile.categoryId) {
+                  cluster.push(curr);
+                  if (curr.r > 0) stack.push({ r: curr.r - 1, c: curr.c });
+                  if (curr.r < ROWS - 1) stack.push({ r: curr.r + 1, c: curr.c });
+                  if (curr.c > 0) stack.push({ r: curr.r, c: curr.c - 1 });
+                  if (curr.c < COLS - 1) stack.push({ r: curr.r, c: curr.c + 1 });
+                }
+              }
+
+              if (cluster.length >= 2) {
+                  cluster.forEach(coord => toClear.add(`${coord.r},${coord.c}`));
+              }
+          }
+      }
+
+      if (toClear.size > 0) {
+          audio.playRowSolved();
+          setClearedCount(prev => prev + toClear.size);
+          setGrid(prev => {
+              const next = prev.map(row => [...row]);
+              toClear.forEach(key => {
+                  const [r, c] = key.split(',').map(Number);
+                  const tile = next[r][c];
+                  if (tile && particleRef.current) {
+                      const el = document.querySelector(`[data-tile-id="${tile.id}"]`);
+                      const rect = el?.getBoundingClientRect();
+                      if (rect) particleRef.current.explode(rect.left + rect.width / 2, rect.top + rect.height / 2, "#FFFFFF");
+                  }
+                  next[r][c] = null;
+              });
+              return next;
+          });
+      }
+  };
+
   useEffect(() => {
-    if (!isAutoPlaying || isGameOver || isReviewing) return;
+    if (!isAutoPlaying || isGameOver || isReviewing || isSwapping) return;
 
     const autoTick = () => {
-      // Look for any existing cluster of 2+
-      let bestCluster: string[] = [];
-      
+      if (document.hidden) return;
+
+      let foundCluster = false;
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           const t = grid[r][c];
@@ -234,7 +316,8 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
             const key = `${curr.r},${curr.c}`;
             if (visited.has(key)) continue;
             visited.add(key);
-            if (grid[curr.r][curr.c]?.categoryId === t.categoryId) {
+            const ct = grid[curr.r][curr.c];
+            if (ct?.categoryId === t.categoryId) {
               cluster.push(curr);
               if (curr.r > 0) stack.push({ r: curr.r - 1, c: curr.c });
               if (curr.r < ROWS - 1) stack.push({ r: curr.r + 1, c: curr.c });
@@ -242,10 +325,36 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
               if (curr.c < COLS - 1) stack.push({ r: curr.r, c: curr.c + 1 });
             }
           }
-
           if (cluster.length >= 2) {
-             handleTileClick(t.id);
-             return;
+             checkClusters(grid);
+             foundCluster = true;
+             break;
+          }
+        }
+        if (foundCluster) break;
+      }
+      if (foundCluster) return;
+
+      for (let r = ROWS - 1; r >= 0; r--) {
+        for (let c = 0; c < COLS; c++) {
+          const t1 = grid[r][c];
+          if (!t1) continue;
+          
+          if (c < COLS - 1) {
+            const t2 = grid[r][c + 1];
+            if (t2 && t1.categoryId !== t2.categoryId) {
+               if (selectedId === null) handleTileClick(t1.id);
+               else if (selectedId === t1.id) handleTileClick(t2.id);
+               return;
+            }
+          }
+          if (r < ROWS - 1) {
+            const t2 = grid[r + 1][c];
+            if (t2 && t1.categoryId !== t2.categoryId) {
+               if (selectedId === null) handleTileClick(t1.id);
+               else if (selectedId === t1.id) handleTileClick(t2.id);
+               return;
+            }
           }
         }
       }
@@ -253,7 +362,7 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
 
     const timer = setTimeout(autoTick, 1000);
     return () => clearTimeout(timer);
-  }, [isAutoPlaying, grid, isGameOver, isReviewing]);
+  }, [isAutoPlaying, grid, isGameOver, isReviewing, isSwapping, selectedId]);
 
   if (isInitializing) {
     return (
@@ -288,8 +397,7 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
       <ParticleOverlay ref={particleRef} />
       
       <div className="flex-1 flex flex-col items-center justify-center w-full h-full relative p-2 overflow-hidden">
-         <div className="w-full h-full max-w-md bg-zinc-900/30 border-4 border-white rounded-medium relative shadow-2xl flex flex-col p-1 overflow-hidden">
-            {/* Background Grid markers for visual reference */}
+         <div className="w-full h-full max-w-md bg-zinc-900/30 border-2 border-white rounded-medium relative shadow-2xl flex flex-col p-1 overflow-hidden">
             <div className="absolute inset-0 grid grid-cols-6 grid-rows-9 opacity-5 pointer-events-none">
                {Array.from({ length: 54 }).map((_, i) => <div key={i} className="border border-white" />)}
             </div>
@@ -309,6 +417,7 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
                             data={tile} 
                             onClick={handleTileClick} 
                             data-tile-id={tile.id}
+                            isCascade={true}
                          />
                        </motion.div>
                      )}
@@ -317,12 +426,12 @@ const Level8_Cascade: React.FC<CascadeLevelProps> = ({
                )}
             </div>
 
-            {/* Danger Zone Indicator */}
-            <div className="absolute top-0 left-0 w-full h-1/9 bg-neon-red/10 animate-pulse pointer-events-none" />
+            <div 
+              className="absolute top-0 left-0 w-full bg-neon-red/10 animate-pulse pointer-events-none" 
+              style={{ height: `${100/9}%` }}
+            />
          </div>
       </div>
     </LevelLayout>
   );
-};
-
-export default Level8_Cascade;
+}

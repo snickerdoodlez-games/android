@@ -34,7 +34,7 @@ const LevelLayout: React.FC<LevelLayoutProps> = ({
   rowsLeft
 }) => {
   return (
-    <div className="flex flex-col h-full w-full max-w-4xl mx-auto select-none overflow-hidden relative bg-black">
+    <div className="flex flex-col h-full w-full max-w-4xl mx-auto select-none overflow-hidden relative bg-black font-oswald">
       <Header 
         modeName={modeName} 
         levelIndex={levelIndex} 
