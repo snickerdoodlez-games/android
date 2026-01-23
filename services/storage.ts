@@ -1,4 +1,3 @@
-
 export const STORAGE_KEYS = {
   LEVEL: 'wpm_level',
   TUTORIAL_SEEN: 'wpm_tutorial_seen_v2',
@@ -90,7 +89,6 @@ export interface GameStats {
   totalMoves: number;
   solvedCategoryIds: string[];
   solvedWords: string[];
-  totalScore: number;
 }
 
 const DEFAULT_STATS: GameStats = {
@@ -101,8 +99,7 @@ const DEFAULT_STATS: GameStats = {
   hintsRefused: 0,
   totalMoves: 0,
   solvedCategoryIds: [],
-  solvedWords: [],
-  totalScore: 0
+  solvedWords: []
 };
 
 export const getStats = (): GameStats => {
@@ -113,7 +110,6 @@ export const getStats = (): GameStats => {
     return { 
       ...DEFAULT_STATS, 
       ...parsed,
-      // Ensure solvedWords is an array even if old save data doesn't have it
       solvedWords: Array.isArray(parsed.solvedWords) ? parsed.solvedWords : []
     };
   } catch {
@@ -131,7 +127,6 @@ export const updateStats = (updates: Partial<GameStats>) => {
         updatedCats = Array.from(newSet);
     }
 
-    // Update Solved Words Logic
     let updatedWords = current.solvedWords;
     if (updates.solvedWords) {
         const wordSet = new Set([...current.solvedWords, ...updates.solvedWords]);
@@ -146,8 +141,7 @@ export const updateStats = (updates: Partial<GameStats>) => {
         hintsRefused: current.hintsRefused + (updates.hintsRefused || 0),
         totalMoves: current.totalMoves + (updates.totalMoves || 0),
         solvedCategoryIds: updatedCats,
-        solvedWords: updatedWords,
-        totalScore: current.totalScore + (updates.totalScore || 0)
+        solvedWords: updatedWords
     };
 
     localStorage.setItem(STORAGE_KEYS.GAME_STATS, JSON.stringify(updated));

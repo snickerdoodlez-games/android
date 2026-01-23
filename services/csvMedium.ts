@@ -553,7 +553,7 @@ export const CSV_MEDIUM_DATA = `Category,Linguistic Cluster,Intensity
 "Professional Sports Transactions","Trade, Transfer, Contract, Free Agent, Waiver, Buyout, Release, Draft",6
 "protection","Bulwark, Carapace, Rampart, Shield, Cuirass, Bastion, Palisade",5
 "public transit","Subway, Trolley, Monorail, Gondola, Funicular, Omnibus",4
-"Punk","Ramones, Clash, Pistols, Misfits, Stooges, Damned, Fugazi, Anarchy, Mosh Pit, Fast-Tempo",5
+"Punk","Ramones, Clash, sex Pistols, Misfits, Stooges, Damned, Fugazi, Anarchy, Mosh Pit, Fast-Tempo",5
 "PUPPETRY","MARIONETTE, MUPPET, BUNRAKU, ROD, Shadow",5
 "Race Cars","IndyCar, Stock Car, LMP1, NASCAR, Dragster, Kart",4
 "Raids","Lindisfarne, Danegeld, Berserker, Shieldwall, Longship, Iona",6
@@ -657,7 +657,7 @@ export const CSV_MEDIUM_DATA = `Category,Linguistic Cluster,Intensity
 "Spin Off","Joey, Angel, The Flash, Rhoda, Daria, Mork & Mindy, FRASIER, JEFFERSONS",5
 "spoilers","SYNOPSIS, TRAILER, LEAK, SCREENCAP, RUMOR, Theories, Datamine, Reveal",5
 "sports broadcasts","SportsCenter, GameDay, Hard Knocks, RedZone",4
-"Stadium","Infrastructure, Capacity, Precinct, Concession, Turnstile",4
+"Stadium","Sporting Event, Fans, Home Team, Concession, Turnstile",4
 "STALINIST STATEHOOD","POLITBURO, HOLODOMOR, APPARATCHIK, COMINTERN, KREMLIN",6
 "Starfish","SUNFLOWER, CHOCOLATE, LEATHER, MADREPORITE, OSSICLES, AMPULLA, Echinoderm, Regeneration, Tube feet, Radial symmetry",4
 "Stats","ERA, WHIP, OBP, WAR, Percentage, Average, Data, Box Score, Leaderboard",4

@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface Props {
@@ -7,6 +6,7 @@ interface Props {
   className?: string;
   active?: boolean;
   sizeClass?: string;
+  color?: string;
 }
 
 const ArcadeIcon: React.FC<Props> = ({ 
@@ -14,38 +14,25 @@ const ArcadeIcon: React.FC<Props> = ({
   viewBox = "0 0 24 24", 
   className = "",
   active = true,
-  sizeClass = "w-8 h-8"
+  sizeClass = "w-8 h-8",
+  color = "#F9FF00" // Default to Neon Yellow (Lemon Glacier)
 }) => {
-  const id = React.useId();
-  const gradientId = `icon-grad-${id}`;
-
-  // Rainbow Palette: Red -> Orange -> Yellow -> Green -> Cyan -> Blue -> Red (loop)
-  const STOPS = [
-    { offset: "0%", color: "#FF073A" },
-    { offset: "17%", color: "#FF5F1F" },
-    { offset: "33%", color: "#F9FF00" },
-    { offset: "50%", color: "#39FF14" },
-    { offset: "67%", color: "#00FFFF" },
-    { offset: "83%", color: "#0066FF" },
-    { offset: "100%", color: "#FF073A" }
-  ];
-
   return (
-    <div className={`relative ${sizeClass} ${className} ${active ? '' : 'opacity-50 grayscale'}`}>
+    <div className={`relative ${sizeClass} ${className} transition-opacity duration-300`}>
       
-      {/* Layer 1: Outer White Stroke (Thickest background) */}
+      {/* Layer 1: Outer White Stroke (Engineered boundary) */}
       <svg viewBox={viewBox} className="absolute inset-0 w-full h-full overflow-visible pointer-events-none" style={{ zIndex: 0 }}>
         <path 
           d={path} 
           fill="white" 
           stroke="white" 
-          strokeWidth="6" 
+          strokeWidth="5" 
           strokeLinecap="round" 
           strokeLinejoin="round" 
         />
       </svg>
 
-      {/* Layer 2: Inner Black Stroke (Separation) */}
+      {/* Layer 2: Inner Black Stroke (High contrast separation) */}
       <svg viewBox={viewBox} className="absolute inset-0 w-full h-full overflow-visible pointer-events-none" style={{ zIndex: 10 }}>
         <path 
           d={path} 
@@ -57,31 +44,12 @@ const ArcadeIcon: React.FC<Props> = ({
         />
       </svg>
 
-      {/* Layer 3: Gradient Fill (Top) */}
+      {/* Layer 3: Solid Color Fill (Interactive top layer) */}
       <svg viewBox={viewBox} className="relative w-full h-full overflow-visible" style={{ zIndex: 20 }}>
-        <defs>
-          {/* 
-             x2="400%" stretches the gradient pattern to 4x the width of the icon.
-             spreadMethod="repeat" tiles it.
-             animateTransform moves it by -4 (400%) to cycle exactly once through the stretched gradient.
-          */}
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="400%" y2="0%" spreadMethod="repeat">
-            {STOPS.map((stop, i) => (
-                <stop key={i} offset={stop.offset} stopColor={stop.color} />
-            ))}
-            <animateTransform 
-                attributeName="gradientTransform" 
-                type="translate" 
-                from="0 0" 
-                to="-4 0" 
-                dur="8s" 
-                repeatCount="indefinite" 
-            />
-          </linearGradient>
-        </defs>
         <path 
           d={path} 
-          fill={active ? `url(#${gradientId})` : '#555'} 
+          fill={active ? color : '#555555'} 
+          className="transition-colors duration-300"
         />
       </svg>
     </div>

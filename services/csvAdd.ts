@@ -1,2 +1,1 @@
-
-export const ADDED_CSV_DATA = ``;
+export const ADDED_CSV_DATA = "";

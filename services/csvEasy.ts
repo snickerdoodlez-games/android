@@ -1,2 +1,1 @@
-
-export const CSV_EASY_DATA = ``;
+export const CSV_EASY_DATA = "";

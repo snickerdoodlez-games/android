@@ -14,6 +14,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="com.snickerdoodlez.wordpairing.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"/>
     <uses-permission android:name="com.android.vending.CHECK_LICENSE"/>
 
@@ -64,7 +65,6 @@
             android:label="@string/title_activity_main"
             android:name="com.snickerdoodlez.wordpairing.MainActivity"
             android:exported="true"
-            android:launchMode="singleTask"
             android:configChanges="smallestScreenSize|screenSize|uiMode|screenLayout|orientation|navigation|keyboardHidden|keyboard|locale">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -73,6 +73,11 @@
             <intent-filter>
                 <action android:name="com.google.android.gms.games.action.VIEW_CONTROLLER"/>
                 <category android:name="com.google.android.gms.games.category.GAME_LOOP"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.google.intent.action.TEST_LOOP"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="application/javascript"/>
             </intent-filter>
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
@@ -98,7 +103,8 @@
         <service
             android:name="com.google.firebase.components.ComponentDiscoveryService"
             android:exported="false"
-            android:directBootAware="true">
+            android:directBootAware="true"
+            tools:targetApi="24">
             <meta-data
                 android:name="com.google.firebase.components:com.google.firebase.perf.FirebasePerfKtxRegistrar"
                 android:value="com.google.firebase.components.ComponentRegistrar"/>
@@ -186,7 +192,8 @@
             android:exported="false"
             android:authorities="com.snickerdoodlez.wordpairing.firebaseinitprovider"
             android:initOrder="100"
-            android:directBootAware="true"/>
+            android:directBootAware="true"
+            tools:targetApi="24"/>
 
         <meta-data
             android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
@@ -239,32 +246,38 @@
             android:name="androidx.work.impl.background.systemalarm.SystemAlarmService"
             android:enabled="@bool/enable_system_alarm_service_default"
             android:exported="false"
-            android:directBootAware="false"/>
+            android:directBootAware="false"
+            tools:targetApi="24"/>
 
         <service
             android:name="androidx.work.impl.background.systemjob.SystemJobService"
             android:permission="android.permission.BIND_JOB_SERVICE"
             android:enabled="@bool/enable_system_job_service_default"
             android:exported="true"
-            android:directBootAware="false"/>
+            android:directBootAware="false"
+            tools:targetApi="24"/>
 
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:enabled="@bool/enable_system_foreground_service_default"
             android:exported="false"
-            android:directBootAware="false"/>
+            android:directBootAware="false"
+            tools:targetApi="24"
+            android:foregroundServiceType="dataSync"/>
 
         <receiver
             android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver"
             android:enabled="true"
             android:exported="false"
-            android:directBootAware="false"/>
+            android:directBootAware="false"
+            tools:targetApi="24"/>
 
         <receiver
             android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryChargingProxy"
             android:enabled="false"
             android:exported="false"
-            android:directBootAware="false">
+            android:directBootAware="false"
+            tools:targetApi="24">
             <intent-filter>
                 <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
                 <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>
@@ -275,7 +288,8 @@
             android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryNotLowProxy"
             android:enabled="false"
             android:exported="false"
-            android:directBootAware="false">
+            android:directBootAware="false"
+            tools:targetApi="24">
             <intent-filter>
                 <action android:name="android.intent.action.BATTERY_OKAY"/>
                 <action android:name="android.intent.action.BATTERY_LOW"/>
@@ -286,7 +300,8 @@
             android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$StorageNotLowProxy"
             android:enabled="false"
             android:exported="false"
-            android:directBootAware="false">
+            android:directBootAware="false"
+            tools:targetApi="24">
             <intent-filter>
                 <action android:name="android.intent.action.DEVICE_STORAGE_LOW"/>
                 <action android:name="android.intent.action.DEVICE_STORAGE_OK"/>
@@ -297,7 +312,9 @@
             android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$NetworkStateProxy"
             android:enabled="false"
             android:exported="false"
-            android:directBootAware="false">
+            android:directBootAware="false"
+            tools:targetApi="24"
+            tools:ignore="Deprecated">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
             </intent-filter>
@@ -307,7 +324,8 @@
             android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
             android:enabled="false"
             android:exported="false"
-            android:directBootAware="false">
+            android:directBootAware="false"
+            tools:targetApi="24">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.TIME_SET"/>
@@ -319,7 +337,9 @@
             android:name="androidx.work.impl.background.systemalarm.ConstraintProxyUpdateReceiver"
             android:enabled="@bool/enable_system_alarm_service_default"
             android:exported="false"
-            android:directBootAware="false">
+            android:directBootAware="false"
+            tools:replace="android:enabled"
+            tools:targetApi="24">
             <intent-filter>
                 <action android:name="androidx.work.impl.background.systemalarm.UpdateProxies"/>
             </intent-filter>
@@ -330,7 +350,8 @@
             android:permission="android.permission.DUMP"
             android:enabled="true"
             android:exported="true"
-            android:directBootAware="false">
+            android:directBootAware="false"
+            tools:targetApi="24">
             <intent-filter>
                 <action android:name="androidx.work.diagnostics.REQUEST_DIAGNOSTICS"/>
             </intent-filter>
@@ -350,7 +371,8 @@
             android:permission="android.permission.DUMP"
             android:enabled="true"
             android:exported="true"
-            android:directBootAware="false">
+            android:directBootAware="false"
+            tools:targetApi="24">
             <intent-filter>
                 <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE"/>
             </intent-filter>

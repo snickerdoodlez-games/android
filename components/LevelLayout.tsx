@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from './Header';
 
@@ -47,12 +46,10 @@ const LevelLayout: React.FC<LevelLayoutProps> = ({
         onToggleHints={onToggleHints}
         hintsEnabled={hintsEnabled}
         rowsLeft={rowsLeft}
-      >
-        {headerExtras}
-      </Header>
+        leftContent={headerExtras}
+      />
 
-      {/* Removed padding-top (pt-2 -> pt-0) to close gap between header and tiles */}
-      <main className="flex-1 w-full relative flex flex-col pt-0 p-1 sm:p-2 min-h-0 bg-black overflow-visible">
+      <main className="flex-1 w-full relative z-[20] flex flex-col p-0 bg-black overflow-visible min-h-0">
         {children}
       </main>
     </div>

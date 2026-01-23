@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CSVRow, TileData, THEMES } from '../types';
 import { motion } from 'framer-motion';
 import Tile from './Tile';
 import LevelLayout from './LevelLayout';
-import { getValidatedLevelData } from '../services/levelPreCheck';
+/* fix: Redirected import to levelContent to bypass levelPreCheck filename collision */
+import { getValidatedLevelData } from '../services/levelContent';
 import { audio } from '../services/audioService';
 import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
 
@@ -52,6 +54,7 @@ export default function Level8_Cascade({
   const spawnInterval = Math.max(MIN_SPAWN_INTERVAL, INITIAL_SPAWN_INTERVAL - (speedLevel - 1) * SPEED_STEP);
 
   useEffect(() => {
+    /* fix: Using unified precheck logic from levelContent */
     const categories = getValidatedLevelData(8, csvData, 10);
     setActivePool(categories);
     setIsInitializing(false);
@@ -225,7 +228,7 @@ export default function Level8_Cascade({
               setTimeout(() => {
                   setGrid(prev => {
                       const final = prev.map(row => row.map(t => {
-                        if (!t) return null;
+                        if (!t) null;
                         if (t.status === 'fading-out-bg') {
                           return { ...t, status: 'neutral' as const };
                         }
@@ -236,8 +239,8 @@ export default function Level8_Cascade({
                   });
                   setSelectedId(null);
                   setIsSwapping(false);
-              }, 250);
-          }, 450);
+              }, 400); // Fast arcade fade
+          }, 800); // Slower stay in swap state
       }, 50);
     }
   };
@@ -296,6 +299,7 @@ export default function Level8_Cascade({
       }
   };
 
+  // AUTO PLAY LOGIC - SPED UP
   useEffect(() => {
     if (!isAutoPlaying || isGameOver || isReviewing || isSwapping) return;
 
@@ -360,7 +364,7 @@ export default function Level8_Cascade({
       }
     };
 
-    const timer = setTimeout(autoTick, 1000);
+    const timer = setTimeout(autoTick, 250);
     return () => clearTimeout(timer);
   }, [isAutoPlaying, grid, isGameOver, isReviewing, isSwapping, selectedId]);
 

@@ -1,1 +1,1 @@
-// Deprecated
+export default () => null;

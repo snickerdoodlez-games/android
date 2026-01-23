@@ -1,6 +1,3 @@
-
-
-
 class AudioService {
   private ctx: AudioContext | null = null;
   private isMuted: boolean = false;
@@ -68,7 +65,7 @@ class AudioService {
       osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
       
       gain.gain.setValueAtTime(vol, ctx.currentTime + startTime);
-      gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + startTime + duration);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + startTime + duration);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -90,7 +87,6 @@ class AudioService {
   startMusic() {
     if (this.isMusicPlaying) return;
     this.isMusicPlaying = true;
-    // Ambient drone disabled by user request.
   }
 
   stopMusic() {
@@ -128,7 +124,8 @@ class AudioService {
   }
 
   playSelect() {
-    this.playTone(600, 'sine', 0.08, 0, 0.1);
+    // Enhanced Select Sound: Sharper, more audible frequency
+    this.playTone(850, 'sine', 0.12, 0, 0.3);
   }
 
   playSwap() {
@@ -136,29 +133,38 @@ class AudioService {
     const ctx = this.getContext();
     if (!ctx) return;
     
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    // Ensure the context is active
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
 
     try {
+        const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         
-        osc.frequency.setValueAtTime(300, ctx.currentTime);
-        osc.frequency.linearRampToValueAtTime(600, ctx.currentTime + 0.1);
+        osc.type = 'sine';
+        // Frequency sweep for "whoosh" sound
+        osc.frequency.setValueAtTime(350, now);
+        osc.frequency.exponentialRampToValueAtTime(700, now + 0.1);
         
-        gain.gain.setValueAtTime(0.05, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+        // Volume envelope for punchy feedback
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
 
         osc.connect(gain);
         gain.connect(ctx.destination);
         
-        osc.start();
-        osc.stop(ctx.currentTime + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.2);
 
         osc.onended = () => {
             osc.disconnect();
             gain.disconnect();
         };
-    } catch(e) {}
+    } catch(e) {
+      // Audio issues shouldn't crash gameplay
+    }
   }
 
   playCorrect() {

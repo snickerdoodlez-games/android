@@ -1,3 +1,1 @@
-
-// Unused
 export const getAntonymData = () => [];

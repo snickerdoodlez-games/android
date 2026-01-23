@@ -273,7 +273,7 @@ const TutorialOverlay: React.FC<TutorialProps> = ({ mode, onComplete }) => {
                     )}
                     
                     {isRowSolved && (
-                        <div className="absolute top-0 left-8 z-[100] transform" style={{ transform: 'translateY(calc(-100% + 4px))' }}>
+                        <div className="absolute top-0 left-6 z-[100] transform" style={{ transform: 'translateY(calc(-100% + 4px))' }}>
                             <div className="animate-pop bg-black text-white px-3 py-1 rounded-t-lg text-[10px] md:text-xs font-bold uppercase tracking-widest leading-tight border-x-4 border-t-4 border-b-0 border-white shadow-[0_-4px_12px_rgba(0,0,0,0.8)] font-oswald">
                                 {categoryName}
                             </div>

@@ -1,2 +1,1 @@
-
-export const NEW_CAT_DATA = ``;
+export const NEW_CAT_DATA = "";

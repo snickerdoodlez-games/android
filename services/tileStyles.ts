@@ -1,148 +1,196 @@
+
 import { TileData } from '../types';
 
 export const TILE_RADII = {
   small: '8px',
-  medium: '16px',
+  medium: '14px',
 };
 
 export const TILE_ANIMATION_CURVE = [0.2, 0.8, 0.2, 1]; 
-export const SWAP_SPEED = 0.3; 
+export const SWAP_SPEED = 0.8; 
 
-// Crisp 2px solid white border as per aesthetic rules
+// Machine-Precise Arcade Typography with Soft encompassing shadow
 export const ARCADE_OUTLINE = {
-  textShadow: '2px 2px 0 #000, 2px -1px 0 #000, -1px 2px 0 #000, -1px -1px 0 #000, 1px 1px 0 #000, 0 0 6px rgba(0,0,0,0.6)',
-  WebkitTextStroke: '1px black',
-  paintOrder: 'stroke fill',
-  fontWeight: 900,
+  textShadow: `
+    1px 1px 1.2px #000, 
+    -1px -1px 1.2px #000, 
+    1px -1px 1.2px #000, 
+    -1px 1px 1.2px #000, 
+    1.5px 0 1.2px #000, 
+    -1.5px 0 1.2px #000, 
+    0 1.5px 1.2px #000, 
+    0 -1.5px 1.2px #000, 
+    3px 3px 2.5px rgba(0,0,0,1),
+    0 0 18px rgba(0,0,0,0.95),
+    0 0 8px rgba(0,0,0,0.9)
+  `,
+  paintOrder: 'stroke fill' as const,
+  fontWeight: 700, 
 };
 
 export const CASCADE_OUTLINE = {
-  textShadow: '2px 2px 0 #000, 2px -1px 0 #000, -1px 2px 0 #000, -1px -1px 0 #000, 1px 1px 0 #000, 0 0 8px rgba(0,0,0,0.8)',
-  WebkitTextStroke: '1px black',
-  paintOrder: 'stroke fill',
-  fontWeight: 900,
+  textShadow: `
+    1px 1px 1.2px #000, 
+    -1px -1px 1.2px #000, 
+    1px -1px 1.2px #000, 
+    -1px 1px 1.2px #000, 
+    1.5px 0 1.2px #000, 
+    -1.5px 0 1.2px #000, 
+    0 1.5px 1.2px #000, 
+    0 -1.5px 1.2px #000, 
+    3px 3px 2.5px rgba(0,0,0,1),
+    0 0 18px rgba(0,0,0,0.95)
+  `,
+  paintOrder: 'stroke fill' as const,
+  fontWeight: 700,
 };
 
 export const EMOJI_OUTLINE = {
   textShadow: `
-    3px 3px 0 #000, -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000,
-    1.5px 0 0 #000, -1.5px 0 0 #000, 0 1.5px 0 #000, 0 -1.5px 0 #000,
-    0 3px 6px rgba(0,0,0,0.6)
+    2px 2px 1.5px #000, 
+    -1px -1px 1.2px #000, 
+    1px -1px 1.2px #000, 
+    -1px 1px 1.2px #000, 
+    4px 4px 4px rgba(0,0,0,0.6),
+    0 0 18px rgba(0,0,0,0.9)
   `,
-  filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.4))',
-  paintOrder: 'stroke fill'
+  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.4))',
+  paintOrder: 'stroke fill' as const
 };
 
-const NEON_HEX_PALETTE = [
-  '#FF073A', '#FF5F1F', '#F9FF00', '#39FF14', '#00F000', '#00FF9F', '#00FFFF', '#00BFFF', '#0066FF', '#B026FF', '#D400FF', '#FF00FF', '#FF1FBF', '#FF0055',
-];
-
-const NEON_GRADIENTS_MAP: Record<string, string> = {
-  'bg-neon-red': 'linear-gradient(180deg, #FF073A 0%, #D400FF 100%)',
-  'bg-neon-orange': 'linear-gradient(180deg, #FF5F1F 0%, #F9FF00 100%)',
-  'bg-neon-yellow': 'linear-gradient(180deg, #F9FF00 0%, #39FF14 100%)',
-  'bg-neon-lime': 'linear-gradient(180deg, #39FF14 0%, #00E5FF 100%)',
-  'bg-neon-green': 'linear-gradient(180deg, #00F000 0%, #0066FF 100%)',
-  'bg-neon-mint': 'linear-gradient(180deg, #00FF9F 0%, #FF1FBF 100%)',
-  'bg-neon-cyan': 'linear-gradient(180deg, #00FFFF 0%, #B026FF 100%)',
-  'bg-neon-sky-blue': 'linear-gradient(180deg, #00BFFF 0%, #FF00FF 100%)',
-  'bg-neon-blue': 'linear-gradient(180deg, #0066FF 0%, #FF073A 100%)',
-  'bg-neon-violet': 'linear-gradient(180deg, #B026FF 0%, #00FFFF 100%)',
-  'bg-neon-purple': 'linear-gradient(180deg, #D400FF 0%, #FF5F1F 100%)',
-  'bg-neon-magenta': 'linear-gradient(180deg, #FF00FF 0%, #F9FF00 100%)',
-  'bg-neon-pink': 'linear-gradient(180deg, #FF1FBF 0%, #00F000 100%)',
-  'bg-neon-rose': 'linear-gradient(180deg, #FF0055 0%, #00BFFF 100%)',
-};
-
-const FALLBACK_GRADIENTS = [
-  'linear-gradient(180deg, #FF073A 0%, #7B00FF 33%, #0066FF 66%, #39FF14 100%)',
-  'linear-gradient(180deg, #00E5FF 0%, #FF1FBF 100%)',
-  'linear-gradient(180deg, #F9FF00 0%, #FF5F1F 100%)',
-];
-
-export const getSolvedGradient = (colorClass?: string, seed?: string): string => {
-  if (colorClass) {
-    for (const [key, gradient] of Object.entries(NEON_GRADIENTS_MAP)) {
-      if (colorClass.includes(key)) {
-        return `${gradient} fixed`;
-      }
+export const SELECTION_VARIANTS = {
+  neutral: { 
+    scale: 1, 
+    rotate: 0,
+    opacity: 1,
+    borderWidth: '2px',
+    boxShadow: '0 0 0px rgba(255,255,255,0)',
+    transition: { duration: 0.4, ease: "easeInOut" } // Sped up from 0.8
+  },
+  selected: { 
+    scale: 1, 
+    rotate: 0,
+    zIndex: 50,
+    borderWidth: '0px', 
+    boxShadow: [
+      'inset 0 0 10px rgba(255,255,255,0.4), 0 0 15px rgba(255,255,255,0.2)',
+      'inset 0 0 20px rgba(255,255,255,0.7), 0 0 25px rgba(255,255,255,0.5)',
+      'inset 0 0 10px rgba(255,255,255,0.4), 0 0 15px rgba(255,255,255,0.2)'
+    ],
+    transition: { 
+      boxShadow: { repeat: Infinity, duration: 0.6, ease: "easeInOut" }, // Sped up from 1.2
+      scale: { duration: 0.2 } // Sped up from 0.4
     }
-  }
-  if (seed) {
-    let hash = 0;
-    for (let i = 0; i < seed.length; i++) {
-      hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  },
+  swapping: { 
+    scale: 1.1, 
+    rotate: 0, 
+    zIndex: 60,
+    borderWidth: '0px',
+    transition: { duration: 0.4, ease: "easeInOut" } // Sped up from 0.8
+  },
+  'swap-target': { 
+    scale: 1.1, 
+    rotate: 0, 
+    zIndex: 60,
+    borderWidth: '0px',
+    boxShadow: [
+      'inset 0 0 10px rgba(255,255,255,0.4), 0 0 15px rgba(255,255,255,0.2)',
+      'inset 0 0 20px rgba(255,255,255,0.7), 0 0 25px rgba(255,255,255,0.5)',
+      'inset 0 0 10px rgba(255,255,255,0.4), 0 0 15px rgba(255,255,255,0.2)'
+    ],
+    transition: { 
+      boxShadow: { repeat: Infinity, duration: 0.6, ease: "easeInOut" }, // Sped up from 1.2
+      scale: { duration: 0.4, ease: "easeInOut" } // Sped up from 0.8
     }
-    const index = Math.abs(hash % FALLBACK_GRADIENTS.length);
-    return `${FALLBACK_GRADIENTS[index]} fixed`;
-  }
-  return `${FALLBACK_GRADIENTS[0]} fixed`;
-};
-
-export const getColorFromCategory = (name: string): string => {
-  if (!name) return '#27272a';
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash % NEON_HEX_PALETTE.length);
-  return NEON_HEX_PALETTE[index];
-};
-
-export const SELECTION_VARIANTS: any = {
-  neutral: { scale: 1, zIndex: 10, transition: { duration: 0.1 } },
-  selected: { scale: 1.05, transition: { duration: 0.1 }, zIndex: 50 },
-  'correct-preview': { scale: 1.1, transition: { duration: 0.2 }, zIndex: 55 },
-  'swap-target': { scale: 1.05, transition: { duration: 0.1 }, zIndex: 40 },
-  swapping: { scale: 1.1, zIndex: 100, transition: { duration: 0.1 } },
-  'fading-out-bg': { scale: 1, transition: { duration: 0.25 } },
-  solved: { scale: [1, 1.1, 1], transition: { duration: 0.3, ease: "easeOut" }, zIndex: 20 },
-  wrong: { x: [0, -8, 8, -8, 8, 0], scale: 1.05, transition: { duration: 0.3 }, zIndex: 60 }
-};
-
-export const getTileStatusClasses = (status: TileData['status'], colorProp?: string): string => {
-  const whiteGlow = 'border-2 border-white shadow-[0_0_12px_rgba(255,255,255,0.7)]';
-  
-  switch (status) {
-    case 'selected':
-    case 'swapping':
-      return `${whiteGlow} z-50`;
-    case 'swap-target':
-      return `${whiteGlow} z-40`;
-    case 'correct-preview':
-      return `bg-neon-lime border-2 border-white shadow-[0_0_15px_#39FF14] z-55`;
-    case 'locked':
-      return `bg-neon-yellow border-2 border-white shadow-[0_0_15px_#F9FF00] z-30`;
-    case 'fading-out-bg':
-       return `border-2 border-white shadow-none transition-colors duration-250`;
-    case 'solved':
-      return colorProp ? `${colorProp} border-2 border-white shadow-none` : 'bg-zinc-800 border-2 border-white shadow-none';
-    case 'wrong':
-      return `bg-neon-red border-2 border-white shadow-[0_0_15px_#FF073A] z-60`;
-    default:
-      if (colorProp) return `${colorProp} border-2 border-white shadow-none`;
-      return 'bg-zinc-900 border-2 border-white shadow-[0_0_4px_rgba(255,255,255,0.1)]';
+  },
+  solved: { 
+    scale: 0.95, 
+    rotate: 0, 
+    zIndex: 5,
+    borderWidth: '2px',
+    transition: { duration: 0.4, ease: "easeOut" } // Sped up from 0.8
+  },
+  hint: {
+    scale: 1.05,
+    borderWidth: '4px',
+    borderColor: '#F9FF00',
+    boxShadow: [
+      '0 0 0px #F9FF00',
+      '0 0 20px #F9FF00',
+      '0 0 0px #F9FF00'
+    ],
+    transition: {
+      boxShadow: { repeat: Infinity, duration: 0.5 } // Sped up from 1.0
+    }
+  },
+  wrong: { 
+    x: [0, -12, 10, -8, 6, -4, 2, 0], 
+    transition: { duration: 0.3, ease: "linear" } // Sped up from 0.4
+  },
+  'correct-preview': { 
+    scale: 1.1, 
+    zIndex: 25,
+    transition: { yoyo: Infinity, duration: 0.15 } // Sped up from 0.3
+  },
+  locked: { 
+    scale: 0.95, 
+    opacity: 0.8 
+  },
+  'fading-out-bg': { 
+    opacity: [0.6, 1],
+    scale: [0.95, 1],
+    filter: 'brightness(1)',
+    transition: { duration: 0.2, ease: "easeInOut" } // Sped up from 0.4
   }
 };
 
-export const getTypographicClasses = (word: string, isEmoji?: boolean, isSolved?: boolean, isCascade?: boolean): string => {
-  const base = "font-oswald font-black uppercase leading-none";
-  
+export const TEXT_VARIANTS = {
+  initial: { opacity: 0, scale: 0.8 },
+  neutral: { opacity: 1, scale: 1, transition: { duration: 0.2 } }, // Sped up from 0.4
+  selected: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
+  solved: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
+  wrong: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
+  swapping: { opacity: 0.7, scale: 0.9, transition: { duration: 0.2 } },
+  'swap-target': { opacity: 0.7, scale: 0.9, transition: { duration: 0.2 } },
+  hint: { opacity: 1, scale: 1 },
+  exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 } }
+};
+
+export const getTileStatusClasses = (status: string, color?: string) => {
+  const base = "border-white transition-all duration-200 "; // Sped up transition base
+  if (status === 'solved') {
+    return base + (color || 'bg-zinc-800') + ' shadow-[inset_0_0_15px_rgba(255,255,255,0.95)]';
+  }
+  if (status === 'hint') return base + "bg-zinc-900 border-neon-yellow shadow-[0_0_15px_#F9FF00]";
+  if (status === 'wrong') return base + "bg-neon-red shadow-[0_0_25px_#FF073A]";
+  if (status === 'locked') return base + "border-neon-yellow shadow-[0_0_12px_rgba(249,255,0,0.6)]";
+  if (status === 'correct-preview') return base + "border-neon-green shadow-[0_0_20px_#39FF14]";
+  if (status === 'selected' || status === 'swap-target' || status === 'swapping') return "border-none"; 
+  if (status === 'neutral') return base + (color ? `${color} border-white/60` : "bg-zinc-900");
+  return base + "bg-black border-zinc-700";
+};
+
+export const getTypographicClasses = (word: string, isEmoji?: boolean, isSolved?: boolean, isCascade?: boolean, isNarrow?: boolean) => {
   if (isEmoji) {
-    return isSolved ? `${base} text-xl md:text-2xl` : `${base} text-3xl md:text-4xl`;
+    return isSolved ? "text-3xl md:text-4xl" : "text-4xl md:text-5xl";
+  }
+  
+  const words = (word || '').trim().split(/\s+/);
+  const maxWordLen = Math.max(...words.map(w => w.length));
+  const lineCount = words.length;
+  
+  let size = "text-base"; 
+  
+  if (isCascade || isNarrow) {
+    if (lineCount >= 3 || maxWordLen > 8) size = "text-[10px] md:text-[11px]";
+    else if (lineCount === 2 || maxWordLen > 6) size = "text-[12px] md:text-[13px]";
+    else size = "text-[14px] md:text-[16px]";
+  } else {
+    if (lineCount >= 3 || maxWordLen > 10) size = "text-[10px] md:text-xs";
+    else if (lineCount === 2 || maxWordLen > 7) size = "text-sm md:text-base";
+    else size = "text-lg md:text-xl";
   }
 
-  const text = word || '';
-  const len = text.length;
-
-  if (isCascade) {
-    if (len > 12) return `${base} text-[8px] md:text-[9px] tracking-tighter`;
-    if (len > 8) return `${base} text-[9px] md:text-[11px] tracking-tight`;
-    return `${base} text-[11px] md:text-[13px] tracking-normal`;
-  }
-
-  // Adjusted for "not so big" feedback
-  if (len > 12) return `${base} text-[11px] md:text-[12px] tracking-tighter`;
-  if (len > 8) return `${base} text-[14px] md:text-[16px] tracking-tight`;
-  return `${base} text-[18px] md:text-[22px] tracking-normal`;
+  return `${size} font-black font-oswald uppercase leading-[1.1] tracking-wide`;
 };

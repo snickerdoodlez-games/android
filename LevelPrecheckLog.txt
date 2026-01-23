@@ -1,0 +1,9 @@
+WORD PAIRING MACHINE - LEVEL PRECHECK LOG
+=========================================
+This file records instances where the LevelPrecheck system identified an invalid or unsolvable board configuration.
+Invalid boards are automatically rejected and a new board is generated before the player ever sees it.
+
+[FORMAT]
+[TIMESTAMP] LEVEL: X | MODE: Y | REASON: Z | CATEGORIES: [A, B, C] | CONFLICTS: [D, E]
+
+--- LOG START ---

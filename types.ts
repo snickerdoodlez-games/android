@@ -17,17 +17,13 @@ export interface TileData {
   isHidden?: boolean;
 }
 
-export interface LevelScoreBreakdown {
+export interface LevelSummary {
   levelIndex: number;
   mode: string;
-  basePoints: number;
-  timeBonus: number;
-  hintPenalty: number;
-  moveBonus: number;
-  mindMatchLossPenalty: number;
-  levelTotal: number;
-  newGrandTotal: number;
-  previousGrandTotal: number;
+  timeMs: number;
+  mistakes: number;
+  moves: number;
+  score?: number;
 }
 
 export enum GameMode {
@@ -38,12 +34,14 @@ export enum GameMode {
   LEVEL_MIND_MATCH = 'LEVEL_MIND_MATCH',
   LEVEL_SYNONYMS = 'LEVEL_SYNONYMS',
   LEVEL_EXPANSION = 'LEVEL_EXPANSION',
-  LEVEL_CASCADE = 'LEVEL_CASCADE'
+  LEVEL_CASCADE = 'LEVEL_CASCADE',
+  HIDDEN = 'HIDDEN'
 }
 
 // Layout Constants
-export const HEADER_HEIGHT = 65;
-export const FOOTER_HEIGHT = 60;
+/* fix: HEADER_HEIGHT reduced to 32 for a tight slide-up fit; FOOTER_HEIGHT remains 70 for ads */
+export const HEADER_HEIGHT = 32;
+export const FOOTER_HEIGHT = 70;
 
 export interface Theme {
   name: string;
@@ -70,7 +68,6 @@ export const NEON_PALETTE: Record<string, string> = {
   'bg-black': '#000000',
 };
 
-// Gradient from Red -> Orange -> Yellow -> Green -> Cyan -> Blue -> Purple -> Pink
 export const SOLVED_COLORS = [
   'bg-neon-red shadow-[0_0_15px_#FF073A] border-white',
   'bg-neon-orange shadow-[0_0_15px_#FF5F1F] border-white',
@@ -103,7 +100,6 @@ const S = GameMode.LEVEL_SYNONYMS;
 const T = GameMode.LEVEL_THEMED;
 const X = GameMode.LEVEL_EXPANSION;
 
-// Sequence updated to exclude Cascade (K) and re-loop across 6 modes to reach 100 entries.
 export const DETERMINISTIC_LEVEL_SEQUENCE: GameMode[] = [
   C, E, M, S, X, T, C, E, M, S, 
   X, T, C, E, M, S, X, T, C, E, 

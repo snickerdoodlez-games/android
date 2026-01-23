@@ -106,7 +106,7 @@ export const CSV_POOL_12 = `id,category,word1,word2,word3,word4,word5,word6,word
 200104,FEUDALISM Terms,King,Lord,Vassal,Serf,Fief,Fealty,Manor,Knight,Peasant,Duty
 200105,CAPITALISM Terms,Market,Profit,Private,Owner,Free,Trade,Supply,Demand,Money,Wealth
 200106,COMMUNISM Terms,State,Owner,Public,Goods,Share,Equal,Party,Work,Gov,People
-200107,PUNK ROCK Bands,Ramones,Clash,Pistols,Misfits,Green Day,Blink 182,Bad Brains,Dead Kenn,Black Flag,Descendents
+200107,PUNK ROCK Bands,Ramones,Clash,sex Pistols,Misfits,Green Day,Blink 182,Bad Brains,Dead Kenn,Black Flag,Descendents
 200108,PUNK ROCK Terms,Riff,Power,Chord,DIY,Fanzine,Mosh,Pogo,Stage Dive,Slam,Thrash
 200109,LOVE Terms,Joy,Care,Trust,Kindness,Affection,Warmth,Friend,Family,Embrace,Heart
 200110,CIVIL RTS History,Slavery,Abolish,Rosa Parks,MLK Jr,March,Protest,Vote,Rights,Freedom,Change
