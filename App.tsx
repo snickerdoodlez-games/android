@@ -1,15 +1,24 @@
 
-
-
-import React, { useState, useEffect, Component, ReactNode, ErrorInfo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, ReactNode, ErrorInfo, Suspense, lazy, Component } from 'react';
 import { GameMode, LevelSummary } from './types';
-import { getSavedLevel, saveLevel, updateStats, getEnabledModes, saveEnabledModes, isTutorialSeen, markTutorialSeen, getCustomPool, saveCustomPool, getStats } from './services/storage';
+import { 
+  getSavedLevel, 
+  saveLevel, 
+  updateStats, 
+  getEnabledModes, 
+  saveEnabledModes, 
+  isTutorialSeen, 
+  markTutorialSeen, 
+  getCustomPool, 
+  saveCustomPool, 
+  getStats 
+} from './services/storage';
 import { getLevelPackage, getLevelMode, LevelPackage } from './services/levelContent';
 import { audio } from './services/audioService';
 import { Capacitor } from '@capacitor/core';
 import { AdMob, BannerAdSize, BannerAdPosition, AdmobConsentStatus } from '@capacitor-community/admob';
 
-// Static UI Components (Fast Load)
+// Static UI Components
 import LevelMenu from './components/LevelMenu';
 import SettingsMenu from './components/SettingsMenu';
 import StatsOverlay from './components/StatsOverlay';
@@ -18,12 +27,14 @@ import CategorySelectionOverlay from './components/CategorySelectionOverlay';
 import Footer from './components/Footer';
 import { AndroidStatusBar, AndroidNavigationBar } from './components/AndroidSystemBars';
 
-// Lazy Loaded Levels (Optimization: Load only when needed)
+// Lazy Loaded Levels
 const Level1_Standard = lazy(() => import('./components/Level1_Standard'));
 const Level1_Emoji = lazy(() => import('./components/Level1_Emoji'));
 const Level2_Filter = lazy(() => import('./components/Level2_Filter'));
 const Level5_Group = lazy(() => import('./components/Level5_Group'));
 const Level7_Expansion = lazy(() => import('./components/Level7_Expansion'));
+const Level7_Expansion_Easy = lazy(() => import('./components/Level7_Expansion_Easy'));
+const Level7_Expansion_Medium = lazy(() => import('./components/Level7_Expansion_Medium'));
 const Level8_Cascade = lazy(() => import('./components/Level8_Cascade'));
 
 const BANNER_AD_ID = 'ca-app-pub-4096368901415767/2019330695';
@@ -39,35 +50,28 @@ const getSafeAreaBottom = () => {
     const height = div.offsetHeight;
     document.body.removeChild(div);
     return Math.max(height, 16);
-  } catch (e) {
-    return 16;
-  }
+  } catch (e) { return 16; }
 };
 
 interface ErrorBoundaryProps { children?: ReactNode; }
 interface ErrorBoundaryState { hasError: boolean; }
 
-// fix: Use React.Component to ensure props and state are correctly recognized by the TypeScript compiler via standard inheritance
+// fix: Use React.Component to ensure the 'props' property is correctly identified by TypeScript on the instance
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false };
-
+  public state: ErrorBoundaryState = { hasError: false };
   static getDerivedStateFromError(_: Error): ErrorBoundaryState { return { hasError: true }; }
   componentDidCatch(error: Error, errorInfo: ErrorInfo) { console.error("Game crashed:", error, errorInfo); }
-  
   render(): ReactNode {
-    const { hasError } = this.state;
-    // fix: Accessed children directly from this.props which is now properly resolved through the React.Component generic extension
-    const { children } = this.props;
-
-    if (hasError) {
+    if (this.state.hasError) {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-4 text-center">
-          <h1 className="text-3xl font-bold mb-4 font-oswald text-red-500 uppercase">System Error</h1>
+          <h1 className="text-3xl font-bold mb-4 font-oswald text-red-500 uppercase text-red-500">System Error</h1>
           <button onClick={() => window.location.reload()} className="px-6 py-3 bg-white text-black font-bold rounded-full uppercase font-oswald border-2 border-white">Reboot</button>
         </div>
       );
     }
-    return children;
+    // fix: 'props' is a member of React.Component, explicitly typed via generics above
+    return this.props.children;
   }
 }
 
@@ -95,6 +99,7 @@ export const App: React.FC = () => {
   const [levelPackage, setLevelPackage] = useState<LevelPackage | null>(null);
   const [forcedMode, setForcedMode] = useState<GameMode | undefined>(undefined);
   const [privacyOptionsRequired, setPrivacyOptionsRequired] = useState(false);
+  const [showDifficultyToast, setShowDifficultyToast] = useState(false);
 
   useEffect(() => {
     setLevelIndex(getSavedLevel());
@@ -111,9 +116,7 @@ export const App: React.FC = () => {
         if (consentInfo.isConsentFormAvailable && consentInfo.status === AdmobConsentStatus.REQUIRED) {
           await AdMob.showConsentForm();
         }
-        if (consentInfo.privacyOptionsRequirementStatus === 'REQUIRED') {
-            setPrivacyOptionsRequired(true);
-        }
+        if (consentInfo.privacyOptionsRequirementStatus === 'REQUIRED') setPrivacyOptionsRequired(true);
         await AdMob.showBanner({
           adId: BANNER_AD_ID,
           adSize: BannerAdSize.BANNER,
@@ -121,10 +124,7 @@ export const App: React.FC = () => {
           margin: getSafeAreaBottom(),
           isTesting: false, 
         });
-        await AdMob.prepareInterstitial({ adId: INTERSTITIAL_AD_ID, isTesting: false }).catch(() => {});
-      } catch (e) {
-        console.error("AdMob init failed", e);
-      }
+      } catch (e) { console.error("AdMob failed:", e); }
     };
     initializeAds();
   }, []);
@@ -135,9 +135,7 @@ export const App: React.FC = () => {
   }, [levelIndex, enabledModes, customPoolIds, forcedMode]);
 
   useEffect(() => {
-    if (mode !== GameMode.MENU && !isTutorialSeen()) {
-      setShowTutorial(true);
-    }
+    if (mode !== GameMode.MENU && !isTutorialSeen()) setShowTutorial(true);
   }, [mode]);
 
   useEffect(() => {
@@ -148,30 +146,68 @@ export const App: React.FC = () => {
   }, [isAutoPlaying, isReviewing]);
 
   const handleLevelComplete = (stats: { timeMs: number, moves: number, solvedCategoryIds?: string[], solvedWords?: string[], failed?: boolean, mistakes?: number }) => {
-    updateStats({ 
-        levelsCompleted: stats.failed ? 0 : 1, 
-        totalMoves: stats.moves, 
-        totalTimeMs: stats.timeMs,
-        rowsSolved: mode === GameMode.LEVEL_MIND_MATCH ? 12 : 4,
-        solvedCategoryIds: stats.solvedCategoryIds,
-        solvedWords: stats.solvedWords,
-    });
+    if (stats.failed) {
+        setIsReviewing(true);
+        setCurrentSummary({ 
+          levelIndex, mode, timeMs: stats.timeMs, moves: stats.moves, mistakes: stats.mistakes || 0, score: 0, stars: 0, 
+          difficulty: 0, solvedCategoryIds: [], solvedWords: [], broadCategories: [] 
+        });
+        return;
+    }
+
+    const timeInSeconds = stats.timeMs / 1000;
+    let stars = 0;
+
+    // Timer-based Star Logic (Background Timer)
+    if (timeInSeconds <= 90) stars = 3;
+    else if (timeInSeconds <= 120) stars = 2;
+    else stars = 1;
+
+    const wordsFoundCount = stats.solvedWords?.length || 0;
+    const avgDifficulty = levelPackage?.data.reduce((acc, r) => acc + (r.difficulty || 1), 0) / (levelPackage?.data.length || 1);
+    const masteryMultiplier = stars === 3 ? 1.5 : (stars === 2 ? 1.2 : 1.0);
+    const finalScore = Math.floor((wordsFoundCount * avgDifficulty) * masteryMultiplier);
+
     setCurrentSummary({
-        levelIndex,
-        mode: mode,
-        timeMs: stats.timeMs,
-        moves: stats.moves,
-        mistakes: stats.mistakes || 0,
-        score: Math.max(0, 1000 - (stats.moves * 10) - (stats.mistakes || 0) * 50)
+        levelIndex, mode, timeMs: stats.timeMs, moves: stats.moves, mistakes: stats.mistakes || 0,
+        score: finalScore, stars: stars, difficulty: avgDifficulty,
+        solvedCategoryIds: stats.solvedCategoryIds || [],
+        solvedWords: stats.solvedWords || [],
+        broadCategories: levelPackage?.data.map(r => r.broadCategory || "General") || []
     });
     setIsReviewing(true);
   };
 
   const proceedToNextLevel = async () => {
+    const starsBefore = getStats().totalStars;
+
+    if (currentSummary && currentSummary.score > 0) {
+        updateStats({ 
+            levelsCompleted: 1, 
+            totalMoves: currentSummary.moves, 
+            totalTimeMs: currentSummary.timeMs,
+            rowsSolved: currentSummary.solvedCategoryIds.length,
+            solvedCategoryIds: currentSummary.solvedCategoryIds,
+            solvedWords: currentSummary.solvedWords,
+            totalScore: currentSummary.score,
+            totalStars: currentSummary.stars,
+            lastLevelStars: currentSummary.stars,
+            lastLevelDifficulty: currentSummary.difficulty,
+            lastLevelBroadCategories: currentSummary.broadCategories
+        });
+    }
+
+    const starsAfter = getStats().totalStars;
+    if ((starsBefore < 20 && starsAfter >= 20) || (starsBefore < 50 && starsAfter >= 50)) {
+      setShowDifficultyToast(true);
+      setTimeout(() => setShowDifficultyToast(false), 3500);
+    }
+
     if (Capacitor.isNativePlatform()) {
         await AdMob.showInterstitial().catch(() => {});
         await AdMob.prepareInterstitial({ adId: INTERSTITIAL_AD_ID, isTesting: false }).catch(() => {});
     }
+
     const nextLevel = levelIndex + 1;
     setLevelIndex(nextLevel);
     saveLevel(nextLevel);
@@ -183,58 +219,117 @@ export const App: React.FC = () => {
 
   const renderContent = () => {
     if (mode === GameMode.MENU) {
-      return (
-          <LevelMenu 
-            onStart={() => setMode(forcedMode || (levelPackage ? levelPackage.mode : getLevelMode(levelIndex, enabledModes)))} 
-            onSettings={() => setShowSettings(true)} 
-            onStats={() => setShowStats(true)} 
-            lastLevel={levelIndex} 
-          />
-      );
+      return <LevelMenu onStart={() => setMode(forcedMode || (levelPackage ? levelPackage.mode : getLevelMode(levelIndex, enabledModes)))} onSettings={() => setShowSettings(true)} onStats={() => setShowStats(true)} lastLevel={levelIndex} />;
     }
     if (!levelPackage || levelPackage.mode !== mode) return <LoadingFallback />;
-    const { data, themeName } = levelPackage;
     
+    const { data, themeName } = levelPackage;
+
+
+    const avgDiff = data.reduce((acc, row) => acc + (row.difficulty || 1), 0) / data.length;
+    const catCounts: Record<string, number> = {};
+    data.forEach(r => { 
+      const c = r.broadCategory || "General";
+      catCounts[c] = (catCounts[c] || 0) + 1; 
+    });
+    const mainCategory = Object.entries(catCounts).sort((a,b) => b[1] - a[1])[0][0];
+
+    // Star Logic for Milestone Component Swapping
+    const totalStars = getStats().totalStars;
+    const effectiveStars = (isReviewing && currentSummary) ? (totalStars - currentSummary.stars) : totalStars;
+    const diffTier = effectiveStars < 20 ? 'easy' : (effectiveStars < 50 ? 'med' : 'hard');
+
     return (
       <Suspense fallback={<LoadingFallback />}>
         {(() => {
           switch (mode) {
+            case GameMode.LEVEL_EXPANSION:
+              if (effectiveStars < 20) {
+                return <Level7_Expansion_Easy key={`exp-easy-${levelIndex}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} />;
+              } else if (effectiveStars < 50) {
+                return <Level7_Expansion_Medium key={`exp-med-${levelIndex}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} />;
+              } else {
+                return <Level7_Expansion key={`exp-hard-${levelIndex}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} />;
+              }
+            
             case GameMode.CLASSIC:
             case GameMode.LEVEL_THEMED:
             case GameMode.LEVEL_SYNONYMS:
-              return <Level1_Standard key={`lvl-${levelIndex}`} csvData={data} mode={mode} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} themeName={themeName} />;
+              return <Level1_Standard key={`std-${diffTier}-${levelIndex}`} csvData={data} mode={mode} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} themeName={themeName} stars={currentSummary?.stars} />;
+            
             case GameMode.LEVEL_EMOJI:
-              return <Level1_Emoji key={`lvl-${levelIndex}`} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} />;
+              return <Level1_Emoji key={`emo-${diffTier}-${levelIndex}`} csvData={data} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} />;
+            
             case GameMode.LEVEL_MIND_MATCH:
-              return <Level5_Group key={`lvl-${levelIndex}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} />;
-            case GameMode.LEVEL_EXPANSION:
-              return <Level7_Expansion key={`lvl-${levelIndex}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} />;
+              return <Level5_Group key={`mm-${diffTier}-${levelIndex}`} csvData={data} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} />;
+            
             case GameMode.LEVEL_CASCADE:
-              return <Level8_Cascade key={`lvl-${levelIndex}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }} setHintsEnabled={setHintsEnabled} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} />;
+              return <Level8_Cascade key={`cas-${diffTier}-${levelIndex}`} csvData={data} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} onOpenSettings={() => setShowSettings(true)} setHintsEnabled={setHintsEnabled} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} />;
+            
             default:
-              return <Level2_Filter key={`lvl-${levelIndex}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} onGameOver={() => handleLevelComplete({ timeMs: 0, moves: 0, failed: true })} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={(cats) => { setActiveCategories(cats || []); setShowSettings(true); }} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} />;
+              return <Level2_Filter key={`filt-${diffTier}-${levelIndex}`} csvData={data} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onGameOver={() => handleLevelComplete({ timeMs: 0, moves: 0, failed: true })} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} />;
           }
         })()}
       </Suspense>
     );
   };
 
+  const totalStars = getStats().totalStars;
+
   return (
     <ErrorBoundary>
-      {/* Root container is absolute fixed with flex-col. No padding-top; AndroidStatusBar component provides the 30px buffer. */}
       <div className="fixed inset-0 h-full w-screen bg-black text-white font-oswald flex flex-col overflow-hidden">
         <AndroidStatusBar />
+        {showDifficultyToast && (
+          <div className="fixed inset-0 flex items-center justify-center z-[5000] pointer-events-none p-6">
+            <div className="bg-black border-4 border-[#00FFFF] px-10 py-8 rounded-3xl 
+                            shadow-[0_0_30px_#00FFFF,inset_0_0_20px_#00FFFF] 
+                            flex flex-col items-center justify-center text-center
+                            animate-pop">
+              
+              {/* Icon with Neon Pink Glow */}
+              <span className="text-6xl mb-4 drop-shadow-[0_0_10px_#FF00FF]">🚀</span>
+              
+              {/* Heading - Oswald, Big, Italicized Neon */}
+              <h2 className="text-[#00FFFF] font-black text-5xl md:text-6xl uppercase italic leading-none font-oswald tracking-tighter drop-shadow-[0_0_15px_rgba(0,255,255,0.8)]">
+                {totalStars >= 50 ? "Mastery" : "Difficulty"}
+                <br />
+                <span className="text-white text-4xl md:text-5xl">Unlocked</span>
+              </h2>
+              
+              {/* Subtext */}
+              <div className="mt-6 bg-[#FF00FF] px-4 py-1 skew-x-[-12deg] shadow-[4px_4px_0px_#00FFFF]">
+                <p className="text-black font-black text-lg md:text-xl uppercase italic font-oswald skew-x-[12deg]">
+                  {totalStars >= 50 ? "7-Row Grid Activated" : "Medium Mode Active"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex-1 relative flex flex-col min-h-0 w-full overflow-hidden">
           {renderContent()}
           {showTutorial && <TutorialOverlay mode={mode} onComplete={() => { markTutorialSeen(); setShowTutorial(false); }} />}
         </div>
         <Footer />
         <AndroidNavigationBar />
-        {showSettings && <SettingsMenu isOpen={showSettings} onClose={() => setShowSettings(false)} onMainMenu={() => { setForcedMode(undefined); setShowSettings(false); setMode(GameMode.MENU); }} isMusicOn={isMusicOn} toggleMusic={() => { setIsMusicOn(!isMusicOn); audio.setSound(!isMusicOn); }} enabledModes={enabledModes} toggleMode={(m) => { let next = enabledModes.includes(m) ? (enabledModes.length > 1 ? enabledModes.filter(x => x !== m) : enabledModes) : [...enabledModes, m]; setEnabledModes(next); saveEnabledModes(next); }} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} isAutoPlaying={isAutoPlaying} onToggleAutoPlay={() => setIsAutoPlaying(!isAutoPlaying)} onShowTutorial={() => setShowTutorial(true)} onResetProgress={() => { localStorage.clear(); window.location.reload(); }} categories={activeCategories} privacyOptionsRequired={privacyOptionsRequired} onShowPrivacyOptions={async () => { if (Capacitor.isNativePlatform()) await AdMob.showPrivacyOptionsForm().catch(() => {}); }} />}
+        {showSettings && <SettingsMenu 
+          isOpen={showSettings} onClose={() => setShowSettings(false)} 
+          onMainMenu={() => { setForcedMode(undefined); setShowSettings(false); setMode(GameMode.MENU); }} 
+          isMusicOn={isMusicOn} toggleMusic={() => { setIsMusicOn(!isMusicOn); audio.setSound(!isMusicOn); }} 
+          enabledModes={enabledModes} 
+          toggleMode={(m) => { let next = enabledModes.includes(m) ? (enabledModes.length > 1 ? enabledModes.filter(x => x !== m) : enabledModes) : [...enabledModes, m]; setEnabledModes(next); saveEnabledModes(next); }} 
+          onSelectMode={(m) => { setForcedMode(m); setMode(m); setShowSettings(false); }} 
+          hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} 
+          isAutoPlaying={isAutoPlaying} onToggleAutoPlay={() => setIsAutoPlaying(!isAutoPlaying)}
+          onShowTutorial={() => setShowTutorial(true)} onResetProgress={() => { localStorage.clear(); window.location.reload(); }} 
+          categories={activeCategories} privacyOptionsRequired={privacyOptionsRequired} 
+          onShowPrivacyOptions={async () => { if (Capacitor.isNativePlatform()) await AdMob.showPrivacyOptionsForm().catch(() => {}); }} 
+        />}
         {showCategorySelector && <CategorySelectionOverlay isOpen={showCategorySelector} onClose={() => setShowCategorySelector(false)} selectedIds={customPoolIds} onToggle={(ids) => { setCustomPoolIds(ids); saveCustomPool(ids); }} />}
         {showStats && <StatsOverlay onClose={() => setShowStats(false)} />}
       </div>
     </ErrorBoundary>
   );
 };
+
 export default App;

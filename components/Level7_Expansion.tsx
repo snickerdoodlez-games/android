@@ -18,7 +18,7 @@ const ROUND_TARGETS = [
 ];
 
 const Level7_Expansion: React.FC<any> = ({ 
-  csvData, onComplete, levelIndex, hintsEnabled, onOpenSettings, setHintsEnabled, isReviewing, onNext, isAutoPlaying 
+  csvData, onComplete, levelIndex, hintsEnabled, onOpenSettings, setHintsEnabled, isReviewing, onNext, isAutoPlaying, stars 
 }) => {
   const [round, setRound] = useState(1);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -39,16 +39,18 @@ const Level7_Expansion: React.FC<any> = ({
   useEffect(() => {
     const target = ROUND_TARGETS[0];
     const fullMatrix = Array.from({ length: MAX_ROWS }, () => Array(MAX_COLS).fill(null));
-    csvData.forEach((cat, rIdx) => {
-      cat.words.forEach((word, cIdx) => {
-        fullMatrix[rIdx][cIdx] = {
-          id: Math.random().toString(36).substr(2, 9),
-          word: word,
-          categoryId: cat.id,
-          categoryName: cat.name.includes(':') ? cat.name.split(':')[1].trim() : cat.name,
-          status: 'neutral',
-          isSolved: false
-        };
+    csvData.forEach((cat: any, rIdx: number) => {
+      cat.words.forEach((word: string, cIdx: number) => {
+        if (rIdx < MAX_ROWS && cIdx < MAX_COLS) {
+          fullMatrix[rIdx][cIdx] = {
+            id: Math.random().toString(36).substr(2, 9),
+            word: word,
+            categoryId: cat.id,
+            categoryName: cat.name.includes(':') ? cat.name.split(':')[1].trim() : cat.name,
+            status: 'neutral',
+            isSolved: false
+          };
+        }
       });
     });
     const visibleIndices: [number, number][] = [];
@@ -68,12 +70,14 @@ const Level7_Expansion: React.FC<any> = ({
     let changed = false;
     let newlySolvedCount = 0;
     const updatedGrid = currentGrid.map(row => [...row]);
+    
     activeRowIndices.forEach(rIdx => {
       const rowTiles = activeColIndices.map(cIdx => updatedGrid[rIdx][cIdx]!);
       const solved = rowTiles.every(t => t.status === 'solved');
       if (solved) { newlySolvedCount++; return; }
-      const targetCatId = csvData[rIdx].id;
-      if (rowTiles.every(t => t.categoryId === targetCatId)) {
+      
+      const firstTile = rowTiles[0];
+      if (firstTile && rowTiles.every(t => t.categoryId === firstTile.categoryId)) {
         changed = true; newlySolvedCount++; audio.playRowSolved();
         const color = THEMES[0].solvedColors[rIdx % THEMES[0].solvedColors.length];
         activeColIndices.forEach(cIdx => {
@@ -86,12 +90,13 @@ const Level7_Expansion: React.FC<any> = ({
         });
       }
     });
+    
     if (changed) setGridData(updatedGrid);
     if (newlySolvedCount === activeRowIndices.length) {
       if (round < 4) setTimeout(() => expandGrid(), 1000);
       else if (!isComplete) {
         audio.playWin(); setIsComplete(true);
-        setTimeout(() => onComplete({ timeMs: Date.now() - startTimeRef.current, moves, solvedCategoryIds: csvData.map(c => c.id), solvedWords: updatedGrid.flat().filter(t => t?.status === 'solved').map(t => t!.word) }), 3000);
+        setTimeout(() => onComplete({ timeMs: Date.now() - startTimeRef.current, moves, solvedCategoryIds: csvData.slice(0, MAX_ROWS).map((c:any) => c.id), solvedWords: updatedGrid.flat().filter(t => t?.status === 'solved').map(t => t!.word) }), 1000);
       }
     }
   }, [activeRowIndices, activeColIndices, round, isComplete, moves, onComplete, csvData]);
@@ -109,12 +114,13 @@ const Level7_Expansion: React.FC<any> = ({
         for (let c = 0; c < target.cols; c++) {
           const t = next[r][c];
           if (!t || t.status !== 'solved') {
-            nonSolvedIndices.push([r, c]); nonSolvedTiles.push(t!);
+            nonSolvedIndices.push([r, c]);
+            if (t) nonSolvedTiles.push(t);
           }
         }
       }
       const scrambled = shuffleArray(nonSolvedTiles);
-      nonSolvedIndices.forEach(([r, c], i) => { next[r][c] = scrambled[i]; });
+      nonSolvedIndices.forEach(([r, c], i) => { if (scrambled[i]) next[r][c] = scrambled[i]; });
       return next;
     });
     setActiveRowIndices(Array.from({ length: target.rows }, (_, i) => i));
@@ -132,14 +138,14 @@ const Level7_Expansion: React.FC<any> = ({
       audio.playSelect(); setSelectedPos({ r, c });
       setGridData(prev => {
         const next = prev.map(row => [...row]);
-        next[r][c] = { ...next[r][c]!, status: 'selected' };
+        if (next[r][c]) next[r][c] = { ...next[r][c]!, status: 'selected' };
         return next;
       });
     } else if (selectedPos.r === r && selectedPos.c === c) {
       setSelectedPos(null);
       setGridData(prev => {
         const next = prev.map(row => [...row]);
-        next[r][c] = { ...next[r][c]!, status: 'neutral' };
+        if (next[r][c]) next[r][c] = { ...next[r][c]!, status: 'neutral' };
         return next;
       });
     } else {
@@ -147,16 +153,18 @@ const Level7_Expansion: React.FC<any> = ({
       setIsSwapping(true); setMoves(m => m + 1); audio.playSwap();
       setGridData(prev => {
         const next = prev.map(row => [...row]);
-        next[r1][c1] = { ...next[r1][c1]!, status: 'swapping' };
-        next[r][c] = { ...next[r][c]!, status: 'swap-target' };
+        if (next[r1][c1]) next[r1][c1] = { ...next[r1][c1]!, status: 'swapping' };
+        if (next[r][c]) next[r][c] = { ...next[r][c]!, status: 'swap-target' };
         return next;
       });
       setTimeout(() => {
         setGridData(prev => {
           const next = prev.map(row => [...row]);
-          const t1 = { ...next[r1][c1]! }; const t2 = { ...next[r][c]! };
-          next[r1][c1] = { ...t1, word: t2.word, categoryId: t2.categoryId, categoryName: t2.categoryName, color: t2.color };
-          next[r][c] = { ...t2, word: t1.word, categoryId: t1.categoryId, categoryName: t1.categoryName, color: t1.color };
+          const t1 = next[r1][c1]; const t2 = next[r][c];
+          if (t1 && t2) {
+            next[r1][c1] = { ...t1, word: t2.word, categoryId: t2.categoryId, categoryName: t2.categoryName, color: t2.color };
+            next[r][c] = { ...t2, word: t1.word, categoryId: t1.categoryId, categoryName: t1.categoryName, color: t1.color };
+          }
           return next;
         });
         setTimeout(() => {
@@ -167,21 +175,21 @@ const Level7_Expansion: React.FC<any> = ({
               setTimeout(() => checkMatches(final), 50); return final;
             });
             setSelectedPos(null); setIsSwapping(false);
-          }, 400); 
-        }, 800);
+          }, 200); 
+        }, 400); 
       }, 50);
     }
   }, [isComplete, isSwapping, isExpanding, isReviewing, gridData, selectedPos, checkMatches]);
 
-  // AUTO PLAY LOGIC - SPED UP
+  // AUTO PLAY LOGIC - SPED UP & FIX
   useEffect(() => {
     if (!isAutoPlaying || isComplete || isSwapping || isExpanding || isReviewing) return;
     const timer = setTimeout(() => {
       for (let rIdx of activeRowIndices) {
         const row = activeColIndices.map(cIdx => gridData[rIdx][cIdx]!);
-        if (row.every(t => t.status === 'solved')) continue;
+        if (row.some(t => !t) || row.every(t => t.status === 'solved')) continue;
 
-        const targetCatId = csvData[rIdx].id;
+        const targetCatId = csvData[rIdx]?.id;
         if (row.every(t => t.categoryId === targetCatId)) {
           checkMatches(gridData);
           return;
@@ -216,9 +224,10 @@ const Level7_Expansion: React.FC<any> = ({
   if (isInitializing) return null;
 
   return (
-    <LevelLayout modeName="EXPANSION" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)}>
+    <LevelLayout modeName="EXPANSION" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)} stars={stars}>
       <ParticleOverlay ref={particleRef} />
-      <div className="flex-1 flex flex-col gap-0.5 pointer-events-auto h-full overflow-visible">
+      {/* Grid Container with gap-0 to close the separation gap seen in screenshots */}
+      <div className="flex-1 flex flex-col gap-0 h-full w-full overflow-visible">
          {activeRowIndices.map(rIdx => {
              const rowTiles = activeColIndices.map(cIdx => gridData[rIdx][cIdx]);
              const solved = rowTiles.every(t => t?.status === 'solved');

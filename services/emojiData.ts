@@ -1,295 +1,280 @@
-
 import { CSVRow } from '../types';
 
 const RAW_EMOJI_DATA = `
-Faces Happy,😀😃😄😁😆😅🤣😂🙂🙃
-Faces Sad,☹️🙁😕😟😔😞😒😏😣😖
-Faces Love,🥰😍😘😗😙😚
-Faces Sick,🤢🤮🤧😷🤒🤕
-Faces Cool,😎🤠🤓
-Hand Gestures,👍👎👊✊🤛🤜🤞✌️🤟🤘
-Hearts,❤️🧡💛💚💙💜🖤🤍🤎💔
-Animals Farm,🐮🐷🐑🐴🐐🐔🐓🐣🦆
-Animals Wild,🐒🦍🦧🐺🦊🦝🦁🐯
-Animals Sea,🐋🐬🦭🐟🐠🐡🦈🐙🐚
-Animals Bugs,🐌🦋🐛🐜🐝🪲🐞🦗🕷️🦂
-Plants,💐🌸💮🏵️🌹🌺🌻🌼🌷🌱
-Trees,🌲🌳🌴🌵🌾🌿☘️🍀🍁🍂
-Fruit,🍇🍈🍉🍊🍋🍌🍍🥭🍎🍏🍐🍑🍒🍓🥝
-Veggie,🥑🍆🥔🥕🌽🌶️🥒🥬🥦🧄🧅🍄
-Food Prep,🍞🥐🥖🥨🥞🧀🍖🍗🥓🍔🍟🍕🌭🥪🌮
-Food Asian,🍱🍲🍛🍜🍝🍠🍢🍣🍤🍥🥮
-Sweets,🍦🍧🍨🍩🍪🎂🍰🧁🍫🍬🍭
-Drink,🥛☕🍵🍶🍺🍻🥂🍷🥃🍸🍹🧃
-Activity,⚽🏀🏈⚾🎾🏐🏉⛳⛸️🎿🛷🥌
-Travel Land,🚗🚕🚙🚌🚎🏎️🚓🚑🚒🚐🚚🚛🚜
-Travel Air,✈️🛩️🛫🛬🚀🛸🚁
-Travel Water,⚓⛵🛶🚤🛳️⛴️🛥️🚢
-Sky,☀️🌝🌚🌑🌒🌓🌔🌕🌖
-Weather,☁️⛅⛈️🌤️🌥️🌦️🌧️🌨️🌩️
-Object,⌚📱📲💻⌨️🖥️🖨️🖱️🖲️🕹️
-Book,📔📕📖📗📘📙📚📓📒📃
-Money,💰💴💵💶💷💸💳🧾
-Office,✉️📧📨📩📤📥📦
-Tool,🔨🪓⛏️⚒️🛠️🗡️⚔️🔧
-Science,⚗️🧪🔬🧬💊🩺
-Clothing Tops,👕👚👔🧥🥋🎽
-Clothing Bottoms,👖👙👘👗🧦
-Shoes,👞👟🥾👡👠🥿
-Flags Red,🇦🇱🇧🇭🇨🇳🇩🇰🇭🇰🇮🇲
-Flags Blue,🇦🇷🇦🇺🇧🇼🇫🇮🇬🇷🇭🇳🇮🇱
-Flags Stripes,🇦🇹🇧🇪🇧🇬🇨🇮🇪🇪🇫🇷🇩🇪
-Cards,♠️♣️♥️♦️
-Music,🎼🎵🎶🎹🎻🎺
-Stationery,✏️✒️🖋️🖊️🖌️🖍️
-Kitchen,🍳🥘🥣🥗🍲🍛
-Medical,💉💊🩹🩺🏥
-Halloween,🎃👻🕷️🕸️🦇💀
-Christmas,🎄🎅🎁❄️⛄🦌
-Easter,🐰🥚🐣🌷
-Love,💍💒💌💑
-Time,⏳⌛⏰⌚🕰️
-Audio,🔇🔈🔉🔊
-Weather Cold,❄️🌨️☃️⛄
-Weather Hot,☀️😎🏖️🏜️
-Insects,🐝🐞🦋🦗🕷️
-Dinosaurs,🦖🦕🐊🐍
-Warning Signs,⚠️🚸⛔🚫
-Constellations,♈♉♊♋♌♍♎♏
-Shapes Blue,🟦🔷🔹🔵
-Shapes Red,🟥🔴🔻🛑
-Shapes Yellow,🟨🟡🔶🔸
-Shapes Green,🟩🟢📗
-Purple Things,🍇🍆👾👿🟣
-Orange Things,🍊🥕🦊🏀
-Black Things,🖤🎱🎓🕶️
-White Things,🤍🦢🏐🦴
-Gray Things,🐘🌪️💿🐭
-Fast Food,🍔🍟🥤🍦🍕
-Breakfast,🥓🍳🥞🧇☕
-Japanese Food,🍣🍱🍜🍥🍢
-Italian Food,🍝🍕🍷🧀🇮🇹
-Baking,🍞🥯🥐🥖🥨
-Space Exploration,🚀🛰️👩‍🚀👨‍🚀🪐
-Photography,📸🎥🎞️📽️🎬
-Medieval,🏰⚔️🛡️🤴👸
-Construction,🏗️🚧👷‍♂️👷‍♀️🔨
-Marine Life,🦈🐙🐡🦞🐚
-Magic & Spells,🧙‍♂️🪄🔮✨🧹
-Gardening,🪴🧑‍🌾🚿🌻🧤
-Writing & School,✍️📝📖🖍️🎒
-Fire & Heat,🔥🌋☄️♨️☀️
-Party & Fun,🥳🎈🎊🎉🥂
-Gaming,🎮🕹️👾🎰🎯
-Luck & Fortune,🍀🎰🧧💎🪙
-Night Time,🌙🦉💤🌌🛌
-Public Transit,🚌🚆🚇🚋🚏
-Detective Work,🕵️‍♂️🔍👣🔦📜
-Art Studio,🎨🖌️🖼️🗿🎭
-Camping Trip,🏕️🔥🪵🎒🔦
-Fitness,💪🏋️‍♂️🏃‍♀️🚴‍♂️🧘
-Jewelry,💎💍📿👑⌚
-Winter Gear,🧥🧣🧤🎿⛸️
-Summer Vibes,🕶️🍦🏄‍♂️🌴🍹
-Celestial Bodies,☀️🌙🌎🪐☄️
-Birds,🦅🦆🦉🦜🦩
-Pet Shop,🐶🐱🐹🐰🦜
-Post Office,📮✉️📦🚚📫
-Music Class,🎹🎸🥁🎻🎺
-Laundry Day,🧺🧼👕🧦👗
-Tools & Hardware,🔩🪚🔧🔨🗜️
-Mythical,🐉🦄🧜‍♀️🧚‍♂️🧞‍♂️
-Tropical Island,🏝️🥥🍍🦜🌴
-Morning Routine,⏰☕🥣🚿🪥
-Evening Routine,🌙🛁📖🛌🍷
-Construction Site,🚧🚜🏗️🧱🔨
-Farm Life,🚜👨‍🌾🐮🐷🐓
-High Tech,🤖💻💾🦾📡
-Desert Life,🏜️🐪🌵🦂☀️
-Forest Hike,🌲🦌🏕️🐻🥾
-Beach Day,🐚🏖️👙🕶️🦀
-Birthday Party,🎂🎁🎈🥳🕯️
-Movie Night,🍿🎞️🎬🥤🎥
-Royal Court,👑🤴👸🏰⚜️
-Weather Stormy,⛈️⚡🌪️🌊🌩️
-Office Space,📎🖇️📁📅📠
-Cooking Tools,🍳🔪🥣🥘🥄
-Travel Essentials,🛂🧳🗺️📸🎫
-Sport Balls,⚽🏀🏈🏐⚾
-Yoga & Zen,🧘‍♂️🧘‍♀️🎐🕯️☯️
-Musical Notes,🎼🎵🎶🎹🎤
-Wild West,🤠🐎🌵🏜️🔫
-Space Objects,☄️🛰️🛸🌌🔭
-Fishing Trip,🎣🚣‍♂️🐟🛶🛥️
-Bakery Treats,🧁🥨🥯🥐🥖
-Bathroom Items,🛁🚽🚿🪥🧼
-Home Comfort,🛋️🛌📺🪑🏠
-Weather Sunny,☀️🌡️🧴⛱️🕶️
-City Life,🌆🏙️🌇🏛️🏘️
-Mountain Hike,🏔️🧗‍♂️🎒🥾🌲
-Garden Flowers,🌻🌷🌹🌺🌸
-Sea Creatures,🐋🐬🐟🐡🐙
-Exotic Animals,🦏🐘🦒🦓🐒
-Pet Supplies,🐕🐈🦴🧶🐹
-School Subjects,🧪🎨📏📖🔢
-Night Sky,🌌🌠🌑🌕🌙
-Winter Sports,🎿🏂⛸️🏒🛷
-Spring Time,🌱🌦️🐛🦋🌷
-Autumn Season,🍂🍁🎃🍎🧣
-Summer Fun,🏖️🍹🏄‍♀️🍍🍦
-Kitchen Ware,🍴🥣🥘🍳🔪
-Workout Gear,🏋️‍♂️👟🎽🥤🧘
-Office Tools,💻🖊️📂📌✂️
-Party Supplies,🎈🎉🎁🥳🍰
-Travel Modes,🚆✈️🚢🚗🛵
-Tools Set,🔨🔧🔩🪚🪛
-Farm Goods,🥚🌽🥛🍯🥩
-Magic Tricks,🎩🐰🪄🃏✨
-Undersea World,🐚🐙🦞🐠🌊
-Royal Symbols,👑🏰🛡️⚔️⚜️
-Weather Extreme,🌪️⚡🌊🌋☄️
-Time Pieces,⌚⏰🕰️
-Writing Kit,✏️🖋️🖍️
-Money Stack,💰💵💸
-Safe Locks,🔒🔓🔏
-Map Arrows,⬆️➡️⬇️
-Media Player,▶️⏸️⏹️
-Sound Levels,🔈🔉🔊
-Email Chain,✉️📧📩
-Folder Sort,📁📂🗂️
-Mail Box,📫📬📭
-Alert Bells,🔔🔕🛎️
-Power Source,🔋🪫🔌
-Discovery Tools,🔍🔎🔦
-Heavy Tools,🔨⚒️🛠️
-Fastener Set,🔧🪛🔩
-Personal Guard,🛡️⚔️🗡️
-Luxury Gems,👑💍💎
-Library Books,📖📘📙
-Scroll Paper,📄📃📜
-Data Charts,📊📈📉
-Planning Set,📅📆🗓️
-Phone Line,📱☎️📞
-Broadcast Kit,📺📻🎥
-Photo Gear,📷📸📽️
-Gaming Fun,🎮🕹️🎲
-Card Suits,♠️♣️♥️
-Trophy Case,🏆🥇🥈
-Honor Medals,🎖️🏅🏵️
-Music Notes,🎵🎶🎼
-Strings Group,🎹🎻🎺
-Headphones,🎧🎤📻
-Cinema Kit,🍿🎬🎞️
-Stage Arts,🎭🎨🎨
-Sport Balls,⚽🏀🏈
-Court Sports,🏒🎾🎿
-City Vehicles,🚗🚕🚌
-Rail Transit,🚂🚆🚇
-Air Travel,✈️🛫🛬
-Ocean Vessel,🚢🛥️🚤
-Space Voyage,🚀🛰️🛸
-Night Stars,⭐🌟✨
-Moon Phase,🌙🌛🌜
-Weather Mix,☀️☁️🌧️
-Storm Cloud,⚡🌩️⛈️
-Heat Source,🔥💥☄️
-Blue Water,💧🌊🚿
-Green Growth,🌱🌿🌲
-Flower Bloom,🌸🌹🌻
-Fruit Orchard,🍎🍌🍓
-Garden Veggie,打🥕🥦🌽
-Sweet Treats,🍦🍩🍪
-Fast Bites,🍔🍟🍕
-Coffee Break,☕🥤🍺
-Wine Tasting,🍷🍸🍹
-Hearts Set,❤️🧡💛
-Hand Likes,👍👎👌
-Happy Faces,😀😂😍
-Pet Friends,🐶🐱🐭
-Wild Birds,🐦🐧🦆
-Small Bugs,🐝🦋🕷️
-Forest Trees,🌳🌲🌴
-City Homes,🏠🏦🏢
-Tall Skyline,🏙️🌆🌃
-Island Peaks,🏝️⛰️🌋
-Road Access,🌉🛤️🛣️
-Warning Signs,🛑⚠️🚫
-Sewing Kit,🪡🧵🧶
-Tailor Shop,🧥👗👕
-Laundry Day,🧺🧼🚿
-Carpentry,🪚🔨📐
-Masonry,🧱🧱🏗️
-Painting Job,🖌️🎨🪜
-Mechanic Tools,🔧🔩⚙️
-Plumbing,🪠🚰🛁
-Electrical,⚡🔌💡
-Science Lab,🧪🔬⚗️
-Biology,🧬🧫🔬
-Chemistry,🧪🌡️⚖️
-Astronomy,🔭🪐🌑
-Math Class,📐📏🔢
-History Class,📜🗿🏛️
-Geography,🌎🗺️🧭
-Art Class,🎨🖌️🖍️
-Gym Class,🏀🏃‍♂️👟
-Library,📚🔖📖
-Lunch Room,🍱🍕🧃
-Playground,🛝🎡🎠
-School Bus,🚌🏫🎒
-Birthday,🎂🎈🎁
-Wedding,👰🤵💍
-Funeral,⚰️🪦🥀
-Holiday,🎄🎃🎆
-Picnic,🧺🥪🌳
-Camping,⛺🔥🌲
-Fishing,🎣🐟🚣
-Hiking,🥾🧗‍♂️🎒
-Hunting,🏹🦌🌲
-Gardening,🪴🧑‍🌾🌻
-Swimming,🩱🏊‍♂️🌊
-Surfing,🏄‍♂️🏄‍♀️🌊
-Skiing,🎿🏂❄️
-Skaters,🛹⛸️🛼
-Boxing,🥊💪🏟️
-Karate,🥋👊🥋
-Soccer,⚽🥅👟
-Basketball,🏀⛹️‍♂️🏀
-Football,🏈🏈🏈
-Baseball,⚾🏏⚾
-Tennis,🎾🏸🎾
-Golf,⛳🏌️‍♂️⛳
-Cycling,🚲🚴‍♂️🚲
-Running,🏃‍♂️👟⏱️
-Fitness,🏋️‍♂️💪🥗
-Yoga,🧘‍♀️🧘‍♂️🕉️
-Dancing,💃🕺💃
-Singing,🎤🎶🎵
-Theater,🎭🎟️🏟️
-Cinema,🍿🎬📽️
-Gaming,🎮🕹️👾
-Cards,♠️♣️♥️
-Dice,🎲🎲🎲
-Chess,♟️🤴👸
-Puzzle,🧩🧩🧩
-Magic,🪄🎩✨
-Spies,🕵️‍♂️🕶️📜
-Space,🚀🛰️☄️
-Aliens,👽🛸👾
-Robots,🤖🦾⚙️
-Monsters,👹👺👻
-Dragons,🐉🔥🏰
-Vampires,🧛‍♂️🦇🧛‍♀️
-Ghosts,👻🕯️🏰
-Zombies,🧟‍♂️🧠🧟‍♀️
-Witches,🧙‍♀️🧹🐈‍⬛
-Wizards,🧙‍♂️🪄🔮
-Knights,🛡️⚔️🐎
-Pirates,🏴‍☠️⚓🦜
-Cowboys,🤠🐎🌵
-Detectives,🕵️‍♂️🔍🔦
-Superheroes,🦸‍♂️🦹‍♂️🦸‍♀️
-Mythology,🔱⚡🦉
-Fairytales,🏰🦄✨
+Food,🍕🍔🍟🌮🍣🍜
+Animals,🦁🐒🐘🦒🐕🐈
+Transportation,🚗🚢✈️🛵🚄🚁
+Weather,☀️🌧️🌩️❄️🌬️🌪️🌨️☃️☔️💧💨
+Sports,⚽🏀🏈🎾🥅🏒
+Technology,📱💻🖱️💾💿🖨️
+Music,🎶🎵🎤🥁🎸🎻
+Buildings,🏠🏢🏫🕍🏭🏛️
+Planets,🌍🪐🚀⭐👽☄️
+Tools,🔨🔧🔩⛏️⚙️⛓️📐📏🧭
+Emotions,😂😭😡🥶😇🥰
+Clothes,👕👖👗🧥🧦👟
+Household,🛋️🪑📺💡🛏️🚽
+School,📚✏️📎🗂️📏📐
+Nature,🌳🌷🌾🍄🌵🍁
+Time,⏰🕰️⏳⌛⏱️📅
+Money,💵💶💷💴💰💳💹📈📉🏦🏧
+Health,🩹🩺💊💉🌡️🧬
+Travel,🗺️📍🧭✈️🏨🧳
+Celebration,🎉🎂🎁🎈🎊🥂
+Sea Life,🐬🐳🐠🦀🐙🐡
+Kitchen,🔪🍴🥄🥣🍷☕
+Art,🎨🧵🧶🖌️✂️✏️
+Science,🔬🧪⚗️🔭💡💻
+Fantasy,🧙‍♀️🐉🧚‍♀️🦄🧞‍♂️🧛
+Furniture,🪑🛋️🗄️🪞🖼️🏺
+Gardening,🌱🌻💧🧺🥕
+Jewelry,💍💎📿🔗👂👑
+Communication,☎️📞📧📬💬📱📟📠
+Office,📇💼📊📈📉📎
+Camping,🏕️🔥⛺️🏮🪓🎒
+Beaches,🏖️🌊☀️🕶️🐚🏄
+Desserts,🍦🍩🍰🍫🍬🍮
+Games,🎲♟️🧩🎯🎱🕹️
+Baby,👶🍼🧸🚼
+Winter,🌨️☃️🧣🧤🛷🎿
+Summer,🏖️☀️🍹🏊🍦🕶️
+Fall,🍂🎃🍁🌰🌽🥧
+Spring,🌸🐣🦋🐞☔🌈
+Body Parts,👁️👃👄👂🧠🦴
+Dance,💃🕺🩰👠👟
+Reading,📖📰📜📄✉️
+Construction,🏗️🧱🚧👷‍♂️🦺🪚
+Party Supplies,🥳🕯️🎊🎆🎈🎤
+Vehicles,🚒🚓🚕🚌🚑🚜
+Mining,⛏️💎💰🔦👷
+Puzzles,🧩🔍❓💡🔑🚪
+Magic,🪄🔮✨💫🌙⭐
+Royalty,👑🤴👸🏰🛡️⚔️
+Writing,✍️🖋️📝📜⌨️📚
+Birds,🐦🦅🦉🦆🦢🦜
+Insects,🐛🦋🐜🐞🐝🦗
+Farming,👩‍🌾👨‍🌾🐄🐖🐑🐔
+Holidays,🎄🎅🎁🕎🏮🧧
+Medical,🏥🚑💉🩸❤️‍🩹
+Fitness,🏋️‍♀️🚴‍♂️🧘‍♀️🏃‍♀️🤸‍♂️💪
+Music Instruments,🎹🎷🎺🥁🎸🎻
+Coffee,☕🥛🧊🥄🍵
+Bakery,🍞🥐🥖🥨🥯🎂
+Footwear,👞👟🥾👢👠🛡
+Military,🔫💣🔪⛑️🎖️
+Fire,🔥🚒🚨💨
+Water Sports,🏊‍♀️🚣‍♀️⛵️🚤🤿🌊
+Snow Sports,⛷️🏂🎿🛷🧤
+Cacti,🌵🪴
+Laundering,🧺🧼🧴👚👖
+Hair Care,💇‍♀️💈🪮✂️🌡️
+Beauty,💄💅🪥🪞
+Time Zones,☀️🌙🌟🕛🕜
+Spices,🌶️🧂🌿🧄🍠
+Flags,🚩🏁🏴🏳️
+Gaming Consoles,🎮🕹️👾💿💻
+Outerwear,🧥🧣🧤🧦🧢
+Dairy,🥛🧀バター🍦🥚
+Hardware,💻🖱️⌨️🖥️💾
+Software,💿💾📄📁
+Geometry,🔺🔻⚪️⚫️🔸🔹
+Photography,📸📷🎞️🔭🔆
+Theater,🎭🎬🎟️💡🎤
+Space,🔭🌌🛰️☄️
+Mythology,🏺🐍🏛️🔱🦉
+Office Supplies,🖇️📌📍📎🖊️
+Deserts,🏜️🐪🌵☀️🔥
+Reptiles,🦎🐍🐊🐢🐸
+Fungi,🍄🦠🧬🌱
+Citrus Fruits,🍊🍋🍈🥝
+Tropical Fruits,🍍🥭🥥🍌🥑
+Root Vegetables,🥕🥔🍠🧅🧄
+Bread,🥖🥯🥨🧇🥞
+Cheese,🧀バター🥚🍞🔪
+Nuts,🥜🌰🍪🍯
+Seafood,🦞🦀🦐🦑
+Body Fluids,🩸💦💧🩹🛁
+Organs,🧠🫀🫁👁️
+Bones,🦴💀⚰️💪
+Electrical,🔌🔋💡⚡️
+Plumbing,🚽🚿🛁🚰
+Chemical,🧪⚗️🔬⚛️🌡️
+Geological,🌋🪨💎⛏️
+Planetary,🪐🌕🌑💫
+Constellations,✨⭐💫🔭
+Physics,⚛️🔭💡⚡️
+Legal,⚖️👩‍⚖️🏛️📜🔒
+Politics,🗳️📢📰🧑‍🤝‍🧑🌐
+Military Actions,💣💥🔥⚔️
+Musical Notes,🎶🎵🎼🎤🥁
+Dance Shoes,🩰👠👞💃🕺
+Structures,🏗️🏭🛖🏠🏢
+Ancient Art,🗿🏺🖼️
+Drawing,✏️✒️🖍️🖌️🖼️
+Sewing,🧵🪡🪢✂️👚
+Hand Tools,🪚🔨🔧🔩
+Fasteners,🔩🔗⛓️📌
+Batteries,🔋🔌💡⚡️
+Magnets,🧲🔗🔩⛓️
+Fabrics,🧶🧵👕👖
+Cleaning,🧼🧴🧽🧹🧺
+Spa,🛀🧘🧖‍♀️💆‍♀️🧖‍♂️
+Makeup,💄💅👄👁️
+Hair Styling,💇‍♀️✂️💈🪮
+Writing Tools,🖊️✏️🖋️📝📜
+Paper,📄🧾🗞️📜
+Postal,✉️📫📬📦📮
+Cartoon Characters,👾🤖👽👻
+Role Play,🎭🧝‍♀️🧙‍♂️🧚‍♀️🧛
+Dice,🎲🎰🎱🎯
+Card Suits,♠️♣️♥️♦️
+Puppets,🧸🎭🤡🪆
+Watches,⌚️⏱️⏰🕰️
+Calendars,🗓️📅📆📖
+Candles/Incense,🕯️🔥👃✨
+Fences/Barriers,🚧🧱🛑⛔
+Swords/Weapons,⚔️🗡️🏹🛡️
+Gloves/Mittens,🧤🧣🖐️🤚
+Socks/Stockings,🧦🩰👡👠
+Coats/Jackets,🧥👚👔
+Pants/Shorts,👖🩳💼
+Skirts/Dresses,👗👚👠
+Sweets/Candy,🍬🍭🍫🍯
+Hot Drinks,☕️🍵🍶🔥
+Cold Drinks,🥤🧊🍸🍹
+Root Beer/Soda,🥤🧃🧊🍺
+Tissues/Paper Towels,🤧🧻📰📄
+Blankets/Bedding,🛌🛋️🧺🛌
+Pillows/Cushions,😴🛋️🧸🛌
+Doors/Windows,🚪🪟🔑🔒
+Stairs/Ramps,🪜⬆️⬇️♿
+Basement/Attic,🏚️🕷️📦🔦
+Garage/Carport,🚗⛽️🛠️🔩
+Street Signs,🛑🚦🚧⚠️
+Tire/Wheel,🚗🛞⚙️🔧
+Engine/Motor,⚙️🔧🔩🔥
+Windscreen/Wiper,🌧️🪟🚗💧
+Headlights/Brake Lights,💡🔦🚨
+Boating,🛥️🚤⚓️🌊
+Submarine/Diving,🤿🐳🐋
+Rocketry,🚀🛰️🧑‍🚀🌌
+Hot Air Balloon,🎈⬆️🔥☁️
+Parachuting,🪂⬇️☁️🌬️
+Skateboarding/Rollerblading,🛹🛼👟
+Wrestling/Combat,🥋🥊💥
+Archery,🏹🎯🛡️💥
+Chess/Board Games,♟️🎲🧩
+Card Games,🃏🎴♠️♥️♦️
+Video Game Characters,👾🤖🎮
+Jewelry Boxes,💍💎📦
+Mirrors/Reflection,🪞✨💍💎
+Lamps/Lighting,💡🔦🕯️⚡️
+Statues/Monuments,🗿🗽🏛️
+Fountain/Pool,⛲️🏊‍♀️💧
+Balloons/Kites,🎈🪁☁️🎉
+Ribbons/Bows,🎀🎁🎉
+Gift Wrap,🎁🛍️📦🎀
+Singing/Choir,🎤🎶🗣️
+Dancing Styles,🩰💃🕺
+Poetry/Prose,📜🖋️📚
+Newspapers/Magazines,📰🗞️📚
+Book Genres,📚👻👽💖
+Erosion/Geology,🪨⏳⛰️🌋
+Solar/Wind Power,☀️🌬️💡🔌
+Farm Animals,🐮🐷🐑🐐🐔
+Ocean Creatures,🦈🐋🐠🐡
+Savannah Animals,🐆🦓🦒🦏
+Forest Animals,🐻🦊🦉🐿️
+Desert Animals,🐪🦂🐍🦎
+Reptiles/Amphibians,🐸🐍🐢🦎
+Rodents,🐭🐹🐰
+Predators,🐅🐺🦁
+Farm Tools,🚜🌾🌽🪓
+Irrigation,💧💦🚿🚰
+Harvesting,🧺🥕🍎🍇
+Grain/Crops,🌾🌽🍞
+Dairy Processing,🥛🧀バター🍦🥚
+Meat Cuts,🥩🍗🥓🍖
+Sauces/Condiments,🥫🍯🧂
+Fast Food,🍔🍟🥤🌮
+Diner Food,🍳🥓🥞🧇
+Baked Goods,🍩🍪🎂
+Spirits/Liquor,🥃🍸🍹🍷
+Beer/Ale,🍺🍻🥂
+Wine/Grapes,🍇🍷🍾
+Vitamins/Supplements,💊🧬🧪🍎
+Herbs/Remedies,🌿🌱🌼
+Cosmetics,💄💅👁️👄
+Skin Care,🧼🧴🧖‍♀️🛀
+Perfume/Fragrance,👃✨🌸
+Security/Espionage,🕵️🗝️🔐🔍👁️‍🗨️📁
+Ancient Civilization,🏺📜🗿🧱🏛️🦴
+Alternative Energy,🔋☀️🌬️💧⚡🔌
+Deep Space,🔭🛰️☄️🌌🛸👨‍🚀
+Botany/Science,🧪🌿🍄🪴🔬🧫
+Cartography/Navigation,🗺️🧭⚓📍📏🛰️
+Natural Disasters,🌀⚡🌊🌋🌡️🌫️
+Smithing/Forge,⚒️🔥🛡️🗡️⛓️💎
+Survival/Camping,🎒🔦📻⛺🪵🔪
+Cybernetics/Augment,🦾🦿🧠💾💻🔌
+Medical Lab,🥼🧫🧪🌡️💉🧬
+The Occult,🔮🧿🃏🕯️📜🌑
+Marine Biology,🤿🐚🦀🐙🌊🫧
+Chronometry/History,⌛⌚⏰🗓️🕰️📜
+Industrial/Factory,🏗️🏭⚙️👷🛠️🚛
+Mining/Geology,⛏️💎⚒️⛰️🔦🧱
+Alchemy/Chemistry,⚗️🧪🧫🌡️🌫️🧪
+Virtual Reality,🥽🎮💻🖥️📡🌐
+Ancient Warfare,🏹🗡️🛡️⚔️🏰🐎
+Forestry/Woodcraft,🪓🌲🪵🍂🌲🦌
+Archeology,🏺🦴📜⛏️🏛️
+Deep Sea,🤿⚓🌊🐙🐚
+Forensics,🔍🧬🧪🧤🔬
+Vintage Tech,🕯️🕰️📜📻📠
+Urban Survival,🎒🔦🔋📻🔪
+Meteorology,🌀⚡🌊🌡️🌫️
+Cyber Espionage,💻🖱️🗝️👁️‍🗨️📡
+Geology,💎⚒️⛰️🧪🧱
+Ancient War,🛡️🏹🗡️🏰⚔️
+Laboratory,🥼🧫🧪🌡️💉
+Cartography,🗺️🧭📍📏🛰️
+The Occult,🔮🧿🃏🕯️🌑
+Industrial,🏗️🏭⚙️👷🛠️
+Forestry,🪓🌲🪵🍂🦌
+Astronomy,🔭🛰️☄️🌌🪐
+Cryptography,🗝️📜🔍🔏🔐
+Marine Life,🦀🐙🐟🐋🫧
+Alchemy,⚗️🧪🧫🌫️🌡️
+Virtual Reality,🥽🎮💻🌐📡
+Chronometry,⌛⌚⏰🗓️🕰️
+Red Zone,🔴🛑🏮🏎️🧧📮
+Blue Zone,🔵💧🧊🌌🗳️🌀
+Yellow Zone,🟡☀️🍌🍯⚠️🎫
+Green Zone,🟢🌿🧪📗🌳🔋
+Purple Zone,🟣🔮🍇🪁👾☂️
+Orange Zone,🟠🏀🍊🎃🦊🧱
+Pink Zone,🌸🎀🛍️🧠🦩🩰
+Black/Darkness,⚫🌑💣🕶️🎩🎱
+White/Light,⚪☁️🏐🕯️🥛🥚
+Circle Logic,⭕⚽🎡💿🥯🧭
+Square Logic,🟦🗳️🧱🕋⏹️🔲
+Triangle Logic,🔺📐🍕⛺⛰️🔼
+Diamond/Gem,🔷💎💠🪁💍🃏
+Hearts/Love,❤️🍓🍒🌹💄🎈
+Golden/Shiny,🟡🏆👑💰🔔🎺
+Silver/Metallic,🔘🥈🔩🍴⛓️🗜️
+East Asian,⛩️🏮🎋🍜🎎🧧
+Medieval/Fantasy,🏰🛡️⚔️👑🐉📜
+Western/Cowboy,🤠🌵🐎👢🎸🏜️
+Tropical/Island,🏝️🥥🍍🌺🏄🍹
+Arctic/Polar,🧊🏔️🐧❄️🎿⛸️
+Ancient Egypt,🏺🐪☀️🧱⚖️👁️‍🗨️
+Parisian/Cafe,🥖🍷🎨🗼🧀☕
+Grecian/Roman,🏛️🏺🍇🌿🏹🛡️
+Americana,🍔⚾🌭🗽🥤🥧
+Cyberpunk,🦾🤖💻🌃⚡🕶️
+Bohemian,🎨🧶🪴🎻🪕🕯️
+Nautical/Sailor,⚓🧭⛵🌊🐚 ⛴️
 `;
 
 let cachedEmojiData: CSVRow[] | null = null;

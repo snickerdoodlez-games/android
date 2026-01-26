@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CSVRow, TileData, THEMES } from '../types';
 import { motion } from 'framer-motion';
@@ -23,18 +22,22 @@ interface CascadeLevelProps {
   onExit: () => void;
   levelIndex: number;
   hintsEnabled: boolean;
+  /* Added difficulty and category to fix type errors in App.tsx */
+  difficulty?: number;
+  category?: string;
   onOpenSettings?: (cats?: {name: string, isSolved: boolean}[]) => void;
   setHintsEnabled?: (val: boolean) => void;
   isReviewing?: boolean;
   onNext?: () => void;
   isAutoPlaying?: boolean;
+  stars?: number;
 }
 
 type CascadeTile = TileData & { row: number; col: number };
 
 export default function Level8_Cascade({ 
   csvData, onComplete, onExit, levelIndex, hintsEnabled, onOpenSettings, setHintsEnabled,
-  isReviewing, onNext, isAutoPlaying 
+  isReviewing, onNext, isAutoPlaying, stars
 }: CascadeLevelProps) {
   const [grid, setGrid] = useState<(CascadeTile | null)[][]>(
     Array.from({ length: ROWS }, () => Array(COLS).fill(null))
@@ -385,6 +388,7 @@ export default function Level8_Cascade({
       onNext={onNext}
       hintsEnabled={hintsEnabled}
       onToggleHints={() => setHintsEnabled?.(!hintsEnabled)}
+      stars={stars}
       headerExtras={
         <div className="flex items-center gap-3 pr-2">
            <div className="flex flex-col items-end">

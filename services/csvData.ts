@@ -1,10 +1,8 @@
-
 import { CSVRow } from '../types';
 import { MASTER_CSV_DATA } from './masterData';
 import { FAMOUS_PEOPLE_DATA } from './famousPeopleData';
 import { GLOBAL_CSV_DATA } from './globalCSV';
-import { CSV_MEDIUM_DATA } from './csvMedium';
-import { parseCSV, parseClusterCSV, MAX_WORD_LENGTH, shuffleArray } from './csvUtils';
+import { parseCSV, MAX_WORD_LENGTH, shuffleArray } from './csvUtils';
 
 export { MAX_WORD_LENGTH };
 
@@ -32,7 +30,6 @@ const ensureDataInitialized = () => {
     try {
         const allRows: CSVRow[] = [
             ...parseCSV(MASTER_CSV_DATA || ""),
-            ...parseClusterCSV(CSV_MEDIUM_DATA || ""), 
             ...parseCSV(FAMOUS_PEOPLE_DATA || "")
         ];
 

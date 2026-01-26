@@ -1,8 +1,12 @@
-apply plugin: 'com.android.application'
-apply plugin: 'com.google.gms.google-services'
-apply plugin: 'com.google.firebase.firebase-perf'
-apply plugin: 'com.google.firebase.crashlytics'
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+    id 'com.google.firebase.firebase-perf'
+    id 'com.google.firebase.crashlytics'
 
+    // This line is now correct because the plugin is defined in the root project
+
+}
 android {
     namespace "com.snickerdoodlez.wordpairing"
     compileSdk rootProject.ext.compileSdkVersion
@@ -10,8 +14,8 @@ android {
         applicationId "com.snickerdoodlez.wordpairing"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 50058
-        versionName "50058"
+        versionCode 5005909
+        versionName "5005909"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
     }
@@ -19,6 +23,13 @@ android {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
+            firebaseCrashlytics {
+                nativeSymbolUploadEnabled true
+                unstrippedNativeLibsDir = file("build/intermediates/merged_native_libs/release/out")
+            }
         }
     }
     testOptions {
@@ -30,12 +41,6 @@ android {
     }
     lintOptions {
         abortOnError false
-    }
-}
-
-repositories {
-    flatDir{
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
 }
 
@@ -64,6 +69,7 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
     implementation "com.google.android.datatransport:transport-runtime:3.1.8"
     implementation "androidx.profileinstaller:profileinstaller:1.3.1"
+
 }
 
 apply from: 'capacitor.build.gradle'

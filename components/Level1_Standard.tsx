@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { TileData, GameMode, THEMES, CSVRow } from '../types';
 import Tile from './Tile';
@@ -10,7 +9,7 @@ import { shuffleArray } from '../services/csvUtils';
 
 export default function Level1_Standard({ 
   csvData, onComplete, mode, levelIndex, hintsEnabled, onOpenSettings, setHintsEnabled,
-  isReviewing, onNext, isAutoPlaying, themeName
+  isReviewing, onNext, isAutoPlaying, themeName, stars
 }: any) {
   const [tiles, setTiles] = useState<TileData[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -143,9 +142,10 @@ export default function Level1_Standard({
   const displayModeName = (mode === GameMode.LEVEL_SYNONYMS ? "SYNONYMS" : mode === GameMode.LEVEL_THEMED ? themeName?.toUpperCase() || "THEMED" : "CLASSIC");
 
   return (
-    <LevelLayout modeName={displayModeName} levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)}>
+    <LevelLayout modeName={displayModeName} levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)} stars={stars}>
       <ParticleOverlay ref={particleRef} />
-      <div className="flex-1 flex flex-col gap-0.5 h-full w-full overflow-visible">
+      {/* Grid Container with gap-0 to close the separation gap seen in screenshots */}
+      <div className="flex-1 flex flex-col gap-0 h-full w-full overflow-visible">
          {Array.from({ length: tiles.length / 4 }).map((_, r) => {
              const row = tiles.slice(r * 4, r * 4 + 4);
              const solved = row.every(t => t.status === 'solved');

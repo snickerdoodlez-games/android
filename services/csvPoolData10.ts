@@ -1,5 +1,5 @@
-
-export const CSV_POOL_10 = `110401,Solar System Objects,Asteroid,Comet,Meteoroid,Heliosphere
+export const CSV_POOL_10 = `id,category,word1,word2,word3,word4,word5,word6,word7,word8,word9,word10,word11,word12,word13,word14,word15
+110401,Solar System Objects,Asteroid,Comet,Meteoroid,Heliosphere
 110402,Solo,Beyonce,Sting,Ozzy,Morrissey
 110403,SONG,CHORUS,VERSE,BRIDGE,OUTRO,REFRAIN
 110404,Songbirds,Bluejay,Oriole,Warbler,Thrush,Finch

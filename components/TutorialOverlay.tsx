@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { GameMode, TileData } from '../types';
 import Tile from './Tile';
@@ -230,12 +229,8 @@ const TutorialOverlay: React.FC<TutorialProps> = ({ mode, onComplete }) => {
         await new Promise(r => setTimeout(r, 800));
         if (!mounted) return;
         
-        setStep(6); // Trigger Hint Highlight
-
-        await new Promise(r => setTimeout(r, 2500));
-        if (!mounted) return;
-
-        setStep(7); // Trigger Settings Highlight
+        // Skip Step 6 (Hint Highlight) per UI suppression requirement
+        setStep(7); // Trigger Settings Highlight directly
 
         await new Promise(r => setTimeout(r, 2500));
         if (!mounted) return;
@@ -349,18 +344,6 @@ const TutorialOverlay: React.FC<TutorialProps> = ({ mode, onComplete }) => {
                 </button>
             </div>
         </div>
-
-        {/* Step 6: Hint Highlight - Pointing to the real header button location */}
-        {step === 6 && (
-          <div className="absolute top-[60px] right-[50px] z-[220] animate-bounce">
-             <div className="relative">
-                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-neon-yellow absolute -top-2 right-4"></div>
-                <div className="bg-zinc-800 p-3 rounded-lg border border-neon-yellow text-center shadow-[0_0_15px_rgba(255,255,0,0.3)]">
-                    <p className="text-neon-yellow font-oswald text-sm font-bold uppercase">TURN HINTS<br/>ON AND OFF</p>
-                </div>
-             </div>
-          </div>
-        )}
 
         {/* Step 7: Settings Highlight - Pointing to the real header button location */}
         {step === 7 && (

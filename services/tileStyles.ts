@@ -1,4 +1,3 @@
-
 import { TileData } from '../types';
 
 export const TILE_RADII = {
@@ -158,9 +157,11 @@ export const TEXT_VARIANTS = {
 };
 
 export const getTileStatusClasses = (status: string, color?: string) => {
-  const base = "border-white transition-all duration-200 "; // Sped up transition base
+  const base = "border-white transition-all duration-200 ";
   if (status === 'solved') {
-    return base + (color || 'bg-zinc-800') + ' shadow-[inset_0_0_15px_rgba(255,255,255,0.95)]';
+    // Return the color class string directly if it exists, otherwise use a default arcade style.
+    // This allows the color definition to fully specify its shadow (glow + inset).
+    return base + (color || 'bg-zinc-800 shadow-[inset_0_0_15px_rgba(255,255,255,0.95)]');
   }
   if (status === 'hint') return base + "bg-zinc-900 border-neon-yellow shadow-[0_0_15px_#F9FF00]";
   if (status === 'wrong') return base + "bg-neon-red shadow-[0_0_25px_#FF073A]";
@@ -171,8 +172,13 @@ export const getTileStatusClasses = (status: string, color?: string) => {
   return base + "bg-black border-zinc-700";
 };
 
-export const getTypographicClasses = (word: string, isEmoji?: boolean, isSolved?: boolean, isCascade?: boolean, isNarrow?: boolean) => {
+export const getTypographicClasses = (word: string, isEmoji?: boolean, isSolved?: boolean, isCascade?: boolean, isNarrow?: boolean, rowCount: number = 0) => {
   if (isEmoji) {
+    // Dynamic Font Scaling: If 7 rows are active, the emoji font-size reduces to maintain fit
+    const isCompact = rowCount >= 7;
+    if (isCompact) {
+      return isSolved ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl";
+    }
     return isSolved ? "text-3xl md:text-4xl" : "text-4xl md:text-5xl";
   }
   

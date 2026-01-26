@@ -1,4 +1,35 @@
+// C:/Users/DD/New folder/android/settings.gradle
+
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    // ADD THIS 'plugins' BLOCK
+    plugins {
+        id 'androidx.benchmark.baseline-profile' version '1.2.4' apply false
+    }
+}
+
+// ... rest of your settings.gradle file follows
+
+
+// ... the rest of your settings.gradle file should follow
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        flatDir {
+            dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+        }
+    }
+}
+
 include ':app'
+// ... etc.
+
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File(project(':capacitor-android').projectDir.parentFile, '../node_modules/@capacitor/android/capacitor')
 include ':capacitor-community-admob'

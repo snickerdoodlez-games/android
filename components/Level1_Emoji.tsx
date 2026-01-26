@@ -1,17 +1,14 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { TileData, THEMES } from '../types';
 import Tile from './Tile';
 import SolvedRowBackground from './SolvedRowBackground';
 import LevelLayout from './LevelLayout';
-import { getEmojiData } from '../services/emojiData';
-import { getValidatedLevelData } from '../services/levelContent';
 import { audio } from '../services/audioService';
 import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
 import { shuffleArray } from '../services/csvUtils';
 
 const Level1_Emoji: React.FC<any> = ({ 
-    onComplete, levelIndex, hintsEnabled, setHintsEnabled, onOpenSettings, isReviewing, onNext, isAutoPlaying
+    csvData, onComplete, levelIndex, hintsEnabled, setHintsEnabled, onOpenSettings, isReviewing, onNext, isAutoPlaying, stars
 }) => {
   const [tiles, setTiles] = useState<TileData[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -53,11 +50,11 @@ const Level1_Emoji: React.FC<any> = ({
   }, [isComplete, moves, onComplete]);
 
   useEffect(() => {
-    const rawEmojiData = getEmojiData();
-    const data = getValidatedLevelData(7, rawEmojiData, 3, levelIndex, "Emoji");
+    // Content is already validated and passed in via App.tsx -> levelPackage.data
+    // which handles the 5, 6, or 7 row count based on difficulty
     const newTiles: TileData[] = [];
-    data.forEach(cat => {
-        cat.words.slice(0, 3).forEach(emoji => {
+    csvData.forEach((cat: any) => {
+        cat.words.slice(0, 3).forEach((emoji: string) => {
              newTiles.push({ id: Math.random().toString(36).substr(2, 9), word: emoji, categoryId: cat.id, categoryName: cat.name, status: 'neutral', isEmoji: true, isSolved: false });
         });
     });
@@ -65,7 +62,7 @@ const Level1_Emoji: React.FC<any> = ({
     setIsInitializing(false);
     startTimeRef.current = Date.now();
     lastActivityRef.current = Date.now();
-  }, [levelIndex]);
+  }, [csvData, levelIndex]);
 
   const handleTileClick = useCallback((id: string) => {
     lastActivityRef.current = Date.now();
@@ -135,25 +132,30 @@ const Level1_Emoji: React.FC<any> = ({
 
   if (isInitializing) return null;
 
+  const currentRowCount = tiles.length / GRID_WIDTH;
+
   return (
-    <LevelLayout modeName="EMOJI" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)}>
+    <LevelLayout modeName="EMOJI" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)} stars={stars}>
       <ParticleOverlay ref={particleRef} />
-      <div className="flex-1 flex flex-col gap-0.5 pointer-events-auto h-full w-full overflow-visible min-h-0">
-         {Array.from({ length: tiles.length / GRID_WIDTH }).map((_, r) => {
+      {/* Grid Container with gap-0 to close the separation gap seen in screenshots */}
+      <div className="flex-1 flex flex-col gap-0 h-full w-full overflow-visible">
+         {Array.from({ length: currentRowCount }).map((_, r) => {
              const row = tiles.slice(r * GRID_WIDTH, r * GRID_WIDTH + GRID_WIDTH);
              const solved = row.every(t => t.status === 'solved');
+             const firstTile = row[0];
              return (
                <div key={r} className="flex-1 relative min-h-0 overflow-visible">
-                  {solved && <SolvedRowBackground seed={row[0].categoryId} />}
+                  {solved && <SolvedRowBackground seed={firstTile.categoryId} />}
                   {solved && (
                     <div className="absolute top-0 left-6 z-[100] transform -translate-y-full">
                       <div className="px-3 py-1 text-[10px] font-black uppercase bg-black border-2 border-white text-white rounded-t-lg shadow-[0_-4px_12px_rgba(0,0,0,0.8)] whitespace-nowrap">
-                        {row[0].categoryName}
+                        {firstTile.categoryName}
                       </div>
                     </div>
                   )}
+                  {/* Portrait Grid Enforcement: Specifically for Emoji mode, 3 columns */}
                   <div className={`grid grid-cols-3 gap-0.5 w-full h-full relative z-10 transition-all duration-300 ${solved ? 'p-[10px]' : 'p-0.5'}`}>
-                    {row.map(tile => <Tile key={tile.id} data={tile} onClick={handleTileClick} ref={el => { if(el) tileRefs.current.set(tile.id, el); }} />)}
+                    {row.map(tile => <Tile key={tile.id} data={tile} onClick={handleTileClick} rowCount={currentRowCount} ref={el => { if(el) tileRefs.current.set(tile.id, el); }} />)}
                   </div>
                </div>
              );

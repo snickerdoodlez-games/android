@@ -1,4 +1,3 @@
-
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { 
@@ -21,6 +20,7 @@ interface TileProps {
   targetColor?: string; 
   isCascade?: boolean;
   isNarrow?: boolean;
+  rowCount?: number; // Added to support typographic scaling
 }
 
 const FONT_STYLE = { 
@@ -28,7 +28,7 @@ const FONT_STYLE = {
   backfaceVisibility: 'hidden' as const,
 };
 
-const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disabled, targetColor, isCascade, isNarrow, ...props }, ref) => {
+const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disabled, targetColor, isCascade, isNarrow, rowCount, ...props }, ref) => {
   const isTransitioning = data.status === 'swapping' || data.status === 'swap-target';
   const isSolved = data.status === 'solved';
   const isSelected = data.status === 'selected';
@@ -38,7 +38,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   const isLocked = data.status === 'locked';
 
   const statusClasses = getTileStatusClasses(data.status, (isCascade || isSolved) ? (data.color || targetColor) : undefined);
-  const textClasses = getTypographicClasses(data.word, data.isEmoji, isSolved, isCascade, isNarrow);
+  const textClasses = getTypographicClasses(data.word, data.isEmoji, isSolved, isCascade, isNarrow, rowCount);
   
   let styleOverride: React.CSSProperties = {};
   

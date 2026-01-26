@@ -80,6 +80,10 @@ export const markTutorialSeen = () => {
   localStorage.setItem(STORAGE_KEYS.TUTORIAL_SEEN, 'true');
 };
 
+export interface CategoryMastery {
+  rating3ThreeStarCount: number;
+}
+
 export interface GameStats {
   rowsSolved: number;
   levelsCompleted: number;
@@ -89,6 +93,11 @@ export interface GameStats {
   totalMoves: number;
   solvedCategoryIds: string[];
   solvedWords: string[];
+  totalScore: number;
+  solvedBroadCategories: string[];
+  totalStars: number;
+  // Keyed by broadCategory name
+  categoryStarProgress: Record<string, CategoryMastery>;
 }
 
 const DEFAULT_STATS: GameStats = {
@@ -99,7 +108,11 @@ const DEFAULT_STATS: GameStats = {
   hintsRefused: 0,
   totalMoves: 0,
   solvedCategoryIds: [],
-  solvedWords: []
+  solvedWords: [],
+  totalScore: 0,
+  solvedBroadCategories: [],
+  totalStars: 0,
+  categoryStarProgress: {}
 };
 
 export const getStats = (): GameStats => {
@@ -110,14 +123,16 @@ export const getStats = (): GameStats => {
     return { 
       ...DEFAULT_STATS, 
       ...parsed,
-      solvedWords: Array.isArray(parsed.solvedWords) ? parsed.solvedWords : []
+      solvedWords: Array.isArray(parsed.solvedWords) ? parsed.solvedWords : [],
+      solvedBroadCategories: Array.isArray(parsed.solvedBroadCategories) ? parsed.solvedBroadCategories : [],
+      categoryStarProgress: parsed.categoryStarProgress || {}
     };
   } catch {
     return DEFAULT_STATS;
   }
 };
 
-export const updateStats = (updates: Partial<GameStats>) => {
+export const updateStats = (updates: Partial<GameStats> & { lastLevelStars?: number, lastLevelDifficulty?: number, lastLevelBroadCategories?: string[] }) => {
   try {
     const current = getStats();
     
@@ -133,6 +148,23 @@ export const updateStats = (updates: Partial<GameStats>) => {
         updatedWords = Array.from(wordSet);
     }
 
+    let updatedBroad = current.solvedBroadCategories;
+    if (updates.solvedBroadCategories) {
+        const broadSet = new Set([...current.solvedBroadCategories, ...updates.solvedBroadCategories]);
+        updatedBroad = Array.from(broadSet);
+    }
+
+    // Handle Star Gating Logic for Category Unlock (Rating 5 requires two 3-star wins in Rating 3)
+    const updatedCategoryStarProgress = { ...current.categoryStarProgress };
+    if (updates.lastLevelStars === 3 && updates.lastLevelDifficulty === 3 && updates.lastLevelBroadCategories) {
+        updates.lastLevelBroadCategories.forEach(cat => {
+            const currentProgress = updatedCategoryStarProgress[cat] || { rating3ThreeStarCount: 0 };
+            updatedCategoryStarProgress[cat] = {
+                rating3ThreeStarCount: currentProgress.rating3ThreeStarCount + 1
+            };
+        });
+    }
+
     const updated: GameStats = {
         rowsSolved: current.rowsSolved + (updates.rowsSolved || 0),
         levelsCompleted: current.levelsCompleted + (updates.levelsCompleted || 0),
@@ -141,7 +173,11 @@ export const updateStats = (updates: Partial<GameStats>) => {
         hintsRefused: current.hintsRefused + (updates.hintsRefused || 0),
         totalMoves: current.totalMoves + (updates.totalMoves || 0),
         solvedCategoryIds: updatedCats,
-        solvedWords: updatedWords
+        solvedWords: updatedWords,
+        totalScore: current.totalScore + (updates.totalScore || 0),
+        solvedBroadCategories: updatedBroad,
+        totalStars: current.totalStars + (updates.totalStars || 0),
+        categoryStarProgress: updatedCategoryStarProgress
     };
 
     localStorage.setItem(STORAGE_KEYS.GAME_STATS, JSON.stringify(updated));

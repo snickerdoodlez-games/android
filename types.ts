@@ -1,8 +1,9 @@
-
 export interface CSVRow {
   id: string;
   name: string;
   words: string[];
+  difficulty?: number;
+  broadCategory?: string;
 }
 
 export interface TileData {
@@ -23,7 +24,12 @@ export interface LevelSummary {
   timeMs: number;
   mistakes: number;
   moves: number;
-  score?: number;
+  score: number;
+  difficulty: number;
+  stars: number;
+  solvedCategoryIds: string[];
+  solvedWords: string[];
+  broadCategories: string[];
 }
 
 export enum GameMode {
@@ -35,12 +41,11 @@ export enum GameMode {
   LEVEL_SYNONYMS = 'LEVEL_SYNONYMS',
   LEVEL_EXPANSION = 'LEVEL_EXPANSION',
   LEVEL_CASCADE = 'LEVEL_CASCADE',
-  HIDDEN = 'HIDDEN'
+  HIDDEN = 'HIDDEN',
+  LEVEL_FILTER = 'LEVEL_FILTER'
 }
 
-// Layout Constants
-/* fix: HEADER_HEIGHT reduced to 32 for a tight slide-up fit; FOOTER_HEIGHT remains 70 for ads */
-export const HEADER_HEIGHT = 32;
+export const HEADER_MIN_HEIGHT = 32;
 export const FOOTER_HEIGHT = 70;
 
 export interface Theme {
@@ -69,20 +74,21 @@ export const NEON_PALETTE: Record<string, string> = {
 };
 
 export const SOLVED_COLORS = [
-  'bg-neon-red shadow-[0_0_15px_#FF073A] border-white',
-  'bg-neon-orange shadow-[0_0_15px_#FF5F1F] border-white',
-  'bg-neon-yellow shadow-[0_0_15px_#F9FF00] border-white',
-  'bg-neon-lime shadow-[0_0_15px_#39FF14] border-white',
-  'bg-neon-green shadow-[0_0_15px_#00F000] border-white',
-  'bg-neon-mint shadow-[0_0_15px_#00FF9F] border-white',
-  'bg-neon-cyan shadow-[0_0_15px_#00FFFF] border-white',
-  'bg-neon-sky-blue shadow-[0_0_15px_#00BFFF] border-white',
-  'bg-neon-blue shadow-[0_0_15px_#0066FF] border-white',
-  'bg-neon-violet shadow-[0_0_15px_#B026FF] border-white',
-  'bg-neon-purple shadow-[0_0_15px_#D400FF] border-white',
-  'bg-neon-magenta shadow-[0_0_15px_#FF00FF] border-white',
-  'bg-neon-pink shadow-[0_0_15px_#FF1FBF] border-white',
-  'bg-neon-rose shadow-[0_0_15_#FF0055] border-white'
+  'bg-neon-red shadow-[0_0_15px_#FF073A,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-neon-orange shadow-[0_0_15px_#FF5F1F,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-neon-yellow shadow-[0_0_15px_#F9FF00,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-neon-lime shadow-[0_0_15px_#39FF14,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-[#00FFFF] shadow-[0_0_15px_#00FFFF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-[#FF00FF] shadow-[0_0_15px_#FF00FF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  // SEVENTH ROW (Index 6): Deep Purple with precise 0.95 white inset glow as requested
+  'bg-[#A020F0] shadow-[0_0_15px_#A020F0,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-neon-sky-blue shadow-[0_0_15px_#00BFFF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-neon-blue shadow-[0_0_15px_#0066FF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-neon-violet shadow-[0_0_15px_#B026FF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-neon-purple shadow-[0_0_15px_#D400FF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-neon-magenta shadow-[0_0_15px_#FF00FF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-neon-pink shadow-[0_0_15px_#FF1FBF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
+  'bg-neon-rose shadow-[0_0_15_#FF0055,inset_0_0_15px_rgba(255,255,255,0.95)] border-white'
 ];
 
 export const THEMES: Theme[] = [
@@ -91,6 +97,24 @@ export const THEMES: Theme[] = [
     gradient: 'from-black to-zinc-900',
     solvedColors: SOLVED_COLORS
   }
+];
+
+export const BROAD_CATEGORIES = [
+  "Nature", "Animals", "Astronomy", "Food", "History", 
+  "Geography", "Religion", "Technology", "Science", "Music", 
+  "Literature", "Movies", "Television", "Economics", "Politics", 
+  "Lifestyle", "Gaming", "Cars", "Sports", "Art", "Mythology"
+];
+
+export const RANKS = [
+  { name: 'NOVICE', min: 0 },
+  { name: 'SEMI-PRO', min: 10000 },
+  { name: 'PRO', min: 25000 },
+  { name: 'VETERAN', min: 50000 },
+  { name: 'ELITE', min: 100000 },
+  { name: 'MASTER', min: 250000 },
+  { name: 'GRANDMASTER', min: 500000 },
+  { name: 'LEGEND', min: 1000000 }
 ];
 
 const C = GameMode.CLASSIC;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { CSVRow, TileData, THEMES, Theme } from '../types';
 import Tile from './Tile';
@@ -15,6 +14,9 @@ interface Level2Props {
   onComplete: (stats?: any) => void;
   onGameOver: () => void;
   levelIndex: number;
+  /* Added difficulty and category to fix type errors in App.tsx */
+  difficulty?: number;
+  category?: string;
   onThemeChange?: (colors: string[]) => void;
   hintsEnabled: boolean;
   setHintsEnabled: (val: boolean) => void;
@@ -22,12 +24,13 @@ interface Level2Props {
   isReviewing?: boolean;
   onNext?: () => void;
   isAutoPlaying?: boolean;
+  stars?: number;
 }
 
 const Level2_Filter: React.FC<Level2Props> = ({ 
     csvData, onComplete, onGameOver, levelIndex, 
     onThemeChange, hintsEnabled, setHintsEnabled, onOpenSettings,
-    isReviewing, onNext, isAutoPlaying
+    isReviewing, onNext, isAutoPlaying, stars
 }) => {
   const [targetCategory, setTargetCategory] = useState<CSVRow | null>(null);
   const [tiles, setTiles] = useState<TileData[]>([]);
@@ -166,7 +169,7 @@ const Level2_Filter: React.FC<Level2Props> = ({
   if (initError) return null;
 
   return (
-    <LevelLayout modeName="HIDDEN" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([{ name: targetCategory?.name || "Loading", isSolved: foundCount === 6 }])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)}
+    <LevelLayout modeName="HIDDEN" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([{ name: targetCategory?.name || "Loading", isSolved: foundCount === 6 }])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)} stars={stars}
       headerExtras={(
         <div className="flex items-center gap-3">
             <div className="flex flex-col items-end">

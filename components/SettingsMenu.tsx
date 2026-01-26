@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { GameMode } from '../types';
 import Privacy from '../plugins/privacy';
@@ -11,7 +10,7 @@ export interface SettingsMenuProps {
   toggleMusic: () => void;
   enabledModes: GameMode[];
   toggleMode: (mode: GameMode) => void;
-  onSelectMode?: (mode: GameMode) => void;
+  onSelectMode?: (mode: GameMode) => void; // Added for selecting a mode
   hintsEnabled: boolean;
   setHintsEnabled: (val: boolean) => void;
   isAutoPlaying?: boolean;
@@ -35,7 +34,7 @@ const MODE_LABELS: Partial<Record<GameMode, string>> = {
 const SettingsMenu: React.FC<SettingsMenuProps> = ({ 
   isOpen, onClose, onMainMenu, isMusicOn, toggleMusic, 
   enabledModes, toggleMode, onSelectMode, hintsEnabled, setHintsEnabled,
-  isAutoPlaying, onToggleAutoPlay,
+  isAutoPlaying, onToggleAutoPlay, 
   onShowTutorial, onResetProgress, categories = [],
   privacyOptionsRequired,
   onShowPrivacyOptions
@@ -66,8 +65,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
         <div className="grid grid-cols-2 gap-2 shrink-0">
             <button onClick={onMainMenu} className="col-span-2 py-2.5 bg-neon-red border-2 border-white text-white font-black font-oswald text-lg uppercase rounded-medium hover:bg-red-500 transition-all shadow-[0_0_15px_rgba(255,7,58,0.4)]">EXIT TO MAIN MENU</button>
-            <button onClick={toggleMusic} className={`p-1 rounded-medium border-2 transition-all font-bold font-oswald text-xs uppercase ${isMusicOn ? 'bg-zinc-900 border-neon-green text-neon-green shadow-[0_0_10px_#00FF66]' : 'bg-black border-zinc-800 text-zinc-600'}`}>SOUND: {isMusicOn ? 'ON' : 'OFF'}</button>
-            <button onClick={() => setHintsEnabled(!hintsEnabled)} className={`p-1 rounded-medium border-2 transition-all font-bold font-oswald text-xs uppercase ${hintsEnabled ? 'bg-zinc-900 border-neon-blue text-neon-blue shadow-[0_0_10px_#00E5FF]' : 'bg-black border-zinc-800 text-zinc-600'}`}>HINTS: {hintsEnabled ? 'ON' : 'OFF'}</button>
+            <button onClick={toggleMusic} className={`col-span-2 py-2.5 rounded-medium border-2 transition-all font-bold font-oswald text-[10px] uppercase ${isMusicOn ? 'bg-zinc-900 border-neon-green text-neon-green shadow-[0_0_10px_#00FF66]' : 'bg-black border-zinc-800 text-zinc-600'}`}>SOUND: {isMusicOn ? 'ON' : 'OFF'}</button>
         </div>
 
         {categories.length > 0 && (
@@ -92,8 +90,17 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
               return (
                 <button 
                   key={m} 
-                  onClick={() => toggleMode(m)} 
-                  className={`flex flex-col items-center justify-center p-1 rounded-medium border-2 transition-all h-12 ${isEnabled ? 'bg-zinc-900 border-neon-aqua text-white shadow-[0_0_8px_rgba(0,255,246,0.3)]' : 'bg-black border-zinc-800 text-zinc-600'}`}
+                  onClick={() => {
+                    if (isEnabled) {
+                      // If already enabled, selecting it should switch the game mode
+                      onSelectMode?.(m);
+                    } else {
+                      // If disabled, enable it and then switch to it
+                      toggleMode(m); // First, enable it in the general pool
+                      onSelectMode?.(m); // Then, select it for immediate play
+                    }
+                  }} 
+                  className={`flex flex-col items-center justify-center p-1 rounded-medium border-2 transition-all h-12 ${isEnabled ? 'bg-zinc-900 border-neon-aqua text-white shadow-[0_0_8px_rgba(0,229,255,0.2)]' : 'bg-black border-zinc-800 text-zinc-600'}`}
                 >
                   <span className="font-bold font-oswald text-[9px] uppercase leading-none mb-0.5 text-center">{MODE_LABELS[m]}</span>
                   <div className={`w-1.5 h-1.5 rounded-full ${isEnabled ? 'bg-neon-aqua shadow-[0_0_5px_#00FFF6]' : 'bg-zinc-800'}`} />

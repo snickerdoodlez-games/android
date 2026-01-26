@@ -20,5 +20,5 @@ ext {
     playServicesAdsVersion = '24.9.0'
     userMessagingPlatformVersion = '4.0.0'
 
-    kotlin_version = "1.9.22"
+    kotlin_version = '2.1.20'
 }

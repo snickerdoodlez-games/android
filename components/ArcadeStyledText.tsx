@@ -22,7 +22,7 @@ const ArcadeStyledText: React.FC<Props> = ({
   return (
     <div className={`relative inline-block ${className} ${active ? '' : 'opacity-40 grayscale contrast-125'}`}>
       <span 
-        className={`${sizeClass} font-black uppercase font-oswald leading-none tracking-tight select-none`}
+        className={`${sizeClass} font-black uppercase font-oswald leading-none tracking-tight select-none px-[3px]`}
         style={{
           color: gradient,
           // Using a multi-layer text-shadow stack produces a much smoother "thick outline"
