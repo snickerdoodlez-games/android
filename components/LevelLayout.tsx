@@ -1,5 +1,7 @@
-import React from 'react';
+
+import React, { useMemo } from 'react';
 import Header from './Header';
+import { TileAnimationSeedContext } from './TileAnimationContext';
 
 interface LevelLayoutProps {
   modeName: string;
@@ -34,28 +36,32 @@ const LevelLayout: React.FC<LevelLayoutProps> = ({
   rowsLeft,
   stars
 }) => {
-  return (
-    <div className="flex flex-col h-full w-full max-w-4xl mx-auto select-none overflow-hidden relative bg-black font-oswald">
-      <Header 
-        modeName={modeName} 
-        levelIndex={levelIndex} 
-        onOpenSettings={onOpenSettings}
-        isReviewing={isReviewing}
-        onNext={onNext}
-        showHintButton={showHintButton}
-        onTurnOffHints={onTurnOffHints}
-        onManualHint={onManualHint}
-        onToggleHints={onToggleHints}
-        hintsEnabled={hintsEnabled}
-        rowsLeft={rowsLeft}
-        leftContent={headerExtras}
-        stars={stars}
-      />
+  const solvedAnimationSeed = useMemo(() => Math.max(0, levelIndex - 1), [levelIndex]);
 
-      <main className="flex-1 w-full relative z-[20] flex flex-col p-0 bg-black overflow-visible min-h-0">
-        {children}
-      </main>
-    </div>
+  return (
+    <TileAnimationSeedContext.Provider value={solvedAnimationSeed}>
+      <div className="flex flex-col h-full w-full max-w-4xl mx-auto select-none overflow-hidden relative bg-black font-oswald">
+        <Header
+          modeName={modeName}
+          levelIndex={levelIndex}
+          onOpenSettings={onOpenSettings}
+          isReviewing={isReviewing}
+          onNext={onNext}
+          showHintButton={showHintButton}
+          onTurnOffHints={onTurnOffHints}
+          onManualHint={onManualHint}
+          onToggleHints={onToggleHints}
+          hintsEnabled={hintsEnabled}
+          rowsLeft={rowsLeft}
+          leftContent={headerExtras}
+          stars={stars}
+        />
+
+        <main className="flex-1 w-full relative z-[6000] flex flex-col p-0 bg-black overflow-visible min-h-0">
+          {children}
+        </main>
+      </div>
+    </TileAnimationSeedContext.Provider>
   );
 };
 

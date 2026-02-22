@@ -11,8 +11,8 @@ interface PrivacyPlugin {
 }
 
 /**
- * Register the 'Privacy' plugin. This is the correct way to get a plugin 
- * reference in Capacitor 7 for custom native code bridges.
+ * Register the 'Privacy' plugin. 
+ * registerPlugin is the correct API for Capacitor 3+ (replacing registerWebPlugin).
  */
 const NativePrivacy = registerPlugin<PrivacyPlugin>('Privacy');
 
@@ -34,9 +34,13 @@ const Privacy = {
 
   /**
    * getIntegrityToken: Calls the native Play Integrity API.
-   * Generates a unique nonce using 'react-app-nonce-' and the current timestamp.
    */
   getIntegrityToken: async () => {
+    if (!Capacitor.isNativePlatform()) {
+      console.warn("Integrity Token is not supported on the web platform.");
+      return null;
+    }
+
     try {
       const nonce = 'react-app-nonce-' + Date.now();
       const result = await NativePrivacy.getIntegrityToken({ nonce });
@@ -44,14 +48,10 @@ const Privacy = {
 
       // Log the token for Android Studio Logcat debugging
       console.log('Integrity Token:', integrityToken);
-      
-      // Visual feedback for testing on device
-      alert('Got Integrity Token! Check Logcat in Android Studio.');
       return integrityToken;
 
     } catch (error) {
       console.error('Error getting integrity token:', error);
-      alert('Error: ' + error);
       return null;
     }
   }

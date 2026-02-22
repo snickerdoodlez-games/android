@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { TileData, THEMES } from '../types';
+import { motion } from 'framer-motion';
+import { TileData, THEMES, LevelProps, NEON_PALETTE } from '../types';
 import Tile from './Tile';
 import SolvedRowBackground from './SolvedRowBackground';
 import LevelLayout from './LevelLayout';
@@ -7,8 +8,10 @@ import { audio } from '../services/audioService';
 import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
 import { shuffleArray } from '../services/csvUtils';
 
-const Level1_Emoji: React.FC<any> = ({ 
-    csvData, onComplete, levelIndex, hintsEnabled, setHintsEnabled, onOpenSettings, isReviewing, onNext, isAutoPlaying, stars
+const m = motion as any;
+
+const Level1_Emoji: React.FC<LevelProps> = ({
+  csvData, onComplete, levelIndex, hintsEnabled, setHintsEnabled, onOpenSettings, isReviewing, onNext, isAutoPlaying, stars
 }) => {
   const [tiles, setTiles] = useState<TileData[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -21,7 +24,7 @@ const Level1_Emoji: React.FC<any> = ({
   const lastActivityRef = useRef(Date.now());
   const tileRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const particleRef = useRef<ParticleHandle>(null);
-  const GRID_WIDTH = 3; 
+  const GRID_WIDTH = 3;
 
   const checkMatches = useCallback((currentTiles: TileData[]) => {
     const updatedTiles = [...currentTiles];
@@ -31,6 +34,7 @@ const Level1_Emoji: React.FC<any> = ({
 
     for (let r = 0; r < rowCount; r++) {
       const row = updatedTiles.slice(r * GRID_WIDTH, r * GRID_WIDTH + GRID_WIDTH);
+      if (row.length === 0) continue;
       if (row.every(t => t.status === 'solved')) { solvedRows++; continue; }
       if (row.every(t => t.categoryId === row[0].categoryId)) {
         changed = true; solvedRows++; audio.playRowSolved();
@@ -50,15 +54,18 @@ const Level1_Emoji: React.FC<any> = ({
   }, [isComplete, moves, onComplete]);
 
   useEffect(() => {
-    // Content is already validated and passed in via App.tsx -> levelPackage.data
-    // which handles the 5, 6, or 7 row count based on difficulty
+    setIsComplete(false);
+    setMoves(0);
+    setIsSwapping(false);
+    setSelectedId(null);
+
     const newTiles: TileData[] = [];
-    csvData.forEach((cat: any) => {
-        cat.words.slice(0, 3).forEach((emoji: string) => {
-             newTiles.push({ id: Math.random().toString(36).substr(2, 9), word: emoji, categoryId: cat.id, categoryName: cat.name, status: 'neutral', isEmoji: true, isSolved: false });
-        });
+    csvData.forEach((cat) => {
+      cat.words.slice(0, 3).forEach((emoji) => {
+        newTiles.push({ id: Math.random().toString(36).substr(2, 9), word: emoji, categoryId: cat.id, categoryName: cat.name, status: 'neutral', isEmoji: true, isSolved: false });
+      });
     });
-    setTiles(shuffleArray(newTiles)); 
+    setTiles(shuffleArray(newTiles));
     setIsInitializing(false);
     startTimeRef.current = Date.now();
     lastActivityRef.current = Date.now();
@@ -78,36 +85,37 @@ const Level1_Emoji: React.FC<any> = ({
     } else {
       const idx1 = tiles.findIndex(t => t.id === selectedId);
       const idx2 = tiles.findIndex(t => t.id === id);
+      if (idx1 === -1 || idx2 === -1) return;
       setIsSwapping(true); setMoves(m => m + 1); audio.playSwap();
       setTiles(p => p.map(t => t.id === selectedId ? { ...t, status: 'swapping' } : t.id === id ? { ...t, status: 'swap-target' } : t));
       setTimeout(() => {
-          setTiles(p => {
-              const n = [...p]; const t1 = n[idx1]; const t2 = n[idx2];
-              n[idx1] = { ...t1, word: t2.word, categoryId: t2.categoryId, categoryName: t2.categoryName, isEmoji: t2.isEmoji };
-              n[idx2] = { ...t2, word: t1.word, categoryId: t1.categoryId, categoryName: t1.categoryName, isEmoji: t1.isEmoji };
-              return n;
-          });
+        setTiles(p => {
+          const n = [...p]; const t1 = n[idx1]; const t2 = n[idx2];
+          n[idx1] = { ...t1, word: t2.word, categoryId: t2.categoryId, categoryName: t2.categoryName, isEmoji: t2.isEmoji };
+          n[idx2] = { ...t2, word: t1.word, categoryId: t1.categoryId, categoryName: t1.categoryName, isEmoji: t1.isEmoji };
+          return n;
+        });
+        setTimeout(() => {
+          setTiles(p => p.map(t => (t.id === selectedId || t.id === id) ? { ...t, status: 'fading-out-bg' } : t));
           setTimeout(() => {
-              setTiles(p => p.map(t => (t.id === selectedId || t.id === id) ? { ...t, status: 'fading-out-bg' } : t));
-              setTimeout(() => {
-                  setTiles(p => {
-                      const f = p.map(t => (t.status === 'fading-out-bg') ? { ...t, status: 'neutral' as const } : t);
-                      setTimeout(() => checkMatches(f), 50); return f;
-                  });
-                  setSelectedId(null); setIsSwapping(false);
-              }, 400); 
-          }, 400);
-      }, 50);
+            setTiles(p => {
+              const f = p.map(t => (t.status === 'fading-out-bg') ? { ...t, status: 'neutral' as const } : t);
+              setTimeout(() => checkMatches(f), 50); return f;
+            });
+            setSelectedId(null); setIsSwapping(false);
+          }, 260);
+        }, 320);
+      }, 40);
     }
   }, [isComplete, isSwapping, isReviewing, selectedId, tiles, checkMatches]);
 
-  // AUTO PLAY LOGIC - SPED UP
   useEffect(() => {
     if (!isAutoPlaying || isComplete || isSwapping || isReviewing) return;
     const timer = setTimeout(() => {
-      for (let r = 0; r < tiles.length / GRID_WIDTH; r++) {
+      const rowCount = tiles.length / GRID_WIDTH;
+      for (let r = 0; r < rowCount; r++) {
         const row = tiles.slice(r * GRID_WIDTH, r * GRID_WIDTH + GRID_WIDTH);
-        if (row.every(t => t.status === 'solved')) continue;
+        if (row.length === 0 || row.every(t => t.status === 'solved')) continue;
 
         const targetCatId = row[0].categoryId;
         if (row.every(t => t.categoryId === targetCatId)) {
@@ -118,11 +126,11 @@ const Level1_Emoji: React.FC<any> = ({
         const wrongTileIdx = row.findIndex(t => t.categoryId !== targetCatId);
         if (wrongTileIdx !== -1) {
           const globalIdx = r * GRID_WIDTH + wrongTileIdx;
-          const correctTileIdx = tiles.findIndex((t, idx) => t.categoryId === targetCatId && idx >= (r+1)*GRID_WIDTH);
+          const correctTileIdx = tiles.findIndex((t, idx) => t.categoryId === targetCatId && idx >= (r + 1) * GRID_WIDTH);
           if (correctTileIdx !== -1) {
-             if (selectedId === null) handleTileClick(tiles[globalIdx].id);
-             else handleTileClick(tiles[correctTileIdx].id);
-             return;
+            if (selectedId === null) handleTileClick(tiles[globalIdx].id);
+            else handleTileClick(tiles[correctTileIdx].id);
+            return;
           }
         }
       }
@@ -135,31 +143,42 @@ const Level1_Emoji: React.FC<any> = ({
   const currentRowCount = tiles.length / GRID_WIDTH;
 
   return (
-    <LevelLayout modeName="EMOJI" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)} stars={stars}>
+    <LevelLayout modeName="EMOJI" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings()} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)} stars={stars}>
       <ParticleOverlay ref={particleRef} />
-      {/* Grid Container with gap-0 to close the separation gap seen in screenshots */}
-      <div className="flex-1 flex flex-col gap-0 h-full w-full overflow-visible">
-         {Array.from({ length: currentRowCount }).map((_, r) => {
-             const row = tiles.slice(r * GRID_WIDTH, r * GRID_WIDTH + GRID_WIDTH);
-             const solved = row.every(t => t.status === 'solved');
-             const firstTile = row[0];
-             return (
-               <div key={r} className="flex-1 relative min-h-0 overflow-visible">
-                  {solved && <SolvedRowBackground seed={firstTile.categoryId} />}
-                  {solved && (
-                    <div className="absolute top-0 left-6 z-[100] transform -translate-y-full">
-                      <div className="px-3 py-1 text-[10px] font-black uppercase bg-black border-2 border-white text-white rounded-t-lg shadow-[0_-4px_12px_rgba(0,0,0,0.8)] whitespace-nowrap">
-                        {firstTile.categoryName}
-                      </div>
-                    </div>
-                  )}
-                  {/* Portrait Grid Enforcement: Specifically for Emoji mode, 3 columns */}
-                  <div className={`grid grid-cols-3 gap-0.5 w-full h-full relative z-10 transition-all duration-300 ${solved ? 'p-[10px]' : 'p-0.5'}`}>
-                    {row.map(tile => <Tile key={tile.id} data={tile} onClick={handleTileClick} rowCount={currentRowCount} ref={el => { if(el) tileRefs.current.set(tile.id, el); }} />)}
+      <div className="flex-1 flex flex-col gap-0 w-full overflow-visible min-h-0">
+        {Array.from({ length: currentRowCount }).map((_, r) => {
+          const row = tiles.slice(r * GRID_WIDTH, r * GRID_WIDTH + GRID_WIDTH);
+          if (row.length === 0) return null;
+          const rowColor = THEMES[0].solvedColors[r % THEMES[0].solvedColors.length];
+          const solved = row.every(t => t.status === 'solved');
+          const firstTile = row[0];
+          return (
+            <div key={r} className="flex-1 relative min-h-0 overflow-visible">
+              {solved && <SolvedRowBackground seed={firstTile.categoryId} colorClass={rowColor} animationKey="level1-emoji" />}
+              {solved && (
+                <m.div
+                  layout
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute top-[-24px] left-0 z-[9000] transform -translate-y-full"
+                >
+                  <div
+                    className="px-3 py-1 text-[11px] md:text-xs font-black uppercase border-x-2 border-t-2 border-b-0 border-white rounded-t-lg shadow-[0_-4px_12px_rgba(0,0,0,0.8)] whitespace-nowrap"
+                    style={{
+                      backgroundColor: '#000000',
+                      color: '#FFFFFF'
+                    }}
+                  >
+                    {firstTile.categoryName}
                   </div>
-               </div>
-             );
-         })}
+                </m.div>
+              )}
+              <div className={`grid grid-cols-3 gap-0.5 w-full h-full min-h-0 relative z-10 transition-all duration-300 ${solved ? 'p-0.5' : 'p-0.5'}`}>
+                {row.map(tile => <Tile key={tile.id} data={tile} targetColor={rowColor} rowCount={currentRowCount} onClick={handleTileClick} ref={el => { if (el) tileRefs.current.set(tile.id, el); }} />)}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </LevelLayout>
   );

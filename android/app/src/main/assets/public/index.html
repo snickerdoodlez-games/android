@@ -1,163 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Word Pairing Machine</title>
-    <link rel="manifest" href="/assets/manifest-eTWSYYy2.json" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              neon: {
-                red: '#FF073A',        // Fluorescent Red
-                orange: '#FF5F1F',     // Neon Orange
-                yellow: '#F9FF00',     // Lemon Glacier
-                lime: '#39FF14',       // Neon Lime
-                green: '#00F000',      // Electric Green
-                mint: '#00FF9F',       // Neon Mint
-                cyan: '#00FFFF',       // Electric Cyan
-                'sky-blue': '#00BFFF', // Deep Sky Blue
-                blue: '#0066FF',       // Electric Blue
-                violet: '#B026FF',     // Neon Violet
-                purple: '#D400FF',     // Electric Purple
-                magenta: '#FF00FF',    // Magenta
-                pink: '#FF1FBF',       // Shocking Pink
-                rose: '#FF0055',       // Neon Rose
-                white: '#FFFFFF',
-              },
-              'deco-gold': '#FFD700',
-              theme: {
-                primary: '#00E5FF',
-                secondary: '#FF1FBF',
-                tertiary: '#FF9900',
-                background: '#000000',
-                surface: '#000000',
-                outline: '#00FF66',
-                'outline-variant': '#D400FF',
-              }
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-web-app-capable" content="yes">
+  <meta name="apple-web-app-status-bar-style" content="black-translucent">
+  <title>Word Pairing Machine</title>
+  <link rel="manifest" href="/assets/manifest-eTWSYYy2.json" />
+
+  <!-- OSWALD FONT -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            neon: {
+              red: '#FFFF00',
+              'yellow-1': '#FFFF00',
+              'yellow-2': '#FFEE00',
+              'yellow-3': '#FFDD00',
+              'lime-1': '#CCFF00',
+              lime: '#99FF00',
+              'lime-2': '#66FF00',
+              'green-1': '#33FF00',
+              green: '#00FF33',
+              'mint-1': '#00FF66',
+              mint: '#00FF99',
+              'mint-2': '#00FFCC',
+
+              'sky-blue': '#0099FF',
+              blue: '#0033FF',
+              'violet-1': '#3300FF',
+              violet: '#6600FF',
+              'purple-1': '#9900FF',
+              purple: '#CC00FF',
+              magenta: '#FF00FF',
+              'pink-1': '#FF0099',
+              pink: '#FF0066',
+              'rose-1': '#FF0033',
+              rose: '#FF0000',
+              'orange-1': '#FF3300',
+              orange: '#FF6600',
+              'orange-2': '#FF9900',
+              'gold-1': '#FFAA00',
+              gold: '#FFBB00',
+              'gold-2': '#FFCC00',
+              white: '#FFFFFF',
             },
-            borderRadius: {
-              'small': '8px',
-              'medium': '14px',
-              'large': '22px',
+            'deco-gold': '#FFD700',
+            theme: {
+              primary: '#00E5FF',
+              secondary: '#FF1FBF',
+              tertiary: '#FF9900',
+              background: '#000000',
+              surface: '#000000',
+              outline: '#00FF66',
+              'outline-variant': '#D400FF',
+            }
+          },
+          borderRadius: {
+            'small': '8px',
+            'medium': '14px',
+            'large': '22px',
+          },
+          fontFamily: {
+            sans: ['Oswald', 'sans-serif'],
+            oswald: ['Oswald', 'sans-serif']
+          },
+          animation: {
+            'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
+            'fade-out': 'fadeOut 0.4s ease-out forwards',
+            'slide-up': 'slideUp 0.5s ease-out forwards',
+            'zoom-in': 'zoomIn 0.5s ease-out forwards',
+            'gradient-shift': 'gradient-shift 4s ease infinite',
+            'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'shimmer': 'shimmer 2.5s linear infinite',
+            'pulse-highlight': 'pulse-highlight 5s ease-in-out infinite',
+            'border-pulse': 'borderPulse 0.6s ease-in-out infinite',
+            'rainbow-flow': 'rainbow-bg 3s linear infinite',
+          },
+          keyframes: {
+            pop: { '0%': { transform: 'scale(0.8)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            fadeOut: { '0%': { opacity: '1' }, '100%': { opacity: '0' } },
+            slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+            zoomIn: { '0%': { transform: 'scale(0.5)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+            shimmer: { '0%': { transform: 'translateX(-150%) skewX(-12deg)' }, '100%': { transform: 'translateX(150%) skewX(-12deg)' } },
+            'gradient-shift': { '0%': { backgroundPosition: '0% 50%' }, '50%': { backgroundPosition: '100% 50%' }, '100%': { backgroundPosition: '0% 50%' } },
+            'pulse-highlight': {
+              '0%': { opacity: '0' },
+              '20%': { opacity: '0.3' },
+              '40%': { opacity: '0' },
+              '100%': { opacity: '0' }
             },
-            fontFamily: {
-              sans: ['Oswald', 'sans-serif'],
-              oswald: ['Oswald', 'sans-serif']
+            borderPulse: {
+              '0%': { borderColor: 'rgba(255,255,255,0.4)' },
+              '50%': { borderColor: 'rgba(255,255,255,1)' },
+              '100%': { borderColor: 'rgba(255,255,255,0.4)' }
             },
-            animation: {
-              'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-              'fade-in': 'fadeIn 0.5s ease-out forwards',
-              'fade-out': 'fadeOut 0.4s ease-out forwards',
-              'slide-up': 'slideUp 0.5s ease-out forwards',
-              'zoom-in': 'zoomIn 0.5s ease-out forwards',
-              'gradient-shift': 'gradient-shift 4s ease infinite',
-              'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-              'shimmer': 'shimmer 2.5s linear infinite',
-              'pulse-highlight': 'pulse-highlight 5s ease-in-out infinite',
-              'border-pulse': 'borderPulse 0.6s ease-in-out infinite',
-              'rainbow-bg': 'rainbow-bg 3s linear infinite', /* Added rainbow-bg animation */
-            },
-            keyframes: {
-              pop: { '0%': { transform: 'scale(0.8)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
-              fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-              fadeOut: { '0%': { opacity: '1' }, '100%': { opacity: '0' } },
-              slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
-              zoomIn: { '0%': { transform: 'scale(0.5)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
-              shimmer: { '0%': { transform: 'translateX(-150%) skewX(-12deg)' }, '100%': { transform: 'translateX(150%) skewX(-12deg)' } },
-              'gradient-shift': { '0%': { backgroundPosition: '0% 50%' }, '50%': { backgroundPosition: '100% 50%' }, '100%': { backgroundPosition: '0% 50%' } },
-              'pulse-highlight': { 
-                '0%': { opacity: '0' }, 
-                '20%': { opacity: '0.3' }, 
-                '40%': { opacity: '0' }, 
-                '100%': { opacity: '0' } 
-              },
-              borderPulse: {
-                '0%': { borderColor: 'rgba(255,255,255,0.4)' },
-                '50%': { borderColor: 'rgba(255,255,255,1)' },
-                '100%': { borderColor: 'rgba(255,255,255,0.4)' }
-              },
-              /* Added rainbow-bg keyframes */
-              'rainbow-bg': {
-                '0%': { backgroundPosition: '0% 50%' },
-                '50%': { backgroundPosition: '100% 50%' },
-                '100%': { backgroundPosition: '0% 50%' },
-              }
+            'rainbow-bg': {
+              '0%': { backgroundPosition: '0% 50%' },
+              '50%': { backgroundPosition: '100% 50%' },
+              '100%': { backgroundPosition: '0% 50%' },
             }
           }
         }
       }
-    </script>
-    <style>
-      html, body {
-        margin: 0 !important;
-        padding: 0 !important;
-        background-color: #000000;
-        color: #FFFFFF;
-        overscroll-behavior: none;
-        user-select: none;
-        -webkit-user-select: none;
-        -webkit-tap-highlight-color: transparent;
-        height: 100%;
-        width: 100%;
-        overflow: hidden;
-        font-family: 'Oswald', sans-serif;
-      }
-      
-      /* Explicitly target all text to inherit Oswald unless overridden by specific font classes */
-      * {
-        font-family: inherit;
-      }
+    }
+  </script>
+  <style>
+    html,
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background-color: #000000;
+      color: #FFFFFF;
+      overscroll-behavior: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: 'Oswald', sans-serif !important;
+    }
 
-      /* Allow scrolling on desktop or large viewports if the UI doesn't fit */
-      @media (min-width: 1024px) {
-        body {
-          overflow: auto;
-        }
-      }
-      /* Mobile specific override to ensure absolutely no bounce/scroll */
-      @media (max-width: 1023px) {
-        body {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-        }
-      }
-      #root {
-        height: 100%;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-      }
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      .next-puzzle-overlay { background: radial-gradient(circle at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.85) 100%); }
-      
-      .h-viewport { height: 100dvh; }
+    * {
+      font-family: 'Oswald', sans-serif !important;
+    }
 
-      /* Added rainbow-bg class */
-      .rainbow-bg {
-        background: linear-gradient(to right, #FF073A, #FF5F1F, #F9FF00, #00F000, #00FFFF, #0066FF, #B026FF, #FF1FBF, #FF073A);
-        background-size: 200% 100%;
-        animation: rainbow-bg 3s linear infinite;
+    @media (min-width: 1024px) {
+      body {
+        overflow: auto;
       }
-    </style>
-  
-  <script type="module" crossorigin src="/assets/index-oClvvHuA.js"></script>
+    }
+
+    @media (max-width: 1023px) {
+      body {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+    }
+
+    #root {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .h-viewport {
+      height: 100dvh;
+    }
+  </style>
+
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "firebase/": "https://esm.sh/firebase@^12.9.0/",
+    "@capacitor/core": "https://esm.sh/@capacitor/core@^8.1.0",
+    "framer-motion": "https://esm.sh/framer-motion@^12.34.1",
+    "@capacitor-community/admob": "https://esm.sh/@capacitor-community/admob@^8.0.0",
+    "path": "https://esm.sh/path@^0.12.7",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/assets/index-DHzWQbB-.js"></script>
 </head>
-  <body>
-    <div id="root"></div>
+
+<body>
+
+  <div id="root"></div>
+
 </body>
+
 </html>

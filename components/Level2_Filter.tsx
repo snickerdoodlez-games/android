@@ -6,6 +6,7 @@ import { getValidatedLevelData } from '../services/levelContent';
 import { MAX_WORD_LENGTH, shuffleArray } from '../services/csvUtils';
 import { audio } from '../services/audioService';
 import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
+import { getStats } from '../services/storage';
 
 interface Level2Props {
   key?: React.Key;
@@ -14,7 +15,6 @@ interface Level2Props {
   onComplete: (stats?: any) => void;
   onGameOver: () => void;
   levelIndex: number;
-  /* Added difficulty and category to fix type errors in App.tsx */
   difficulty?: number;
   category?: string;
   onThemeChange?: (colors: string[]) => void;
@@ -51,7 +51,8 @@ const Level2_Filter: React.FC<Level2Props> = ({
   const particleRef = useRef<ParticleHandle>(null);
   const solvedWordsRef = useRef<string[]>([]);
   
-  const ROUNDS_TO_PLAY = 6;
+  const stats = getStats();
+  const ROUNDS_TO_PLAY = stats.totalStars < 20 ? 4 : (stats.totalStars < 50 ? 6 : 8);
   const MISTAKE_LIMIT = 5;
 
   useEffect(() => { 
@@ -68,14 +69,14 @@ const Level2_Filter: React.FC<Level2Props> = ({
       setCurrentTheme(THEMES[0]);
       setFoundCount(0); 
       lastActivityRef.current = Date.now();
-      const validatedPool = getValidatedLevelData(10, csvData, 6, levelIndex, "Hidden");
+      const validatedPool = getValidatedLevelData(10, csvData, 4, levelIndex, "Hidden");
       if (validatedPool.length === 0) { setInitError(true); setIsTransitioning(false); return; }
       const target = validatedPool[0];
       const decoyPool = validatedPool.slice(1);
       setTargetCategory(target);
-      const correctWords = target.words.slice(0, 6);
+      const correctWords = target.words.slice(0, 4);
       const allDecoyWords = decoyPool.flatMap(c => c.words);
-      const incorrectWords = shuffleArray(allDecoyWords).slice(0, 6);
+      const incorrectWords = shuffleArray(allDecoyWords).slice(0, 4);
       const roundTiles: TileData[] = shuffleArray([
           ...correctWords.map(w => ({ id: Math.random().toString(36).substr(2, 9), word: w, categoryId: target.id, categoryName: target.name, status: 'neutral' as const })),
           ...incorrectWords.map(w => ({ id: Math.random().toString(36).substr(2, 9), word: w, categoryId: 'incorrect', categoryName: 'Incorrect', status: 'neutral' as const }))
@@ -88,7 +89,6 @@ const Level2_Filter: React.FC<Level2Props> = ({
 
   useEffect(() => { initRound(true); }, [csvData]);
 
-  // Hint Logic: 120,000ms = 2 minutes
   useEffect(() => {
     if (!hintsEnabled || isLevelComplete || isReviewing || isTransitioning) return;
     const interval = setInterval(() => {
@@ -111,7 +111,6 @@ const Level2_Filter: React.FC<Level2Props> = ({
     const tileIndex = tiles.findIndex(t => t.id === id);
     if (tileIndex === -1 || ['solved', 'wrong', 'locked'].includes(tiles[tileIndex].status)) return;
     
-    // Clear hint status on click
     setTiles(prev => prev.map(t => t.status === 'hint' ? { ...t, status: 'neutral' as const } : t));
 
     setMoves(prev => prev + 1);
@@ -127,7 +126,7 @@ const Level2_Filter: React.FC<Level2Props> = ({
         solvedWordsRef.current.push(tile.word);
         setFoundCount(prev => {
             const next = prev + 1;
-            if (next === 6) {
+            if (next === 4) {
                 setFeedbackMsg("MATCH!");
                 setRoundsPlayed(r => {
                     const nextRound = r + 1;
@@ -152,9 +151,8 @@ const Level2_Filter: React.FC<Level2Props> = ({
         if (nextMistakes >= MISTAKE_LIMIT) { setIsLevelComplete(true); onGameOver(); }
         else { setTimeout(() => setTiles(prev => prev.map(t => t.id === id ? { ...t, status: 'neutral' } : t)), 500); }
     }
-  }, [isTransitioning, isLevelComplete, feedbackMsg, tiles, targetCategory, currentTheme, foundCount, mistakes, totalMistakes, hintTriggerCount, moves, onComplete, onGameOver]);
+  }, [isTransitioning, isLevelComplete, feedbackMsg, tiles, targetCategory, currentTheme, foundCount, mistakes, totalMistakes, hintTriggerCount, moves, onComplete, onGameOver, ROUNDS_TO_PLAY]);
 
-  // --- AUTO PLAY LOGIC - SPED UP ---
   useEffect(() => {
     if (!isAutoPlaying || isLevelComplete || isTransitioning || feedbackMsg) return;
     const autoTick = () => {
@@ -169,12 +167,12 @@ const Level2_Filter: React.FC<Level2Props> = ({
   if (initError) return null;
 
   return (
-    <LevelLayout modeName="HIDDEN" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([{ name: targetCategory?.name || "Loading", isSolved: foundCount === 6 }])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)} stars={stars}
+    <LevelLayout modeName="HIDDEN" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([{ name: targetCategory?.name || "Loading", isSolved: foundCount === 4 }])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)} stars={stars}
       headerExtras={(
         <div className="flex items-center gap-3">
             <div className="flex flex-col items-end">
                 <span className="text-[8px] text-neon-green font-bold uppercase tracking-widest">FOUND</span>
-                <span className="text-sm font-black text-neon-green">{foundCount}/6</span>
+                <span className="text-sm font-black text-neon-green">{foundCount}/4</span>
             </div>
             <div className="flex flex-col items-end">
                 <span className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">ROUND</span>

@@ -1,7 +1,7 @@
 {
   "name": "word-pairing-machine",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,19 +9,23 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor-community/admob": "^7.2.0",
-    "@capacitor/android": "^7.0.0",
-    "@capacitor/cli": "^7.0.0",
-    "@capacitor/core": "^7.0.0",
-    "@rollup/rollup-win32-x64-msvc": "^4.56.0",
-    "framer-motion": "11.15.0",
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1"
+    "@capacitor-community/admob": "^6.0.0",
+    "@capacitor/android": "^8.1.0",
+    "@capacitor/cli": "^8.1.0",
+    "@capacitor/core": "^8.1.0",
+    "@google/genai": "^0.3.1",
+    "build": "^0.1.4",
+    "firebase": "11.1.0",
+    "framer-motion": "^11.15.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "~5.7.2",
+    "vite": "^6.0.0"
   }
 }

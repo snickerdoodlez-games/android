@@ -7,6 +7,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // com.snickerdoodlez.wordpairing.FirebaseRtdbKt.readAllPuzzles();
     }
 
     @Override

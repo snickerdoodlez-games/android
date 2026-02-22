@@ -1,95 +1,49 @@
-import { CSVRow } from '../types';
-import { MASTER_CSV_DATA } from './masterData';
-import { FAMOUS_PEOPLE_DATA } from './famousPeopleData';
-import { GLOBAL_CSV_DATA } from './globalCSV';
-import { parseCSV, MAX_WORD_LENGTH, shuffleArray } from './csvUtils';
+import { CSVRow } from '../types.ts';
+import { parseCSV, MAX_WORD_LENGTH } from './csvUtils.ts';
+
+// Import all data pools
+import { MASTER_CSV_DATA } from './masterData.ts';
+import { CSV_POOL_1 } from './csvPoolData1.ts';
+import { CSV_POOL_2 } from './csvPoolData2.ts';
+import { CSV_POOL_3 } from './csvPoolData3.ts';
+import { CSV_POOL_4 } from './csvPoolData4.ts';
+import { CSV_POOL_5 } from './csvPoolData5.ts';
+import { CSV_POOL_6 } from './csvPoolData6.ts';
+import { CSV_POOL_7 } from './csvPoolData7.ts';
+import { CSV_POOL_9 } from './csvPoolData9.ts';
+import { CSV_POOL_10 } from './csvPoolData10.ts';
+import { CSV_POOL_11 } from './csvPoolData11.ts';
+import { CSV_POOL_12 } from './csvPoolData12.ts';
+import { CSV_POOL_13 } from './csvPoolData13.ts';
 
 export { MAX_WORD_LENGTH };
 
-// Module-level caches to ensure parsing only happens once
-let initializedConsolidatedPool: CSVRow[] = [];
-let initializedGlobalPool: CSVRow[] = [];
+/**
+ * Parses and returns the global category data from all master sources and pools.
+ */
+export const getGlobalData = (): CSVRow[] => {
+  const sources = [
+    MASTER_CSV_DATA,
+    CSV_POOL_1,
+    CSV_POOL_2,
+    CSV_POOL_3,
+    CSV_POOL_4,
+    CSV_POOL_5,
+    CSV_POOL_6,
+    CSV_POOL_7,
+    CSV_POOL_9,
+    CSV_POOL_10,
+    CSV_POOL_11,
+    CSV_POOL_12,
+    CSV_POOL_13,
+  ];
 
-const FALLBACK_DATA: CSVRow[] = [
-    { id: 'fb1', name: 'Colors', words: ['Red', 'Blue', 'Green', 'Yellow'] },
-    { id: 'fb2', name: 'Animals', words: ['Dog', 'Cat', 'Bird', 'Fish'] },
-    { id: 'fb3', name: 'Fruits', words: ['Apple', 'Banana', 'Orange', 'Grape'] },
-    { id: 'fb4', name: 'Planets', words: ['Earth', 'Mars', 'Venus', 'Jupiter'] },
-    { id: 'fb5', name: 'Seasons', words: ['Spring', 'Summer', 'Fall', 'Winter'] },
-    { id: 'fb6', name: 'Directions', words: ['North', 'South', 'East', 'West'] },
-    { id: 'fb7', name: 'Elements', words: ['Fire', 'Water', 'Air', 'Earth'] }
-];
+  return sources.flatMap(src => parseCSV(src));
+};
 
 /**
- * Initializes the data pools if they haven't been already.
- * This is called internally but can be pre-warmed.
+ * Returns a consolidated pool of category data for level generation.
  */
-const ensureDataInitialized = () => {
-    if (initializedConsolidatedPool.length > 0) return;
-
-    try {
-        const allRows: CSVRow[] = [
-            ...parseCSV(MASTER_CSV_DATA || ""),
-            ...parseCSV(FAMOUS_PEOPLE_DATA || "")
-        ];
-
-        if (allRows.length === 0) {
-            initializedConsolidatedPool = FALLBACK_DATA;
-            return;
-        }
-
-        const mergedMap = new Map<string, CSVRow>();
-        for (const row of allRows) {
-            if (!row.name) continue;
-            const normalizedName = row.name.toUpperCase().trim();
-            if (normalizedName === 'CATEGORY' || normalizedName === 'NAME' || normalizedName === '') continue;
-
-            if (mergedMap.has(normalizedName)) {
-                const existing = mergedMap.get(normalizedName)!;
-                const combinedWords = Array.from(new Set([...existing.words, ...row.words]));
-                existing.words = combinedWords;
-            } else {
-                mergedMap.set(normalizedName, { ...row });
-            }
-        }
-
-        initializedConsolidatedPool = Array.from(mergedMap.values()).filter(row => row.words.length >= 4);
-        if (initializedConsolidatedPool.length === 0) initializedConsolidatedPool = FALLBACK_DATA;
-        
-        // Also pre-warm global data
-        initializedGlobalPool = parseCSV(GLOBAL_CSV_DATA || "");
-
-    } catch (e) {
-        console.error("Critical error during CSV initialization:", e);
-        initializedConsolidatedPool = FALLBACK_DATA;
-    }
-};
-
 export const getConsolidatedData = (): CSVRow[] => {
-  ensureDataInitialized();
-  return initializedConsolidatedPool;
-};
-
-export const getGlobalData = (): CSVRow[] => {
-    ensureDataInitialized();
-    return initializedGlobalPool;
-};
-
-export const getRandomCategories = (count: number, sourceData?: CSVRow[]): CSVRow[] => {
-  const data = sourceData || getConsolidatedData();
-  if (data.length === 0) return [];
-  return shuffleArray(data).slice(0, count);
-};
-
-export const getThemedCategories = (count: number, sourceData?: CSVRow[]): { name: string, categories: CSVRow[] } => {
-  const data = sourceData || getConsolidatedData();
-  return { 
-    name: "VARIETY PACK", 
-    categories: shuffleArray(data).slice(0, count) 
-  };
-};
-
-export const getWordsFromCategory = (category: CSVRow, count: number): string[] => {
-  const fitWords = category.words.filter(w => w.length <= MAX_WORD_LENGTH);
-  return shuffleArray(fitWords).slice(0, count);
+  return getGlobalData();
 };

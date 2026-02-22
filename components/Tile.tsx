@@ -1,35 +1,68 @@
+
 import { motion, AnimatePresence } from 'framer-motion';
-import React from 'react';
-import { 
-  SELECTION_VARIANTS, 
+import React, { useRef } from 'react';
+import {
+  SELECTION_VARIANTS,
   TEXT_VARIANTS,
-  ARCADE_OUTLINE, 
-  CASCADE_OUTLINE,
+  EMOJI_TEXT_VARIANTS,
+  POP_STYLE_LIGHT,
+  POP_STYLE_DARK,
   EMOJI_OUTLINE,
-  getTileStatusClasses, 
-  getTypographicClasses,
+  getTileStatusClasses,
+  getTypographicClasses
 } from '../services/tileStyles';
-import { TileData } from '../types';
+import { TileData, NEON_PALETTE } from '../types';
 
 const m = motion as any;
+const BANK_HEX_PALETTE = ['#fd073a', '#ff5f1f', '#ccd100', '#39ff14', '#00ffff', '#ff00ff', '#680e68'];
+const ROTATING_HARD_CONIC = `conic-gradient(from 0deg, ${BANK_HEX_PALETTE[0]} 0deg 72deg, ${BANK_HEX_PALETTE[1]} 72deg 144deg, ${BANK_HEX_PALETTE[2]} 144deg 216deg, ${BANK_HEX_PALETTE[3]} 216deg 288deg, ${BANK_HEX_PALETTE[4]} 288deg 360deg)`;
 
 interface TileProps {
   data: TileData;
   onClick: (id: string) => void;
+  onLongPress?: (word: string, definition?: string) => void;
   disabled?: boolean;
-  targetColor?: string; 
+  targetColor?: string;
   isCascade?: boolean;
   isNarrow?: boolean;
-  rowCount?: number; // Added to support typographic scaling
+  rowCount?: number;
 }
 
-const FONT_STYLE = { 
+const FONT_STYLE = {
   fontFamily: '"Oswald", sans-serif',
-  backfaceVisibility: 'hidden' as const,
+  backfaceVisibility: 'hidden' as const
 };
 
-const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disabled, targetColor, isCascade, isNarrow, rowCount, ...props }, ref) => {
-  const isTransitioning = data.status === 'swapping' || data.status === 'swap-target';
+type SelectedAnimationPreset = {
+  name: string;
+  type: 'draw-border';
+  baseFill: string;
+  borderColor: string;
+  hoverColor: string;
+  borderWidth: number;
+  duration: number;
+};
+
+const SELECTED_ANIMATION_BANK: SelectedAnimationPreset[] = [
+  {
+    name: 'draw-border-v1',
+    type: 'draw-border',
+    baseFill: '#111111',
+    borderColor: '#58afd1',
+    hoverColor: '#ffe593',
+    borderWidth: 6,
+    duration: 0.25
+  }
+];
+
+const SELECTED_ANIMATION_PRESET = SELECTED_ANIMATION_BANK[0];
+
+const Tile = React.forwardRef<HTMLDivElement, TileProps>(({
+  data, onClick, onLongPress, disabled, targetColor, isCascade, isNarrow, rowCount, ...props
+}, ref) => {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPressActive = useRef(false);
+
   const isSolved = data.status === 'solved';
   const isSelected = data.status === 'selected';
   const isSwapping = data.status === 'swapping';
@@ -37,18 +70,95 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   const isCorrectPreview = data.status === 'correct-preview';
   const isLocked = data.status === 'locked';
 
-  const statusClasses = getTileStatusClasses(data.status, (isCascade || isSolved) ? (data.color || targetColor) : undefined);
+  // Use row color first so tiles in the same row share a consistent visual color.
+  const solvedColor = targetColor || data.color;
+  const borderHex = (() => {
+    if (!solvedColor) return undefined;
+    const bgClass = solvedColor.split(' ').find(c => c.startsWith('bg-neon-'));
+    return bgClass ? NEON_PALETTE[bgClass] : undefined;
+  })();
+  const isUnsolvedBorderState =
+    data.status === 'neutral' ||
+    data.status === 'selected' ||
+    data.status === 'swap-target' ||
+    data.status === 'swapping' ||
+    data.status === 'correct-preview';
+  const statusClasses = getTileStatusClasses(data.status, solvedColor, data.categoryId);
   const textClasses = getTypographicClasses(data.word, data.isEmoji, isSolved, isCascade, isNarrow, rowCount);
-  
-  let styleOverride: React.CSSProperties = {};
-  
-  if (isSelected || isSwapTarget || isSwapping) {
-    styleOverride.backgroundColor = '#000000';
-  } else if (isLocked) {
-    styleOverride.backgroundColor = '#F9FF00';
-  } else if (isCorrectPreview) {
-    styleOverride.backgroundColor = '#39FF14';
-  }
+  const variants = data.isEmoji ? EMOJI_TEXT_VARIANTS : TEXT_VARIANTS;
+
+  const isDarkText =
+    data.status === 'neutral' ||
+    isSwapTarget ||
+    isSwapping ||
+    isCorrectPreview ||
+    (isSolved && (solvedColor || '').includes('text-black'));
+
+  const textStyle = data.isEmoji
+    ? EMOJI_OUTLINE
+    : (isDarkText ? POP_STYLE_DARK : POP_STYLE_LIGHT);
+
+  const solvedTextColor = (solvedColor || '').includes('text-white') ? '#FFFFFF' : '#000000';
+  const solvedFillColor = borderHex || '#FF0066';
+  const solvedInsetShadow =
+    'inset 0 7px 5px rgba(0,0,0,0.68), inset 7px 0 5px rgba(0,0,0,0.68), inset 0 -3px 3px rgba(0,0,0,0.4), inset -3px 0 3px rgba(0,0,0,0.4)';
+
+  const styleOverride: React.CSSProperties = (() => {
+    if (isSelected) {
+      return {
+        backgroundColor: SELECTED_ANIMATION_PRESET.baseFill,
+        color: '#FFFFFF'
+      };
+    }
+    if (isLocked) return { backgroundColor: '#18181B', color: '#71717A' };
+    if (isSolved) {
+      return {
+        backgroundColor: solvedFillColor,
+        color: solvedTextColor,
+        boxShadow: solvedInsetShadow,
+        borderColor: '#FFFFFF'
+      };
+    }
+    if (data.status === 'wrong') return { backgroundColor: '#000000', color: '#FF0000' };
+    if (data.status === 'hint') return { backgroundColor: '#000000', color: '#FFFF00' };
+    return { backgroundColor: '#FFFFFF', color: '#000000' };
+  })();
+  const borderStyle: React.CSSProperties = isSelected
+    ? {
+      borderColor: 'transparent',
+      boxShadow: 'none',
+      filter: 'none',
+      animation: 'none'
+    }
+    : {};
+  const borderWidth = 6;
+  const showSelectionOverlay = isSelected;
+  const neutralTextOverride: React.CSSProperties = isSelected
+    ? {
+      textShadow: 'none',
+      filter: 'none'
+    }
+    : {};
+
+  const handlePointerDown = () => {
+    if (disabled || isSwapping || isSwapTarget) return;
+    isLongPressActive.current = false;
+    timerRef.current = setTimeout(() => {
+      isLongPressActive.current = true;
+      if (onLongPress) onLongPress(data.word, data.definition);
+    }, 500);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (!isLongPressActive.current) {
+      onClick(data.id);
+    }
+  };
+
+  const handlePointerLeave = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
 
   const renderWordContent = () => {
     if (data.isEmoji) return data.word;
@@ -62,108 +172,82 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   };
 
   const emojiFilterStyle = data.isEmoji ? {
-    filter: isSolved ? `brightness(1.2)` : 'none'
+    filter: isSolved
+      ? `brightness(1.2) drop-shadow(0px 4px 4px rgba(0,0,0,0.6))`
+      : 'drop-shadow(0px 2px 2px rgba(0,0,0,0.3))'
   } : {};
 
-  const rainbowGradient = 'linear-gradient(to right, #FF073A, #FF5F1F, #F9FF00, #00F000, #00FFFF, #0066FF, #B026FF, #FF1FBF, #FF073A)';
-
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center overflow-visible touch-action-manipulation">
-      <m.div 
+    <div className="relative w-full h-full flex flex-col items-center justify-center overflow-visible touch-none min-h-0">
+      <m.div
         layout
         ref={ref}
         initial="neutral"
         animate={data.status}
         variants={SELECTION_VARIANTS}
-        onClick={() => !disabled && onClick(data.id)}
-        className={`relative w-full flex items-center justify-center cursor-pointer select-none rounded-small z-10 ${statusClasses} h-full touch-action-manipulation overflow-hidden`}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
+        transition={isSelected ? { duration: 0 } : { type: "spring", stiffness: 450, damping: 28 }}
+        className={`relative w-full flex items-center justify-center cursor-pointer select-none rounded-small z-10 ${statusClasses} h-full ${showSelectionOverlay ? 'overflow-visible' : 'overflow-hidden'} min-h-0`}
         style={{
           ...FONT_STYLE,
           ...styleOverride,
+          ...borderStyle,
+          borderWidth: `${borderWidth}px`,
           boxSizing: 'border-box',
-          transition: 'background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out'
+          transition: 'border-color 0.24s ease-out, border-width 0.24s cubic-bezier(0.22, 0.8, 0.2, 1), box-shadow 0.2s ease-out'
         }}
         {...props}
       >
-         {/* SELECTION BORDER LAYERS - SYNCED 0.4s FADE (Sped up from 0.8s) */}
-         <AnimatePresence>
-           {(isSelected || isSwapTarget || isSwapping) && (
-             <m.div 
-                key="selection-border-container"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                className="absolute inset-0 z-0"
-             >
-               <m.div 
-                 className="absolute inset-0"
-                 style={{ 
-                   background: isSwapTarget ? rainbowGradient : '#FFFFFF',
-                   backgroundSize: '200% 100%',
-                   animation: isSwapTarget ? 'rainbow-flow 1.5s linear infinite' : 'none'
-                 }}
-               >
-                 <m.div 
-                   className="absolute inset-[4px] rounded-[4px]"
-                   style={{ 
-                     background: isSwapTarget ? '#FFFFFF' : rainbowGradient,
-                     backgroundSize: '200% 100%',
-                     animation: (isSelected || isSwapping) ? 'rainbow-flow 1.5s linear infinite' : 'none'
-                   }}
-                 >
-                   <div className="absolute inset-[3px] bg-black rounded-[2px]" />
-                 </m.div>
-               </m.div>
-             </m.div>
-           )}
-         </AnimatePresence>
-
-         {/* SHINE / SHIMMER LAYER - Sped up from 0.8s */}
-         <AnimatePresence>
-           {(isSelected || isSwapTarget || isTransitioning || isSolved) && (
-             <m.div 
-                className="absolute inset-0 pointer-events-none z-20 overflow-hidden"
-                initial={{ opacity: 0 }}
-                animate={{ 
-                  opacity: isTransitioning ? 0.9 : (isSelected || isSwapTarget) ? [0.3, 0.5, 0.3] : 0.4 
+        <AnimatePresence>
+          {showSelectionOverlay && (
+            <m.div
+              className="absolute inset-0 pointer-events-none z-[2] rounded-small overflow-hidden"
+              initial={{ opacity: 1 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+            >
+              <m.div
+                className="absolute -inset-[20%]"
+                style={{
+                  background: ROTATING_HARD_CONIC,
+                  transformOrigin: '50% 50%'
                 }}
-                transition={(isSelected || isSwapTarget) ? { duration: 0.75, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
-                exit={{ opacity: 0 }}
-             >
-               <m.div 
-                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-[200%]"
-                 animate={{ 
-                    x: ['-100%', '100%'],
-                 }}
-                 transition={{ 
-                    duration: isTransitioning ? 0.2 : (isSelected || isSwapTarget) ? 1.0 : 1.25, 
-                    repeat: Infinity, 
-                    ease: "linear" 
-                 }}
-                 style={{ skewX: '-25deg' }}
-               />
-             </m.div>
-           )}
-         </AnimatePresence>
-
-         <AnimatePresence mode="wait">
-           <m.span 
-              key={data.word} 
-              variants={TEXT_VARIANTS}
-              initial="initial"
-              animate={data.status}
-              exit="exit"
-              className={`${textClasses} text-white z-30 text-center px-2 pointer-events-none w-full flex flex-col items-center justify-center max-w-full`}
-              style={{
-                ...(data.isEmoji ? EMOJI_OUTLINE : isCascade ? CASCADE_OUTLINE : ARCADE_OUTLINE),
-                ...emojiFilterStyle,
-                maxHeight: '100%'
-              }}
-           >
-             {renderWordContent()}
-           </m.span>
-         </AnimatePresence>
+                animate={{ rotate: 360 }}
+                transition={{ duration: 4.2, ease: 'linear', repeat: Infinity }}
+              />
+              <div
+                className="absolute pointer-events-none rounded-small"
+                style={{
+                  inset: `${SELECTED_ANIMATION_PRESET.borderWidth + 1}px`,
+                  background: SELECTED_ANIMATION_PRESET.baseFill
+                }}
+              />
+            </m.div>
+          )}
+        </AnimatePresence>
+        <AnimatePresence mode="wait">
+          <m.span
+            key={data.word}
+            variants={variants}
+            initial="initial"
+            animate={data.status}
+            exit="exit"
+            className={`${textClasses} absolute inset-0 z-[9999] text-center px-2 pointer-events-none flex flex-col items-center justify-center max-w-full`}
+            style={{
+              ...textStyle,
+              ...neutralTextOverride,
+              ...emojiFilterStyle,
+              maxHeight: '100%',
+              color: 'currentColor',
+              zIndex: 9999
+            }}
+          >
+            {renderWordContent()}
+          </m.span>
+        </AnimatePresence>
       </m.div>
     </div>
   );

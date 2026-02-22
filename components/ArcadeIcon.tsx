@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface Props {
@@ -7,6 +8,8 @@ interface Props {
   active?: boolean;
   sizeClass?: string;
   color?: string;
+  noOutline?: boolean;
+  style?: React.CSSProperties;
 }
 
 const ArcadeIcon: React.FC<Props> = ({ 
@@ -15,22 +18,26 @@ const ArcadeIcon: React.FC<Props> = ({
   className = "",
   active = true,
   sizeClass = "w-8 h-8",
-  color = "#F9FF00" // Default to Neon Yellow (Lemon Glacier)
+  color = "#F9FF00", // Default to Neon Yellow (Lemon Glacier)
+  noOutline = false,
+  style = {}
 }) => {
   return (
-    <div className={`relative ${sizeClass} ${className} transition-opacity duration-300`}>
+    <div className={`relative ${sizeClass} ${className} transition-opacity duration-300`} style={style}>
       
-      {/* Layer 1: Outer White Stroke (Engineered boundary) */}
-      <svg viewBox={viewBox} className="absolute inset-0 w-full h-full overflow-visible pointer-events-none" style={{ zIndex: 0 }}>
-        <path 
-          d={path} 
-          fill="white" 
-          stroke="white" 
-          strokeWidth="5" 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-        />
-      </svg>
+      {/* Layer 1: Outer White Stroke (Engineered boundary) - Conditional */}
+      {!noOutline && (
+        <svg viewBox={viewBox} className="absolute inset-0 w-full h-full overflow-visible pointer-events-none" style={{ zIndex: 0 }}>
+          <path 
+            d={path} 
+            fill="white" 
+            stroke="white" 
+            strokeWidth="5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+          />
+        </svg>
+      )}
 
       {/* Layer 2: Inner Black Stroke (High contrast separation) */}
       <svg viewBox={viewBox} className="absolute inset-0 w-full h-full overflow-visible pointer-events-none" style={{ zIndex: 10 }}>
@@ -48,7 +55,7 @@ const ArcadeIcon: React.FC<Props> = ({
       <svg viewBox={viewBox} className="relative w-full h-full overflow-visible" style={{ zIndex: 20 }}>
         <path 
           d={path} 
-          fill={active ? color : '#555555'} 
+          fill={active ? color : '#ffffff'} 
           className="transition-colors duration-300"
         />
       </svg>
