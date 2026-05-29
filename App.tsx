@@ -11,7 +11,9 @@ import {
   markTutorialSeen, 
   getCustomPool, 
   saveCustomPool, 
-  getStats 
+  getStats,
+  getAutoPlay,
+  saveAutoPlay
 } from './services/storage';
 import { getLevelPackage, getLevelMode, LevelPackage } from './services/levelContent';
 import { audio } from './services/audioService';
@@ -105,6 +107,7 @@ export const App: React.FC = () => {
     setLevelIndex(getSavedLevel());
     setEnabledModes(getEnabledModes());
     setCustomPoolIds(getCustomPool());
+    setIsAutoPlaying(getAutoPlay());
   }, []);
 
   useEffect(() => {
@@ -133,6 +136,16 @@ export const App: React.FC = () => {
     const pkg = getLevelPackage(levelIndex, enabledModes, customPoolIds, forcedMode);
     setLevelPackage(pkg);
   }, [levelIndex, enabledModes, customPoolIds, forcedMode]);
+
+  // AUTO-START: When auto-play is enabled and we're on the menu, automatically begin playing
+  useEffect(() => {
+    if (isAutoPlaying && mode === GameMode.MENU && levelPackage) {
+      const timer = setTimeout(() => {
+        setMode(forcedMode || levelPackage.mode);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAutoPlaying, mode, levelPackage, forcedMode]);
 
   useEffect(() => {
     if (mode !== GameMode.MENU && !isTutorialSeen()) setShowTutorial(true);
@@ -320,7 +333,7 @@ export const App: React.FC = () => {
           toggleMode={(m) => { let next = enabledModes.includes(m) ? (enabledModes.length > 1 ? enabledModes.filter(x => x !== m) : enabledModes) : [...enabledModes, m]; setEnabledModes(next); saveEnabledModes(next); }} 
           onSelectMode={(m) => { setForcedMode(m); setMode(m); setShowSettings(false); }} 
           hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} 
-          isAutoPlaying={isAutoPlaying} onToggleAutoPlay={() => setIsAutoPlaying(!isAutoPlaying)}
+          isAutoPlaying={isAutoPlaying} onToggleAutoPlay={() => { const next = !isAutoPlaying; setIsAutoPlaying(next); saveAutoPlay(next); }}
           onShowTutorial={() => setShowTutorial(true)} onResetProgress={() => { localStorage.clear(); window.location.reload(); }} 
           categories={activeCategories} privacyOptionsRequired={privacyOptionsRequired} 
           onShowPrivacyOptions={async () => { if (Capacitor.isNativePlatform()) await AdMob.showPrivacyOptionsForm().catch(() => {}); }} 

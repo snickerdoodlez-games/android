@@ -6,7 +6,8 @@ export const STORAGE_KEYS = {
   GAME_STATS: 'wpm_game_stats',
   DAILY_HISTORY: 'wpm_daily_history',
   ENABLED_MODES: 'wpm_enabled_modes',
-  CUSTOM_POOL: 'wpm_custom_pool'
+  CUSTOM_POOL: 'wpm_custom_pool',
+  AUTO_PLAY: 'wpm_auto_play'
 };
 
 export const getLocalISODate = (date: Date = new Date()): string => {
@@ -78,6 +79,18 @@ export const isTutorialSeen = (): boolean => {
 
 export const markTutorialSeen = () => {
   localStorage.setItem(STORAGE_KEYS.TUTORIAL_SEEN, 'true');
+};
+
+export const getAutoPlay = (): boolean => {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.AUTO_PLAY) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+export const saveAutoPlay = (enabled: boolean) => {
+  localStorage.setItem(STORAGE_KEYS.AUTO_PLAY, enabled ? 'true' : 'false');
 };
 
 export interface CategoryMastery {
