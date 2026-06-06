@@ -6,8 +6,6 @@ import LevelLayout from './LevelLayout';
 import { audio } from '../services/audioService';
 import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
 import { shuffleArray } from '../services/csvUtils';
-import { isModeTutorialSeen, markModeTutorialSeen } from '../services/storage';
-import { getTutorialSteps } from '../services/tutorialSolver';
 
 export default function Level1_Standard({ 
   csvData, onComplete, mode, levelIndex, hintsEnabled, onOpenSettings, setHintsEnabled,
@@ -19,17 +17,13 @@ export default function Level1_Standard({
   const [isComplete, setIsComplete] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
   const [moves, setMoves] = useState(0);
-  const [isTutorialPlaying, setIsTutorialPlaying] = useState(false);
-  const [tutorialInstruction, setTutorialInstruction] = useState<{ message: string; colorClass: string; borderColor: string } | null>(null);
 
   const startTimeRef = useRef(Date.now());
   const lastActivityRef = useRef(Date.now());
   const tileRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const particleRef = useRef<ParticleHandle>(null);
-  const [definitionTestId, setDefinitionTestId] = useState<string | null>(null);
-  const definitionTestedRef = useRef<Set<string>>(new Set());
-  const definitionTestPhaseRef = useRef<boolean>(true);
-  const tutorialCheckedRef = useRef(false);
+  const tilesRef = useRef(tiles);
+  tilesRef.current = tiles;
 
   const getModeName = useCallback(() => {
     if (mode === GameMode.LEVEL_SYNONYMS) return 'SYNONYMS';
@@ -81,7 +75,7 @@ export default function Level1_Standard({
 
   const handleTileClick = useCallback((id: string) => {
     lastActivityRef.current = Date.now();
-    if (isComplete || isSwapping || isReviewing || isTutorialPlaying) return;
+    if (isComplete || isSwapping || isReviewing) return;
     const tile = tiles.find(t => t.id === id);
     if (!tile || tile.status === 'solved' || tile.status === 'locked') return;
 
@@ -114,94 +108,12 @@ export default function Level1_Standard({
           }, 400); 
       }, 50);
     }
-  }, [isComplete, isSwapping, isReviewing, isTutorialPlaying, selectedId, tiles, checkMatches]);
+  }, [isComplete, isSwapping, isReviewing, selectedId, tiles, checkMatches]);
 
-  // --- TUTORIAL INIT ---
+  // AUTO PLAY LOGIC
   useEffect(() => {
-    if (isInitializing || tutorialCheckedRef.current) return;
-    tutorialCheckedRef.current = true;
-
-    if (!isModeTutorialSeen(mode)) {
-      setIsTutorialPlaying(true);
-      const steps = getTutorialSteps(getModeName());
-      setTutorialInstruction(steps[0]);
-    }
-  }, [isInitializing, mode, getModeName]);
-
-  // --- TUTORIAL SOLVER ---
-  useEffect(() => {
-    if (!isTutorialPlaying || isSwapping || isComplete || isReviewing) return;
-
+    if (!isAutoPlaying || isComplete || isSwapping || isReviewing) return;
     const timer = setTimeout(() => {
-      const solvedCount = tiles.filter(t => t.status === 'solved').length / 4;
-      const totalRows = tiles.length / 4;
-      const steps = getTutorialSteps(getModeName());
-
-      if (solvedCount >= 2 || solvedCount >= totalRows) {
-        setIsTutorialPlaying(false);
-        markModeTutorialSeen(mode);
-        setTutorialInstruction(steps[3]);
-        return;
-      }
-
-      if (solvedCount === 0 && selectedId === null) {
-        setTutorialInstruction(steps[0]);
-      } else if (selectedId !== null) {
-        setTutorialInstruction(steps[1]);
-      } else if (solvedCount === 1) {
-        setTutorialInstruction(steps[2]);
-      }
-
-      for (let r = 0; r < totalRows; r++) {
-        const row = tiles.slice(r * 4, r * 4 + 4);
-        if (row.some(t => t.status === 'solved')) continue;
-
-        const targetCatId = row[0].categoryId;
-        if (row.every(t => t.categoryId === targetCatId)) {
-          checkMatches(tiles);
-          return;
-        }
-
-        const wrongTileIdx = row.findIndex(t => t.categoryId !== targetCatId);
-        if (wrongTileIdx !== -1) {
-          const globalIdx = r * 4 + wrongTileIdx;
-          const correctTileIdx = tiles.findIndex((t, idx) => t.categoryId === targetCatId && idx >= (r+1) * 4);
-          if (correctTileIdx !== -1) {
-            if (selectedId === null) {
-              handleTileClick(tiles[globalIdx].id);
-            } else if (selectedId === tiles[globalIdx].id) {
-              handleTileClick(tiles[correctTileIdx].id);
-            } else {
-              handleTileClick(tiles[correctTileIdx].id);
-            }
-            return;
-          }
-        }
-      }
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [isTutorialPlaying, isSwapping, isComplete, isReviewing, tiles, selectedId, handleTileClick, checkMatches, mode, getModeName]);
-
-  // AUTO PLAY LOGIC W/ DEFINITION TESTING
-  useEffect(() => {
-    if (!isAutoPlaying || isComplete || isSwapping || isReviewing || isTutorialPlaying) return;
-    const timer = setTimeout(() => {
-      if (definitionTestPhaseRef.current) {
-        const allUnsolved = tiles.filter(t => t.status !== 'solved');
-        const unsolvedTiles = allUnsolved.filter(t => t.definition && !definitionTestedRef.current.has(t.id));
-        const hasDefinitions = allUnsolved.some(t => t.definition && t.definition.trim().length > 0);
-        const targetTestCount = Math.ceil(allUnsolved.length / 2);
-        if (!hasDefinitions) { definitionTestPhaseRef.current = false; setDefinitionTestId(null); return; }
-        if (definitionTestedRef.current.size < targetTestCount && unsolvedTiles.length > 0) {
-          if (definitionTestId === null) {
-            const pickTile = unsolvedTiles[Math.floor(Math.random() * unsolvedTiles.length)];
-            setDefinitionTestId(pickTile.id);
-          }
-          return;
-        }
-        definitionTestPhaseRef.current = false; setDefinitionTestId(null); return;
-      }
       for (let r = 0; r < tiles.length / 4; r++) {
         const row = tiles.slice(r * 4, r * 4 + 4);
         if (row.every(t => t.status === 'solved')) continue;
@@ -220,17 +132,7 @@ export default function Level1_Standard({
       }
     }, 200);
     return () => clearTimeout(timer);
-  }, [isAutoPlaying, isComplete, isSwapping, isReviewing, isTutorialPlaying, tiles, selectedId, handleTileClick, checkMatches, definitionTestId]);
-
-  useEffect(() => {
-    if (!isAutoPlaying || definitionTestId === null) return;
-    const timer = setTimeout(() => { definitionTestedRef.current.add(definitionTestId); setDefinitionTestId(null); }, 800);
-    return () => clearTimeout(timer);
-  }, [isAutoPlaying, definitionTestId]);
-
-  useEffect(() => {
-    if (!isAutoPlaying) { definitionTestedRef.current.clear(); definitionTestPhaseRef.current = true; setDefinitionTestId(null); }
-  }, [isAutoPlaying, csvData]);
+  }, [isAutoPlaying, isComplete, isSwapping, isReviewing, tiles, selectedId, handleTileClick, checkMatches]);
 
   if (isInitializing) return null;
   const displayModeName = (mode === GameMode.LEVEL_SYNONYMS ? "SYNONYMS" : mode === GameMode.LEVEL_THEMED ? themeName?.toUpperCase() || "THEMED" : "CLASSIC");
@@ -239,15 +141,6 @@ export default function Level1_Standard({
     <LevelLayout modeName={displayModeName} levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)} stars={stars}>
       <ParticleOverlay ref={particleRef} />
       <div className="flex-1 flex flex-col gap-0 h-full w-full overflow-visible relative">
-        {tutorialInstruction && (
-          <div className="absolute top-2 left-0 right-0 z-50 flex justify-center pointer-events-none">
-            <div className={`px-4 py-2 bg-black border-2 ${tutorialInstruction.borderColor} rounded-lg shadow-[0_0_20px_rgba(255,255,255,0.3)]`}>
-              <span className={`text-sm font-black uppercase tracking-wider ${tutorialInstruction.colorClass}`}>
-                {tutorialInstruction.message}
-              </span>
-            </div>
-          </div>
-        )}
          {Array.from({ length: tiles.length / 4 }).map((_, r) => {
              const row = tiles.slice(r * 4, r * 4 + 4);
              const solved = row.every(t => t.status === 'solved');
@@ -262,7 +155,7 @@ export default function Level1_Standard({
                     </div>
                   )}
                   <div className={`grid grid-cols-4 gap-0.5 w-full h-full relative z-10 transition-all duration-300 ${solved ? 'p-[10px]' : 'p-0.5'}`}>
-                    {row.map(tile => <Tile key={tile.id} data={tile} onClick={handleTileClick} showDefinitionOverride={tile.id === definitionTestId} ref={(el: any) => { if(el) tileRefs.current.set(tile.id, el); }} />)}
+                    {row.map(tile => <Tile key={tile.id} data={tile} onClick={handleTileClick} ref={(el: any) => { if(el) tileRefs.current.set(tile.id, el); }} />)}
                   </div>
                </div>
              );

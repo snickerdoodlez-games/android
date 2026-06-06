@@ -312,7 +312,7 @@ const Level7_Expansion_Medium: React.FC<any> = ({
   if (isInitializing) return null;
 
   return (
-    <LevelLayout modeName="EXPANSION (MID)" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)} stars={stars}>
+    <LevelLayout modeName="EXPANSION" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)} stars={stars}>
       <ParticleOverlay ref={particleRef} />
       <div className="flex-1 flex flex-col gap-0.5 pointer-events-auto h-full overflow-visible relative">
          {activeRowIndices.map(rIdx => {

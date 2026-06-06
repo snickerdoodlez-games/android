@@ -15,8 +15,8 @@ export interface SettingsMenuProps {
   setHintsEnabled: (val: boolean) => void;
   isAutoPlaying?: boolean;
   onToggleAutoPlay?: () => void;
-  onShowTutorialMenu?: () => void;
   onResetProgress: () => void;
+
   categories?: { name: string, isSolved: boolean }[];
   privacyOptionsRequired?: boolean;
   onShowPrivacyOptions?: () => void;

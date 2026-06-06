@@ -1,6 +1,6 @@
 
 import { CSVRow } from '../types';
-import { parseCSV } from './csvUtils';
+import { parseCSV, shuffleArray } from './csvUtils';
 import { CSV_SYNONYMS_1 } from './CSV_SYNONYMS_1';
 import { CSV_SYNONYMS_2 } from './CSV_SYNONYMS_2';
 import { CSV_SYNONYMS_3 } from './CSV_SYNONYMS_3';
@@ -22,6 +22,6 @@ export const getSynonymData = (): CSVRow[] => {
   // Only keep the header from the first file, remove duplicate headers from files 2-4
   const data = parsedData.filter(row => row.name !== 'CATEGORY' && row.name !== 'Category');
 
-  cachedSynonymData = data;
-  return data;
+  cachedSynonymData = shuffleArray(data);
+  return cachedSynonymData;
 };

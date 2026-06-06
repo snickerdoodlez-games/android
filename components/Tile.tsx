@@ -123,7 +123,10 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
 
   const handleCloseDefinition = useCallback(() => {
     setShowDefinition(false);
-  }, []);
+    // Prevent long press re-triggering immediately after closing definition
+    longPressTriggered.current = true;
+    clearLongPress();
+  }, [clearLongPress]);
 
   // Close definition on scroll
   useEffect(() => {
@@ -173,7 +176,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
         {/* Word heading */}
-        <h2 className="text-[clamp(1.25rem,5vw,2rem)] font-black font-oswald uppercase text-white text-center tracking-wider leading-tight mb-1">
+        <h2 className="text-[clamp(1.25rem,5vw,2rem)] font-black font-raleway uppercase text-white text-center tracking-wider leading-tight mb-1">
           {data.word}
         </h2>
 
@@ -183,7 +186,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
             <div className="w-12 h-0.5 bg-neon-aqua mx-auto my-4 shadow-[0_0_8px_#00FFFF]" />
             
             {/* Definition text */}
-            <p className="text-[clamp(0.8125rem,3.5vw,1.125rem)] leading-relaxed text-white font-sans text-center whitespace-normal break-words">
+            <p className="text-[clamp(0.8125rem,3.5vw,1.125rem)] leading-relaxed text-white font-raleway text-center whitespace-normal break-words">
               {data.definition}
             </p>
           </>
@@ -194,7 +197,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
 
         {/* Close button */}
         <button
-          className="block mx-auto px-8 py-2 bg-white text-black font-black font-oswald text-[clamp(0.75rem,3vw,1rem)] uppercase rounded-medium hover:scale-105 active:scale-95 transition-all"
+          className="block mx-auto px-8 py-2 bg-white text-black font-black font-raleway text-[clamp(0.75rem,3vw,1rem)] uppercase rounded-medium hover:scale-105 active:scale-95 transition-all"
           onClick={handleCloseDefinition}
         >
           TAP TO CLOSE

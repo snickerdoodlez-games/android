@@ -58,11 +58,11 @@ const ensureDataInitialized = () => {
             }
         }
 
-        initializedConsolidatedPool = Array.from(mergedMap.values()).filter(row => row.words.length >= 4);
+        initializedConsolidatedPool = shuffleArray(Array.from(mergedMap.values()).filter(row => row.words.length >= 4));
         if (initializedConsolidatedPool.length === 0) initializedConsolidatedPool = FALLBACK_DATA;
         
         // Also pre-warm global data
-        initializedGlobalPool = parseCSV(GLOBAL_CSV_DATA || "");
+        initializedGlobalPool = shuffleArray(parseCSV(GLOBAL_CSV_DATA || ""));
 
     } catch (e) {
         console.error("Critical error during CSV initialization:", e);

@@ -1,4 +1,5 @@
 import { CSVRow } from '../types';
+import { shuffleArray } from './csvUtils';
 
 const RAW_EMOJI_DATA = `
 Food,🍕🍔🍟🌮🍣🍜
@@ -331,6 +332,6 @@ export const getEmojiData = (): CSVRow[] => {
     }
   });
 
-  cachedEmojiData = data;
-  return data;
+  cachedEmojiData = shuffleArray(data);
+  return cachedEmojiData;
 };

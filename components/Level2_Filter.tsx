@@ -158,30 +158,12 @@ const Level2_Filter: React.FC<Level2Props> = ({
     }
   }, [isTransitioning, isLevelComplete, feedbackMsg, tiles, targetCategory, currentTheme, foundCount, mistakes, totalMistakes, hintTriggerCount, moves, onComplete, onGameOver]);
 
-  // AUTO PLAY LOGIC W/ DEFINITION TESTING
+  // AUTO PLAY LOGIC
   useEffect(() => {
     if (!isAutoPlaying || isLevelComplete || isTransitioning || feedbackMsg) return;
 
     const timer = setTimeout(() => {
-      // PHASE 1: Test definitions on half the unsolved tiles before solving
-      if (definitionTestPhaseRef.current) {
-        const unsolvedTiles = tiles.filter(t => t.categoryId === targetCategory?.id && t.status !== 'solved' && t.definition && !definitionTestedRef.current.has(t.id));
-        const targetTestCount = Math.ceil(tiles.filter(t => t.status !== 'solved').length / 2);
-        
-        if (definitionTestedRef.current.size < targetTestCount && unsolvedTiles.length > 0) {
-          if (definitionTestId === null) {
-            const pickTile = unsolvedTiles[Math.floor(Math.random() * unsolvedTiles.length)];
-            setDefinitionTestId(pickTile.id);
-          }
-          return;
-        }
-        
-        definitionTestPhaseRef.current = false;
-        setDefinitionTestId(null);
-        return;
-      }
-
-      // PHASE 2: Normal solving
+      // Normal solving
       const autoTick = () => {
         if (document.hidden) return;
         const targetTile = tiles.find(t => t.categoryId === targetCategory?.id && t.status !== 'solved');
@@ -190,26 +172,7 @@ const Level2_Filter: React.FC<Level2Props> = ({
       autoTick();
     }, 150);
     return () => clearTimeout(timer);
-  }, [isAutoPlaying, isLevelComplete, isTransitioning, feedbackMsg, tiles, targetCategory, handleTileClick, definitionTestId]);
-
-  // Mark definition as tested after showing it for enough time
-  useEffect(() => {
-    if (!isAutoPlaying || definitionTestId === null) return;
-    const timer = setTimeout(() => {
-      definitionTestedRef.current.add(definitionTestId);
-      setDefinitionTestId(null);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [isAutoPlaying, definitionTestId]);
-
-  // Reset definition testing state when level resets
-  useEffect(() => {
-    if (!isAutoPlaying) {
-      definitionTestedRef.current.clear();
-      definitionTestPhaseRef.current = true;
-      setDefinitionTestId(null);
-    }
-  }, [isAutoPlaying, csvData]);
+  }, [isAutoPlaying, isLevelComplete, isTransitioning, feedbackMsg, tiles, targetCategory, handleTileClick]);
 
   if (initError) return null;
 

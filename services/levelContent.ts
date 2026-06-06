@@ -2,7 +2,7 @@ import { GameMode, DETERMINISTIC_LEVEL_SEQUENCE, CSVRow } from '../types';
 import { getConsolidatedData, getGlobalData } from './csvData';
 import { getSynonymData } from './synonymData';
 import { getEmojiData } from './emojiData';
-import { getThemedDataMap } from './themeData';
+import { getThemedDataMap } from './csvThemeDataLoader';
 import { shuffleArray, checkVisualFit } from './csvUtils';
 import { getStats } from './storage';
 

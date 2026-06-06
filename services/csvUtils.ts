@@ -14,20 +14,25 @@ export function shuffleArray<T>(array: T[]): T[] {
 }
 
 // Parse a single CSV line into its field parts, handling quoted values
-function parseCSVLine(line: string): string[] {
+// Two formats are supported:
+//   1. "" pairs toggle quote mode (e.g., ""hello"" → hello)
+//   2. Single " toggles quote mode (standard CSV, e.g., "hello" → hello)
+// This ensures commas inside quoted fields are treated as content,
+// not as field separators.
+export function parseCSVLine(line: string): string[] {
   const parts: string[] = [];
   let current = '';
   let inQuote = false;
   
   for (let j = 0; j < line.length; j++) {
     const char = line[j];
-    if (char === '"') {
-      if (inQuote && line[j+1] === '"') {
-        current += '"';
-        j++;
-      } else {
-        inQuote = !inQuote;
-      }
+    if (char === '"' && line[j+1] === '"') {
+      // "" pair toggles quote mode (the format's way of marking quoted fields)
+      inQuote = !inQuote;
+      j++;  // skip the second quote of the pair
+    } else if (char === '"') {
+      // Single " also toggles quote mode for standard CSV quoting
+      inQuote = !inQuote;
     } else if (char === ',' && !inQuote) {
       parts.push(current);
       current = '';

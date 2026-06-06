@@ -196,31 +196,11 @@ const Level7_Expansion: React.FC<any> = ({
     }
   }, [isComplete, isSwapping, isExpanding, isReviewing, gridData, selectedPos, checkMatches]);
 
-  // AUTO PLAY LOGIC W/ DEFINITION TESTING
+  // AUTO PLAY LOGIC
   useEffect(() => {
     if (!isAutoPlaying || isComplete || isSwapping || isExpanding || isReviewing) return;
 
     const timer = setTimeout(() => {
-      if (definitionTestPhaseRef.current) {
-        const allTiles = gridData.flat().filter(t => t !== null) as TileData[];
-        const unsolvedTiles = allTiles.filter(t => t.status !== 'solved');
-        const tilesWithDefs = unsolvedTiles.filter(t => t.definition && !definitionTestedRef.current.has(t.id));
-        const hasDefinitions = unsolvedTiles.some(t => t.definition && t.definition.trim().length > 0);
-        const targetTestCount = Math.ceil(unsolvedTiles.length / 2);
-        
-        if (!hasDefinitions) { definitionTestPhaseRef.current = false; setDefinitionTestId(null); return; }
-        
-        if (definitionTestedRef.current.size < targetTestCount && tilesWithDefs.length > 0) {
-          if (definitionTestId === null) {
-            const pickTile = tilesWithDefs[Math.floor(Math.random() * tilesWithDefs.length)];
-            setDefinitionTestId(pickTile.id);
-          }
-          return;
-        }
-        
-        definitionTestPhaseRef.current = false; setDefinitionTestId(null); return;
-      }
-
       for (let rIdx of activeRowIndices) {
         const row = activeColIndices.map(cIdx => gridData[rIdx][cIdx]!);
         if (row.some(t => !t) || row.every(t => t.status === 'solved')) continue;
@@ -248,16 +228,6 @@ const Level7_Expansion: React.FC<any> = ({
     }, 200);
     return () => clearTimeout(timer);
   }, [isAutoPlaying, isComplete, isSwapping, isExpanding, isReviewing, gridData, selectedPos, handleTileClick, activeRowIndices, activeColIndices, csvData, checkMatches, definitionTestId]);
-
-  useEffect(() => {
-    if (!isAutoPlaying || definitionTestId === null) return;
-    const timer = setTimeout(() => { definitionTestedRef.current.add(definitionTestId); setDefinitionTestId(null); }, 800);
-    return () => clearTimeout(timer);
-  }, [isAutoPlaying, definitionTestId]);
-
-  useEffect(() => {
-    if (!isAutoPlaying) { definitionTestedRef.current.clear(); definitionTestPhaseRef.current = true; setDefinitionTestId(null); }
-  }, [isAutoPlaying, csvData]);
 
   if (isInitializing) return null;
 

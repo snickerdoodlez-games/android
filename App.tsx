@@ -19,6 +19,7 @@ import { Capacitor } from '@capacitor/core';
 import { AdMob, BannerAdSize, BannerAdPosition, AdmobConsentStatus } from '@capacitor-community/admob';
 
 // Static UI Components
+import HowToPlay from './components/HowToPlay';
 import LevelMenu from './components/LevelMenu';
 import SettingsMenu from './components/SettingsMenu';
 import StatsOverlay from './components/StatsOverlay';
@@ -82,6 +83,7 @@ const LoadingFallback: React.FC = () => (
 
 export const App: React.FC = () => {
   const [mode, setMode] = useState<GameMode>(GameMode.MENU);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [levelIndex, setLevelIndex] = useState(1); 
   const [isMusicOn, setIsMusicOn] = useState(true); 
   const [showSettings, setShowSettings] = useState(false);
@@ -223,8 +225,20 @@ export const App: React.FC = () => {
   };
 
   const renderContent = () => {
+    if (showHowToPlay) {
+      return <HowToPlay onStart={() => {
+        setShowHowToPlay(false);
+        setMode(forcedMode || (levelPackage ? levelPackage.mode : getLevelMode(levelIndex, enabledModes)));
+      }} />;
+    }
     if (mode === GameMode.MENU) {
-      return <LevelMenu onStart={() => setMode(forcedMode || (levelPackage ? levelPackage.mode : getLevelMode(levelIndex, enabledModes)))} onSettings={() => setShowSettings(true)} onStats={() => setShowStats(true)} lastLevel={levelIndex} />;
+      return <LevelMenu onStart={() => {
+        if (levelIndex === 1) {
+          setShowHowToPlay(true);
+        } else {
+          setMode(forcedMode || (levelPackage ? levelPackage.mode : getLevelMode(levelIndex, enabledModes)));
+        }
+      }} onSettings={() => setShowSettings(true)} onStats={() => setShowStats(true)} lastLevel={levelIndex} />;
     }
     if (!levelPackage || levelPackage.mode !== mode) return <LoadingFallback />;
     
@@ -287,23 +301,23 @@ export const App: React.FC = () => {
         <AndroidStatusBar />
         {showDifficultyToast && (
           <div className="fixed inset-0 flex items-center justify-center z-[5000] pointer-events-none p-6">
-            <div className="bg-black border-4 border-[#00FFFF] px-10 py-8 rounded-3xl 
-                            shadow-[0_0_30px_#00FFFF,inset_0_0_20px_#00FFFF] 
+            <div className="bg-black border-4 border-[#FE8900] px-10 py-8 rounded-3xl 
+                            shadow-[0_0_30px_#FE8900,inset_0_0_20px_#FE8900] 
                             flex flex-col items-center justify-center text-center
                             animate-pop">
               
-              {/* Icon with Neon Pink Glow */}
-              <span className="text-6xl mb-4 drop-shadow-[0_0_10px_#FF00FF]">🚀</span>
+              {/* Word Pairing Logo */}
+              <img src="/logo.svg" alt="Word Pairing" className="w-24 h-24 md:w-28 md:h-28 mb-4 drop-shadow-[0_0_15px_#FE8900]" />
               
               {/* Heading - Oswald, Big, Italicized Neon */}
-              <h2 className="text-[#00FFFF] font-black text-5xl md:text-6xl uppercase italic leading-none font-oswald tracking-tighter drop-shadow-[0_0_15px_rgba(0,255,255,0.8)]">
+              <h2 className="text-[#04DEFB] font-black text-5xl md:text-6xl uppercase italic leading-none font-oswald tracking-tighter drop-shadow-[0_0_15px_rgba(4,222,251,0.8)]">
                 {totalStars >= 50 ? "Mastery" : "Difficulty"}
                 <br />
-                <span className="text-white text-4xl md:text-5xl">Unlocked</span>
+                <span className="text-[#FE8900] text-4xl md:text-5xl drop-shadow-[0_0_10px_rgba(254,137,0,0.8)]">Unlocked</span>
               </h2>
               
               {/* Subtext */}
-              <div className="mt-6 bg-[#FF00FF] px-4 py-1 skew-x-[-12deg] shadow-[4px_4px_0px_#00FFFF]">
+              <div className="mt-6 bg-[#BED739] px-4 py-1 skew-x-[-12deg] shadow-[4px_4px_0px_#04DEFB]">
                 <p className="text-black font-black text-lg md:text-xl uppercase italic font-oswald skew-x-[12deg]">
                   {totalStars >= 50 ? "7-Row Grid Activated" : "Medium Mode Active"}
                 </p>
