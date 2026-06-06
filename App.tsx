@@ -7,8 +7,6 @@ import {
   updateStats, 
   getEnabledModes, 
   saveEnabledModes, 
-  isTutorialSeen, 
-  markTutorialSeen, 
   getCustomPool, 
   saveCustomPool, 
   getStats,
@@ -24,7 +22,6 @@ import { AdMob, BannerAdSize, BannerAdPosition, AdmobConsentStatus } from '@capa
 import LevelMenu from './components/LevelMenu';
 import SettingsMenu from './components/SettingsMenu';
 import StatsOverlay from './components/StatsOverlay';
-import TutorialOverlay from './components/TutorialOverlay';
 import CategorySelectionOverlay from './components/CategorySelectionOverlay';
 import Footer from './components/Footer';
 import { AndroidStatusBar, AndroidNavigationBar } from './components/AndroidSystemBars';
@@ -91,7 +88,6 @@ export const App: React.FC = () => {
   const [showStats, setShowStats] = useState(false);
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [hintsEnabled, setHintsEnabled] = useState(true);
-  const [showTutorial, setShowTutorial] = useState(false);
   const [activeCategories, setActiveCategories] = useState<{name: string, isSolved: boolean}[]>([]);
   const [isReviewing, setIsReviewing] = useState(false);
   const [currentSummary, setCurrentSummary] = useState<LevelSummary | null>(null);
@@ -146,10 +142,6 @@ export const App: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [isAutoPlaying, mode, levelPackage, forcedMode]);
-
-  useEffect(() => {
-    if (mode !== GameMode.MENU && !isTutorialSeen()) setShowTutorial(true);
-  }, [mode]);
 
   useEffect(() => {
     if (isAutoPlaying && isReviewing) {
@@ -321,7 +313,6 @@ export const App: React.FC = () => {
         )}
         <div className="flex-1 relative flex flex-col min-h-0 w-full overflow-hidden">
           {renderContent()}
-          {showTutorial && <TutorialOverlay mode={mode} onComplete={() => { markTutorialSeen(); setShowTutorial(false); }} />}
         </div>
         <Footer />
         <AndroidNavigationBar />
@@ -334,7 +325,7 @@ export const App: React.FC = () => {
           onSelectMode={(m) => { setForcedMode(m); setMode(m); setShowSettings(false); }} 
           hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} 
           isAutoPlaying={isAutoPlaying} onToggleAutoPlay={() => { const next = !isAutoPlaying; setIsAutoPlaying(next); saveAutoPlay(next); }}
-          onShowTutorial={() => setShowTutorial(true)} onResetProgress={() => { localStorage.clear(); window.location.reload(); }} 
+          onResetProgress={() => { localStorage.clear(); window.location.reload(); }} 
           categories={activeCategories} privacyOptionsRequired={privacyOptionsRequired} 
           onShowPrivacyOptions={async () => { if (Capacitor.isNativePlatform()) await AdMob.showPrivacyOptionsForm().catch(() => {}); }} 
         />}

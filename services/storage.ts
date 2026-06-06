@@ -3,6 +3,12 @@ export const STORAGE_KEYS = {
   TUTORIAL_SEEN: 'wpm_tutorial_seen_v2',
   TUTORIAL_SEEN_L2: 'wpm_tutorial_seen_l2',
   TUTORIAL_SEEN_L5: 'wpm_tutorial_seen_l5',
+  TUTORIAL_BASICS: 'wpm_tutorial_basics',
+  TUTORIAL_MIND_MATCH: 'wpm_tutorial_mind_match',
+  TUTORIAL_SYNONYMS: 'wpm_tutorial_synonyms',
+  TUTORIAL_THEMED: 'wpm_tutorial_themed',
+  TUTORIAL_EXPANSION: 'wpm_tutorial_expansion',
+  TUTORIAL_EMOJI: 'wpm_tutorial_emoji',
   GAME_STATS: 'wpm_game_stats',
   DAILY_HISTORY: 'wpm_daily_history',
   ENABLED_MODES: 'wpm_enabled_modes',
@@ -79,6 +85,40 @@ export const isTutorialSeen = (): boolean => {
 
 export const markTutorialSeen = () => {
   localStorage.setItem(STORAGE_KEYS.TUTORIAL_SEEN, 'true');
+};
+
+// Per-mode tutorial tracking - TUTORIAL_BASICS is the general gameplay tutorial
+export const isModeTutorialSeen = (mode: GameMode): boolean => {
+  const keyMap: Partial<Record<GameMode, string>> = {
+    [GameMode.CLASSIC]: STORAGE_KEYS.TUTORIAL_BASICS,
+    [GameMode.LEVEL_MIND_MATCH]: STORAGE_KEYS.TUTORIAL_MIND_MATCH,
+    [GameMode.LEVEL_SYNONYMS]: STORAGE_KEYS.TUTORIAL_SYNONYMS,
+    [GameMode.LEVEL_THEMED]: STORAGE_KEYS.TUTORIAL_THEMED,
+    [GameMode.LEVEL_EXPANSION]: STORAGE_KEYS.TUTORIAL_EXPANSION,
+    [GameMode.LEVEL_EMOJI]: STORAGE_KEYS.TUTORIAL_EMOJI,
+  };
+  const key = keyMap[mode];
+  if (!key) return true; // No tutorial for this mode
+  return !!localStorage.getItem(key);
+};
+
+export const markModeTutorialSeen = (mode: GameMode) => {
+  const keyMap: Partial<Record<GameMode, string>> = {
+    [GameMode.CLASSIC]: STORAGE_KEYS.TUTORIAL_BASICS,
+    [GameMode.LEVEL_MIND_MATCH]: STORAGE_KEYS.TUTORIAL_MIND_MATCH,
+    [GameMode.LEVEL_SYNONYMS]: STORAGE_KEYS.TUTORIAL_SYNONYMS,
+    [GameMode.LEVEL_THEMED]: STORAGE_KEYS.TUTORIAL_THEMED,
+    [GameMode.LEVEL_EXPANSION]: STORAGE_KEYS.TUTORIAL_EXPANSION,
+    [GameMode.LEVEL_EMOJI]: STORAGE_KEYS.TUTORIAL_EMOJI,
+  };
+  const key = keyMap[mode];
+  if (key) localStorage.setItem(key, 'true');
+};
+
+export const resetAllTutorials = () => {
+  Object.values(STORAGE_KEYS).forEach(key => {
+    if (key.startsWith('wpm_tutorial')) localStorage.removeItem(key);
+  });
 };
 
 export const getAutoPlay = (): boolean => {

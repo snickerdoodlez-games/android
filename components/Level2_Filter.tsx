@@ -50,6 +50,9 @@ const Level2_Filter: React.FC<Level2Props> = ({
   const startTimeRef = useRef(Date.now());
   const particleRef = useRef<ParticleHandle>(null);
   const solvedWordsRef = useRef<string[]>([]);
+  const [definitionTestId, setDefinitionTestId] = useState<string | null>(null);
+  const definitionTestedRef = useRef<Set<string>>(new Set());
+  const definitionTestPhaseRef = useRef<boolean>(true);
   
   const ROUNDS_TO_PLAY = 6;
   const MISTAKE_LIMIT = 5;
@@ -74,10 +77,11 @@ const Level2_Filter: React.FC<Level2Props> = ({
       const decoyPool = validatedPool.slice(1);
       setTargetCategory(target);
       const correctWords = target.words.slice(0, 6);
+      const correctDefs = target.definitions?.slice(0, 6) || [];
       const allDecoyWords = decoyPool.flatMap(c => c.words);
       const incorrectWords = shuffleArray(allDecoyWords).slice(0, 6);
       const roundTiles: TileData[] = shuffleArray([
-          ...correctWords.map(w => ({ id: Math.random().toString(36).substr(2, 9), word: w, categoryId: target.id, categoryName: target.name, status: 'neutral' as const })),
+          ...correctWords.map((w, idx) => ({ id: Math.random().toString(36).substr(2, 9), word: w, categoryId: target.id, categoryName: target.name, definition: correctDefs[idx], status: 'neutral' as const })),
           ...incorrectWords.map(w => ({ id: Math.random().toString(36).substr(2, 9), word: w, categoryId: 'incorrect', categoryName: 'Incorrect', status: 'neutral' as const }))
       ]);
       setTiles(roundTiles); 
@@ -154,17 +158,58 @@ const Level2_Filter: React.FC<Level2Props> = ({
     }
   }, [isTransitioning, isLevelComplete, feedbackMsg, tiles, targetCategory, currentTheme, foundCount, mistakes, totalMistakes, hintTriggerCount, moves, onComplete, onGameOver]);
 
-  // --- AUTO PLAY LOGIC - SPED UP ---
+  // AUTO PLAY LOGIC W/ DEFINITION TESTING
   useEffect(() => {
     if (!isAutoPlaying || isLevelComplete || isTransitioning || feedbackMsg) return;
-    const autoTick = () => {
-      if (document.hidden) return;
-      const targetTile = tiles.find(t => t.categoryId === targetCategory?.id && t.status !== 'solved');
-      if (targetTile) { handleTileClick(targetTile.id); }
-    };
-    const timer = setTimeout(autoTick, 150);
+
+    const timer = setTimeout(() => {
+      // PHASE 1: Test definitions on half the unsolved tiles before solving
+      if (definitionTestPhaseRef.current) {
+        const unsolvedTiles = tiles.filter(t => t.categoryId === targetCategory?.id && t.status !== 'solved' && t.definition && !definitionTestedRef.current.has(t.id));
+        const targetTestCount = Math.ceil(tiles.filter(t => t.status !== 'solved').length / 2);
+        
+        if (definitionTestedRef.current.size < targetTestCount && unsolvedTiles.length > 0) {
+          if (definitionTestId === null) {
+            const pickTile = unsolvedTiles[Math.floor(Math.random() * unsolvedTiles.length)];
+            setDefinitionTestId(pickTile.id);
+          }
+          return;
+        }
+        
+        definitionTestPhaseRef.current = false;
+        setDefinitionTestId(null);
+        return;
+      }
+
+      // PHASE 2: Normal solving
+      const autoTick = () => {
+        if (document.hidden) return;
+        const targetTile = tiles.find(t => t.categoryId === targetCategory?.id && t.status !== 'solved');
+        if (targetTile) { handleTileClick(targetTile.id); }
+      };
+      autoTick();
+    }, 150);
     return () => clearTimeout(timer);
-  }, [isAutoPlaying, isLevelComplete, isTransitioning, feedbackMsg, tiles, targetCategory, handleTileClick]);
+  }, [isAutoPlaying, isLevelComplete, isTransitioning, feedbackMsg, tiles, targetCategory, handleTileClick, definitionTestId]);
+
+  // Mark definition as tested after showing it for enough time
+  useEffect(() => {
+    if (!isAutoPlaying || definitionTestId === null) return;
+    const timer = setTimeout(() => {
+      definitionTestedRef.current.add(definitionTestId);
+      setDefinitionTestId(null);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [isAutoPlaying, definitionTestId]);
+
+  // Reset definition testing state when level resets
+  useEffect(() => {
+    if (!isAutoPlaying) {
+      definitionTestedRef.current.clear();
+      definitionTestPhaseRef.current = true;
+      setDefinitionTestId(null);
+    }
+  }, [isAutoPlaying, csvData]);
 
   if (initError) return null;
 
@@ -185,7 +230,7 @@ const Level2_Filter: React.FC<Level2Props> = ({
     >
       <ParticleOverlay ref={particleRef} />
       <div className="w-full flex-1 grid grid-cols-3 gap-1 p-1 min-h-0 relative z-10 h-full">
-          {tiles.map(tile => (<div key={tile.id} className="relative w-full h-full"><Tile data={tile} onClick={handleTileClick} /></div>))}
+          {tiles.map(tile => (<div key={tile.id} className="relative w-full h-full"><Tile data={tile} onClick={handleTileClick} showDefinitionOverride={tile.id === definitionTestId} /></div>))}
           {feedbackMsg && (
              <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
                  <div className="bg-black/90 border-4 border-white px-8 py-4 rounded-xl shadow-2xl animate-pop">

@@ -1,0 +1,186 @@
+# Word Pairing: Category Match — .clinerules
+
+## Project Overview
+
+**Name:** Word Pairing: Category Match  
+**Type:** React + TypeScript + Capacitor Android app  
+**Description:** A sleek, dark-mode word association puzzle game where players group related word tiles to solve categories across multiple game modes.  
+**Package:** com.snickerdoodlez.wordpairing  
+**Repository:** git@github.com:snickerdoodlez-games/android.git  
+**License:** ISC
+
+---
+
+## Tech Stack
+
+- **Framework:** React 19 + TypeScript 5.8
+- **Bundler:** Vite 6
+- **Mobile:** Capacitor 7 (Android)
+- **Animation:** Framer Motion 11.15
+- **Styling:** Tailwind CSS (via CDN in index.html)
+- **Ads:** @capacitor-community/admob
+- **Font:** Oswald (Google Fonts)
+- **UI Theme:** Neon arcade color scheme with dark background
+
+---
+
+## Build & Run Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm install` | Install all dependencies |
+| `npm run dev` | Start Vite dev server (port 3000) |
+| `npm run build` | Production build to `dist/` |
+| `npm run preview` | Preview production build |
+
+---
+
+## Project Structure
+
+```
+c:/Users/DD/New folder/gitttt/
+├── App.tsx                    # Root React component + game state machine
+├── index.tsx                  # Entry point
+├── index.html                 # HTML shell with Tailwind CDN + Oswald font
+├── types.ts                   # Shared TypeScript types, enums, game constants
+├── vite.config.ts             # Vite configuration (aliases, GEMINI_API_KEY)
+├── capacitor.config.json      # Capacitor config (outputs to dist/)
+├── metadata.json              # AI Studio metadata
+├── components/                # React components
+│   ├── Level1_Standard.tsx    # Classic mode
+│   ├── Level1_Emoji.tsx       # Emoji mode
+│   ├── Level2_Filter.tsx      # Filter mode
+│   ├── Level5_Group.tsx       # Group mode
+│   ├── Level6_Hidden.tsx      # Hidden tiles mode
+│   ├── Level7_Expansion.tsx   # Expansion mode
+│   ├── Level7_Expansion_Easy.tsx
+│   ├── Level7_Expansion_Medium.tsx
+│   ├── Level8_Cascade.tsx     # Cascade mode
+│   ├── LevelLayout.tsx        # Shared level layout wrapper
+│   ├── LevelMenu.tsx          # Level selection menu
+│   ├── LevelSuccessScreen.tsx # Level completion overlay
+│   ├── Tile.tsx               # Game tile component
+│   ├── Header.tsx / Footer.tsx# Layout components
+│   ├── SettingsMenu.tsx       # Settings overlay
+│   ├── StatsOverlay.tsx       # Player stats
+│   ├── TutorialOverlay.tsx    # Tutorial
+│   └── ...other overlays
+├── services/                  # Data & utility services
+│   ├── csvData.ts             # Main CSV data loader
+│   ├── csvPoolData*.ts        # Pool data files (1–13)
+│   ├── csvThemeData*.ts       # Theme data files (1–9)
+│   ├── csvEasy/Medium/Hard.ts # Difficulty-sorted CSV
+│   ├── csvAdd.ts              # CSV addition utilities
+│   ├── csvUtils.ts            # CSV parsing utilities
+│   ├── levelContent.ts        # Level content generation
+│   ├── levelPreCheck.ts       # Level validation
+│   ├── storage.ts             # LocalStorage persistence
+│   ├── audioService.ts        # Sound effects
+│   └── ...other data services
+├── *.tree.csv                 # CSV tree data files
+├── android/                   # Android/Capacitor native project
+└── app/                       # App build directory
+```
+
+---
+
+## Code Conventions
+
+### Imports
+```
+- React/hooks first
+- Types next
+- Services and utilities
+- Components (static first, lazy-loaded last)
+```
+
+### Naming
+- **Components:** PascalCase (e.g., `Level1_Standard.tsx`)
+- **Services:** camelCase (e.g., `audioService.ts`, `csvUtils.ts`)
+- **Types/Interfaces:** PascalCase (e.g., `CSVRow`, `TileData`)
+- **Enums:** PascalCase (e.g., `GameMode`)
+- **Constants:** UPPER_SNAKE_CASE (e.g., `HEADER_MIN_HEIGHT`)
+
+### Styling
+- **Tailwind classes** used via CDN. Do not add custom CSS unless necessary.
+- **Neon color palette** is defined in `index.html` tailwind config and `types.ts`.
+- Use `bg-neon-*`, `shadow-[0_0_15px_#COLOR,...]` patterns for glowing effects.
+- **Always use the existing neon color scheme.** Never introduce new color systems.
+- Never change the font (Oswald) without explicit instruction.
+
+### CSV Data Format
+```
+id,Category Name,"Description",Word1,"Definition1",Word2,"Definition2",...,Difficulty,BroadCategory
+```
+- Each row: id | name | description | (word + definition) pairs | difficulty | broadCategory
+- Words: alternating word-definition pairs after the description
+- Difficulty: numeric (1=easy, 3=medium, 5=hard)
+- BroadCategory: one of Nature, Animals, Astronomy, Food, History, Geography, Religion, Technology, Science, Music, Literature, Movies, Television, Economics, Politics, Lifestyle, Gaming, Cars, Sports, Art, Mythology
+
+### Game Modes (from GameMode enum)
+- `CLASSIC` - Group 4 related word tiles
+- `LEVEL_EMOJI` - Emoji tiles instead of words
+- `LEVEL_MIND_MATCH` - Timed matching rounds (20 tiles, 4 per match, 3 rounds, 3 errors)
+- `LEVEL_SYNONYMS` - Group by meaning
+- `LEVEL_THEMED` - Themed categories
+- `LEVEL_EXPANSION` / `LEVEL_CASCADE` - Advanced modes
+- `HIDDEN` - Tiles start hidden, revealed when row solved
+
+---
+
+## Critical Rules (from project_rules.md)
+
+1. **DO NOT change game logic or design unless explicitly told.**
+2. **DO NOT add/delete CSV data unless explicitly told.**
+3. **DO NOT change fonts or color schemes unless explicitly told.**
+4. **When asked to "clear cache" — clear cache only. No code changes.**
+5. **Keep neon color scheme.** Colors from the logo are encouraged.
+6. **Header/footer must not bleed into system bars.**
+7. **Timer should only appear on Mind Match level.**
+8. **A game tile should never repeat on the same level, even across categories.**
+9. **Tile swap animation:** First selected = neon blue + white glow; Second = neon pink + white glow. Words fade/fade after swap. Locked = yellow + white glow.
+10. **Hints must respect off/on toggle.**
+
+---
+
+## MCP Server Tools Available
+
+The following MCP tools are available to assist with this project:
+
+### Project-Specific MCP Tools (word-pairing-mcp)
+- **search_game_content** - Search across all CSV data files for matching words, categories, or definitions
+- **validate_manifest** - Validate metadata.json and level structure
+- **analyze_level_progression** - Analyze the deterministic level sequence
+- **audit_csv_consistency** - Check for duplicate entries or structural issues in CSV files
+- **find_unused_categories** - Find categories in data that aren't referenced by any level
+
+### General MCP Tools
+- **github-integration** - Git status, commits, branches, pushes, changelogs
+- **kanban** - Task/board management for sprint tracking
+- **guesswho-game-tester** - Game simulation and bug scanning (generic use)
+- **memory** - Knowledge graph for persistent context
+
+---
+
+## Common Tasks
+
+### Adding new CSV content
+1. Add data to the appropriate `csvPoolData*.ts` or `csvThemeData*.ts` file
+2. Follow the CSV row format: `id, name, description, word1, def1, word2, def2, ..., difficulty, broadCategory`
+3. Ensure no duplicate word tiles within the same level
+4. Use the `audit_csv_consistency` MCP tool to validate
+
+### Building for Android
+1. `npm run build` (builds to `dist/`)
+2. `npx cap copy android` (copies web assets to Android)
+3. `npx cap open android` (opens Android Studio)
+
+### Testing levels
+1. Start dev server: `npm run dev`
+2. Game runs on `http://localhost:3000`
+3. Level sequence is deterministic (see `DETERMINISTIC_LEVEL_SEQUENCE` in types.ts)
+
+### Debugging
+- Check `LevelPrecheckLog.txt` for level validation issues
+- Use `LevelPreCheck` service warnings for CSV data problems
+- Browser console for runtime errors

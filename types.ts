@@ -2,6 +2,8 @@ export interface CSVRow {
   id: string;
   name: string;
   words: string[];
+  catDict?: string; // Category description from new CSV format
+  definitions?: string[]; // Definitions for each word (same index as words)
   difficulty?: number;
   broadCategory?: string;
 }
@@ -11,6 +13,7 @@ export interface TileData {
   word: string;
   categoryId: string;
   categoryName: string;
+  definition?: string; // Word definition shown on long-click
   status: 'neutral' | 'selected' | 'solved' | 'wrong' | 'correct-preview' | 'placeholder' | 'hint' | 'exiting' | 'flipping-out' | 'flipping-in' | 'placeholder-colored' | 'locked' | 'swap-target' | 'swapping' | 'fading-out-bg';
   color?: string;
   isEmoji?: boolean;
@@ -125,14 +128,14 @@ const T = GameMode.LEVEL_THEMED;
 const X = GameMode.LEVEL_EXPANSION;
 
 export const DETERMINISTIC_LEVEL_SEQUENCE: GameMode[] = [
-  C, E, M, S, X, T, C, E, M, S, 
-  X, T, C, E, M, S, X, T, C, E, 
-  M, S, X, T, C, E, M, S, X, T, 
-  C, E, M, S, X, T, C, E, M, S, 
-  X, T, C, E, M, S, X, T, C, E, 
-  M, S, X, T, C, E, M, S, X, T, 
-  C, E, M, S, X, T, C, E, M, S, 
-  X, T, C, E, M, S, X, T, C, E, 
-  M, S, X, T, C, E, M, S, X, T, 
-  C, E, M, S, X, T, C, E, M, S
+  C, E, M, S, X, T, C, E, M, 
+  S, X, T, C, E, M, S, X, T, 
+  C, E, M, S, X, T, C, E, 
+  M, S, X, T, C, E, M, S, X, 
+  T, C, E, M, S, X, T, C, 
+  E, M, S, X, T, C, E, M, S, 
+  X, T, C, E, M, S, X, T, 
+  C, E, M, S, X, T, C, E, M, 
+  S, X, T, C, E, M, S, X, T, 
+  C, E, M, S, X, T, C, E
 ];

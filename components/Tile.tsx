@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import React from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   SELECTION_VARIANTS, 
   TEXT_VARIANTS,
@@ -20,15 +21,24 @@ interface TileProps {
   targetColor?: string; 
   isCascade?: boolean;
   isNarrow?: boolean;
-  rowCount?: number; // Added to support typographic scaling
+  rowCount?: number;
+  showDefinitionOverride?: boolean;
 }
+
+const LONG_PRESS_DURATION = 400; // ms
 
 const FONT_STYLE = { 
   fontFamily: '"Oswald", sans-serif',
   backfaceVisibility: 'hidden' as const,
 };
 
-const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disabled, targetColor, isCascade, isNarrow, rowCount, ...props }, ref) => {
+const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disabled, targetColor, isCascade, isNarrow, rowCount, showDefinitionOverride, ...props }, ref) => {
+  const [showDefinition, setShowDefinition] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
+  const pointerWasCancelled = useRef(false);
+  const tileRef = useRef<HTMLDivElement | null>(null);
+
   const isTransitioning = data.status === 'swapping' || data.status === 'swap-target';
   const isSolved = data.status === 'solved';
   const isSelected = data.status === 'selected';
@@ -50,6 +60,81 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
     styleOverride.backgroundColor = '#39FF14';
   }
 
+  const clearLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  // Begin long press timer (shared by pointer and touch events)
+  const startLongPress = useCallback(() => {
+    if (disabled) return;
+    longPressTriggered.current = false;
+    pointerWasCancelled.current = false;
+    clearLongPress();
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      setShowDefinition(true);
+    }, LONG_PRESS_DURATION);
+  }, [disabled, clearLongPress]);
+
+  // Cancel long press timer
+  const cancelLongPress = useCallback(() => {
+    clearLongPress();
+  }, [clearLongPress]);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    pointerWasCancelled.current = false;
+    startLongPress();
+  }, [startLongPress]);
+
+  const handlePointerUp = useCallback(() => {
+    // FIX: If pointercancel fired (browser detected a gesture like long-press),
+    // don't clear the timer. The timer needs to fire to show the definition overlay.
+    // Without this check, pointerup fires after pointercancel on mobile and clears
+    // the timer before it can reach LONG_PRESS_DURATION.
+    if (pointerWasCancelled.current) return;
+    cancelLongPress();
+  }, [cancelLongPress]);
+
+  const handlePointerLeave = useCallback(() => {
+    // Only cancel if this wasn't a long-press scenario (pointer was cancelled)
+    if (pointerWasCancelled.current) return;
+    cancelLongPress();
+  }, [cancelLongPress]);
+
+  // CRITICAL FIX: When the browser detects a potential gesture (like scroll or long-press),
+  // it fires pointercancel. We mark this so handlePointerUp won't clear the timer,
+  // allowing the timeout to fire and show the definition overlay.
+  const handlePointerCancel = useCallback(() => {
+    pointerWasCancelled.current = true;
+    // Intentionally do NOT clear the long press timer - let it fire.
+  }, []);
+
+  // When showDefinitionOverride is active (auto-play testing), show definition overlay
+  useEffect(() => {
+    if (showDefinitionOverride && data.definition) {
+      setShowDefinition(true);
+    } else if (!showDefinitionOverride) {
+      setShowDefinition(false);
+    }
+  }, [showDefinitionOverride, data.definition]);
+
+  const handleCloseDefinition = useCallback(() => {
+    setShowDefinition(false);
+  }, []);
+
+  // Close definition on scroll
+  useEffect(() => {
+    if (!showDefinition) return;
+    const handleScroll = () => setShowDefinition(false);
+    document.addEventListener('scroll', handleScroll, true);
+    return () => {
+      document.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [showDefinition]);
+
   const renderWordContent = () => {
     if (data.isEmoji) return data.word;
     const words = (data.word || '').trim().split(/\s+/);
@@ -67,15 +152,80 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
 
   const rainbowGradient = 'linear-gradient(to right, #FF073A, #FF5F1F, #F9FF00, #00F000, #00FFFF, #0066FF, #B026FF, #FF1FBF, #FF073A)';
 
+  // Definition overlay - renders in a portal to avoid clipping
+  const definitionOverlay = (
+    <m.div
+      key="definition-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80"
+      onClick={handleCloseDefinition}
+    >
+      <m.div
+        initial={{ scale: 0.85, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.85, opacity: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="bg-black border-2 border-white rounded-large px-8 py-8 mx-6 shadow-[0_0_40px_rgba(0,255,255,0.5)] max-w-[90vw] w-full"
+        style={{ maxWidth: '400px' }}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      >
+        {/* Word heading */}
+        <h2 className="text-[clamp(1.25rem,5vw,2rem)] font-black font-oswald uppercase text-white text-center tracking-wider leading-tight mb-1">
+          {data.word}
+        </h2>
+
+        {/* Separator */}
+        {data.definition && (
+          <>
+            <div className="w-12 h-0.5 bg-neon-aqua mx-auto my-4 shadow-[0_0_8px_#00FFFF]" />
+            
+            {/* Definition text */}
+            <p className="text-[clamp(0.8125rem,3.5vw,1.125rem)] leading-relaxed text-white font-sans text-center whitespace-normal break-words">
+              {data.definition}
+            </p>
+          </>
+        )}
+
+        {/* Separator before close button */}
+        <div className="mt-6 mb-4 w-full h-px bg-zinc-800" />
+
+        {/* Close button */}
+        <button
+          className="block mx-auto px-8 py-2 bg-white text-black font-black font-oswald text-[clamp(0.75rem,3vw,1rem)] uppercase rounded-medium hover:scale-105 active:scale-95 transition-all"
+          onClick={handleCloseDefinition}
+        >
+          TAP TO CLOSE
+        </button>
+      </m.div>
+    </m.div>
+  );
+
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center overflow-visible touch-action-manipulation">
       <m.div 
         layout
-        ref={ref}
+        ref={(el) => {
+          tileRef.current = el;
+          if (typeof ref === 'function') ref(el);
+          else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = el;
+        }}
         initial="neutral"
         animate={data.status}
         variants={SELECTION_VARIANTS}
-        onClick={() => !disabled && onClick(data.id)}
+        onClick={() => {
+          if (!disabled && !longPressTriggered.current) {
+            onClick(data.id);
+          }
+          longPressTriggered.current = false;
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
+        onPointerCancel={handlePointerCancel}
+        onContextMenu={(e: React.MouseEvent) => { e.preventDefault(); }}
         className={`relative w-full flex items-center justify-center cursor-pointer select-none rounded-small z-10 ${statusClasses} h-full touch-action-manipulation overflow-hidden`}
         style={{
           ...FONT_STYLE,
@@ -119,9 +269,9 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
            )}
          </AnimatePresence>
 
-         {/* SHINE / SHIMMER LAYER - Sped up from 0.8s */}
+         {/* SHINE / SHIMMER LAYER - No shimmer on solved tiles to preserve neon color */}
          <AnimatePresence>
-           {(isSelected || isSwapTarget || isTransitioning || isSolved) && (
+           {(isSelected || isSwapTarget || isTransitioning) && (
              <m.div 
                 className="absolute inset-0 pointer-events-none z-20 overflow-hidden"
                 initial={{ opacity: 0 }}
@@ -165,6 +315,14 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
            </m.span>
          </AnimatePresence>
       </m.div>
+
+      {/* DEFINITION OVERLAY - RENDERED VIA PORTAL TO AVOID CLIPPING */}
+      {showDefinition && createPortal(
+        <AnimatePresence>
+          {definitionOverlay}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 });

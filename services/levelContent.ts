@@ -54,19 +54,28 @@ export function validateStandardLevel(
     if (!isThemed && usedWords.has(normalizedCatName)) continue;
 
     const validWords: string[] = [];
-    for (const word of cat.words) {
+    const validIndices: number[] = [];
+    for (let wi = 0; wi < cat.words.length; wi++) {
+      const word = cat.words[wi];
       const cleanWord = word.trim().toUpperCase();
       if (usedWords.has(cleanWord)) continue;
       if (!isThemed && usedCategoryNames.has(cleanWord)) continue;
       if (!checkVisualFit(cleanWord, colCount, isEmojiMode)) continue; 
       validWords.push(word);
+      validIndices.push(wi);
     }
 
     if (validWords.length >= colCount) {
+      const finalIndices = validIndices.slice(0, colCount);
       const finalWords = validWords.slice(0, colCount);
       finalWords.forEach(w => usedWords.add(w.trim().toUpperCase()));
       usedCategoryNames.add(normalizedCatName);
-      selectedCategories.push({ ...cat, words: finalWords });
+      // Sync definitions with filtered words - preserve index alignment with words array
+      // DO NOT filter out empty strings as it breaks index alignment with finalWords
+      const finalDefinitions = cat.definitions && cat.definitions.length > 0
+        ? finalIndices.map(i => { const d = cat.definitions![i]; return d !== undefined ? d : ''; })
+        : undefined;
+      selectedCategories.push({ ...cat, words: finalWords, definitions: finalDefinitions });
     }
   }
 

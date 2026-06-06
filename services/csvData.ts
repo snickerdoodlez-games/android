@@ -48,6 +48,11 @@ const ensureDataInitialized = () => {
                 const existing = mergedMap.get(normalizedName)!;
                 const combinedWords = Array.from(new Set([...existing.words, ...row.words]));
                 existing.words = combinedWords;
+                // Also combine definitions when merging duplicate category names
+                if (row.definitions && row.definitions.length > 0) {
+                    const combinedDefs = Array.from(new Set([...(existing.definitions || []), ...row.definitions]));
+                    existing.definitions = combinedDefs;
+                }
             } else {
                 mergedMap.set(normalizedName, { ...row });
             }

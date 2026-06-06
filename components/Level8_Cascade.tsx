@@ -52,13 +52,16 @@ export default function Level8_Cascade({
   const particleRef = useRef<ParticleHandle>(null);
   const startTimeRef = useRef(Date.now());
   const spawnTimerRef = useRef<any>(null);
+  const [definitionTestId, setDefinitionTestId] = useState<string | null>(null);
+  const definitionTestedRef = useRef<Set<string>>(new Set());
+  const definitionTestPhaseRef = useRef<boolean>(true);
 
   const speedLevel = Math.floor(clearedCount / 10) + 1;
   const spawnInterval = Math.max(MIN_SPAWN_INTERVAL, INITIAL_SPAWN_INTERVAL - (speedLevel - 1) * SPEED_STEP);
 
   useEffect(() => {
-    /* fix: Using unified precheck logic from levelContent */
-    const categories = getValidatedLevelData(8, csvData, 10);
+    /* fix: Use data as-is for cascade pool - validation with 8 rows/10 cols fails since data has ~5-7 rows with 4 cols each */
+    const categories = csvData && csvData.length > 0 ? csvData : [];
     setActivePool(categories);
     setIsInitializing(false);
   }, [csvData]);
@@ -95,11 +98,16 @@ export default function Level8_Cascade({
 
       const col = availableCols[Math.floor(Math.random() * availableCols.length)];
       const cat = activePool[Math.floor(Math.random() * activePool.length)];
-      const word = cat.words[Math.floor(Math.random() * cat.words.length)];
+      const wordIdx = Math.floor(Math.random() * cat.words.length);
+      const word = cat.words[wordIdx];
+      // Prefer word-level definition (WORDDEF), fall back to category description (CATDICT)
+      const wordDef = cat.definitions?.[wordIdx];
+      const definition = (wordDef && wordDef.trim().length > 0) ? wordDef : (cat.catDict || '');
       
       const newTile: CascadeTile = {
         id: Math.random().toString(36).substr(2, 9),
         word: word,
+        definition,
         categoryId: cat.id,
         categoryName: cat.name.includes(':') ? cat.name.split(':')[1].trim() : cat.name,
         status: 'neutral',
@@ -206,6 +214,7 @@ export default function Level8_Cascade({
                     word: tCopy.word,
                     categoryId: tCopy.categoryId,
                     categoryName: tCopy.categoryName,
+                    definition: tCopy.definition,
                     color: tCopy.color,
                 };
                 next[target.r][target.c] = {
@@ -213,6 +222,7 @@ export default function Level8_Cascade({
                     word: sCopy.word,
                     categoryId: sCopy.categoryId,
                     categoryName: sCopy.categoryName,
+                    definition: sCopy.definition,
                     color: sCopy.color,
                 };
               }
@@ -302,13 +312,50 @@ export default function Level8_Cascade({
       }
   };
 
-  // AUTO PLAY LOGIC - SPED UP
+  // AUTO PLAY LOGIC W/ DEFINITION TESTING - SPED UP
   useEffect(() => {
     if (!isAutoPlaying || isGameOver || isReviewing || isSwapping) return;
 
     const autoTick = () => {
       if (document.hidden) return;
 
+      // PHASE 1: Test definitions on half the tiles before solving
+      if (definitionTestPhaseRef.current) {
+        const allTiles: CascadeTile[] = [];
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const t = grid[r][c];
+            if (t && t.definition && !definitionTestedRef.current.has(t.id)) {
+              allTiles.push(t);
+            }
+          }
+        }
+        const unsolvedCount = grid.flat().filter(t => t !== null).length;
+        const targetTestCount = Math.ceil(unsolvedCount / 2);
+        
+        // Skip definition testing phase if no tiles have definitions
+        const hasDefinitions = allTiles.length > 0;
+        
+        if (!hasDefinitions) {
+          definitionTestPhaseRef.current = false;
+          setDefinitionTestId(null);
+          return;
+        }
+        
+        if (definitionTestedRef.current.size < targetTestCount && allTiles.length > 0) {
+          if (definitionTestId === null) {
+            const pickTile = allTiles[Math.floor(Math.random() * allTiles.length)];
+            setDefinitionTestId(pickTile.id);
+          }
+          return;
+        }
+        
+        definitionTestPhaseRef.current = false;
+        setDefinitionTestId(null);
+        return;
+      }
+
+      // PHASE 2: Normal solving
       let foundCluster = false;
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
@@ -369,7 +416,26 @@ export default function Level8_Cascade({
 
     const timer = setTimeout(autoTick, 250);
     return () => clearTimeout(timer);
-  }, [isAutoPlaying, grid, isGameOver, isReviewing, isSwapping, selectedId]);
+  }, [isAutoPlaying, grid, isGameOver, isReviewing, isSwapping, selectedId, definitionTestId]);
+
+  // Mark definition as tested after showing it for enough time
+  useEffect(() => {
+    if (!isAutoPlaying || definitionTestId === null) return;
+    const timer = setTimeout(() => {
+      definitionTestedRef.current.add(definitionTestId);
+      setDefinitionTestId(null);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [isAutoPlaying, definitionTestId]);
+
+  // Reset definition testing state when level resets
+  useEffect(() => {
+    if (!isAutoPlaying) {
+      definitionTestedRef.current.clear();
+      definitionTestPhaseRef.current = true;
+      setDefinitionTestId(null);
+    }
+  }, [isAutoPlaying, csvData]);
 
   if (isInitializing) {
     return (
@@ -426,6 +492,7 @@ export default function Level8_Cascade({
                             onClick={handleTileClick} 
                             data-tile-id={tile.id}
                             isCascade={true}
+                            showDefinitionOverride={tile.id === definitionTestId}
                          />
                        </motion.div>
                      )}

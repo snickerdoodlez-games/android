@@ -15,7 +15,7 @@ export interface SettingsMenuProps {
   setHintsEnabled: (val: boolean) => void;
   isAutoPlaying?: boolean;
   onToggleAutoPlay?: () => void;
-  onShowTutorial: () => void;
+  onShowTutorialMenu?: () => void;
   onResetProgress: () => void;
   categories?: { name: string, isSolved: boolean }[];
   privacyOptionsRequired?: boolean;
@@ -35,7 +35,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
   isOpen, onClose, onMainMenu, isMusicOn, toggleMusic, 
   enabledModes, toggleMode, onSelectMode, hintsEnabled, setHintsEnabled,
   isAutoPlaying, onToggleAutoPlay, 
-  onShowTutorial, onResetProgress, categories = [],
+  onResetProgress, categories = [],
   privacyOptionsRequired,
   onShowPrivacyOptions
 }) => {
@@ -111,9 +111,6 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
         </div>
 
         <div className="mt-auto flex flex-col gap-2 pt-2 border-t border-zinc-800 shrink-0">
-            <div className="grid grid-cols-1 gap-2">
-                <button onClick={onShowTutorial} className="py-2 bg-zinc-900 border border-neon-yellow text-neon-yellow rounded-medium font-bold text-[9px] font-oswald uppercase shadow-[0_0_8px_rgba(249,255,0,0.2)]">HOW TO PLAY</button>
-            </div>
             <button 
               onClick={onToggleAutoPlay} 
               className={`col-span-2 py-2.5 rounded-medium border-2 transition-all font-bold font-oswald text-[10px] uppercase ${isAutoPlaying ? 'bg-zinc-900 border-neon-pink text-neon-pink shadow-[0_0_10px_#FF00FF]' : 'bg-black border-zinc-800 text-zinc-600'}`}

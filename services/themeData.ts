@@ -593,7 +593,11 @@ export const getThemedDataMap = (): Map<string, CSVRow[]> => {
     themesMap.get(themeName)!.push({
       id: `theme-${themeName}-${subCategory}`.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       name: subCategory,
-      words: words
+      words: words,
+      catDict: subCategory,
+      // Per-word definitions: each word gets "{subCategory}: {word}" as its definition
+      // This ensures long-press on any themed tile shows a meaningful definition
+      definitions: words.map(w => `${subCategory}: ${w}`)
     });
   }
   

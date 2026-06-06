@@ -35,7 +35,7 @@ const LevelLayout: React.FC<LevelLayoutProps> = ({
   stars
 }) => {
   return (
-    <div className="flex flex-col h-full w-full max-w-4xl mx-auto select-none overflow-hidden relative bg-black font-oswald">
+    <div className="flex flex-col h-full w-full max-w-6xl mx-auto select-none overflow-hidden relative bg-black font-oswald">
       <Header 
         modeName={modeName} 
         levelIndex={levelIndex} 

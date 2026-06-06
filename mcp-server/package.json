@@ -1,0 +1,19 @@
+{
+  "name": "word-pairing-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Word Pairing: Category Match project - provides tools for CSV data management, level validation, and project analysis",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0"
+  }
+}

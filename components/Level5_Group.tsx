@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { CSVRow, TileData, THEMES } from '../types';
+import { CSVRow, TileData, THEMES, GameMode } from '../types';
 import Tile from './Tile';
 import Header from './Header';
 import { audio } from '../services/audioService';
 import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
 import { ARCADE_OUTLINE } from '../services/tileStyles';
+import { isModeTutorialSeen, markModeTutorialSeen } from '../services/storage';
+import { getTutorialSteps } from '../services/tutorialSolver';
 
 export default function Level5_Group({ 
-    csvData, onComplete, levelIndex, onOpenSettings, isReviewing, onNext, hintsEnabled, setHintsEnabled, isAutoPlaying, stars
+    csvData, onComplete, levelIndex, onOpenSettings, isReviewing, onNext, hintsEnabled, setHintsEnabled, isAutoPlaying, stars, mode
 }: any) {
   const [tiles, setTiles] = useState<TileData[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -19,11 +21,18 @@ export default function Level5_Group({
   const [solvedWords, setSolvedWords] = useState<string[]>([]); 
   const [totalMoves, setTotalMoves] = useState(0);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isTutorialPlaying, setIsTutorialPlaying] = useState(false);
+  const [tutorialInstruction, setTutorialInstruction] = useState<{ message: string; colorClass: string; borderColor: string } | null>(null);
   
   const lastActivityRef = useRef(Date.now());
   const particleRef = useRef<ParticleHandle>(null);
   const overallStartTimeRef = useRef(Date.now());
   const tileRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [definitionTestId, setDefinitionTestId] = useState<string | null>(null);
+  const definitionTestedRef = useRef<Set<string>>(new Set());
+  const definitionTestPhaseRef = useRef<boolean>(true);
+  const tutorialCheckedRef = useRef(false);
+  const tutorialRoundRef = useRef(1);
 
   // totalRounds is derived from data length (4 categories per round)
   const totalRounds = useMemo(() => Math.floor(csvData.length / 4), [csvData]);
@@ -48,9 +57,11 @@ export default function Level5_Group({
     if (roundData.length < 4) return;
     
     const newTiles: TileData[] = [];
-    roundData.forEach(cat => {
-        cat.words.slice(0, 4).forEach(w => {
-            newTiles.push({ id: Math.random().toString(36).substr(2, 9), word: w, categoryId: cat.id, categoryName: cat.name, status: 'neutral' });
+    roundData.forEach((cat: any) => {
+        cat.words.slice(0, 4).forEach((w: string, wIdx: number) => {
+            const wordDef = cat.definitions?.[wIdx];
+            const definition = (wordDef && wordDef.trim().length > 0) ? wordDef : (cat.catDict || '');
+            newTiles.push({ id: Math.random().toString(36).substr(2, 9), word: w, categoryId: cat.id, categoryName: cat.name, definition, status: 'neutral' });
         });
     });
     setTiles(newTiles.sort(() => 0.5 - Math.random())); 
@@ -84,27 +95,6 @@ export default function Level5_Group({
     }
   }, [round, totalRounds, isReviewing, isComplete, initRound]);
 
-  // TIMER LOGIC
-  useEffect(() => {
-    if (isInitializing || isReviewing || isComplete) return;
-
-    if (timeLeft > 0) {
-      const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
-      return () => clearInterval(timer);
-    } else {
-      // ENDURANCE FAILURE: Time expired across the session
-      audio.playError();
-      onComplete({ 
-        failed: true, 
-        timeMs: Date.now() - overallStartTimeRef.current, 
-        mistakes: totalMistakes, 
-        moves: totalMoves,
-        solvedCategoryIds,
-        solvedWords
-      });
-    }
-  }, [timeLeft, isInitializing, isComplete, isReviewing, totalMistakes, totalMoves, solvedCategoryIds, solvedWords, onComplete]);
-
   const validateSelection = useCallback((ids: string[], currentTiles: TileData[]) => {
     const sel = currentTiles.filter(t => ids.includes(t.id));
     if (sel.length === 4 && sel.every(t => t.categoryId === sel[0].categoryId)) {
@@ -136,7 +126,6 @@ export default function Level5_Group({
       // Check if current round is cleared
       if (next.every(t => t.status === 'solved')) {
           if (round >= totalRounds) { 
-            // ENDURANCE SUCCESS: All rounds cleared within persistent timer
             audio.playWin(); 
             setIsComplete(true);
             onComplete({ 
@@ -147,7 +136,6 @@ export default function Level5_Group({
               solvedWords: updatedSolvedWords
             }); 
           } else {
-            // PROCEED TO NEXT ROUND: Timer is NOT touched (Carry-Over)
             setTotalMoves(prev => prev + 1);
             setTimeout(() => setRound(r => r + 1), 600); 
           }
@@ -166,7 +154,7 @@ export default function Level5_Group({
 
   const handleTileClick = useCallback((id: string) => {
     lastActivityRef.current = Date.now();
-    if (isComplete || timeLeft === 0 || isReviewing) return;
+    if (isComplete || timeLeft === 0 || isReviewing || isTutorialPlaying) return;
     const clicked = tiles.find(t => t.id === id);
     if (!clicked || clicked.status === 'solved' || clicked.status === 'wrong' || clicked.status === 'locked') return;
     
@@ -176,12 +164,108 @@ export default function Level5_Group({
     setSelectedIds(nextIds);
     setTiles(p => p.map(t => (t.status === 'solved' || t.status === 'locked') ? t : nextIds.includes(t.id) ? { ...t, status: 'selected' as const } : { ...t, status: 'neutral' as const }));
     if (nextIds.length === 4) setTimeout(() => validateSelection(nextIds, tiles), 150);
-  }, [isComplete, timeLeft, isReviewing, selectedIds, tiles, validateSelection]);
+  }, [isComplete, timeLeft, isReviewing, isTutorialPlaying, selectedIds, tiles, validateSelection]);
 
-  // AUTO PLAY LOGIC - SPED UP
+  // --- TUTORIAL INIT ---
   useEffect(() => {
-    if (!isAutoPlaying || isComplete || isReviewing || timeLeft === 0) return;
+    if (isInitializing || tutorialCheckedRef.current) return;
+    tutorialCheckedRef.current = true;
+
+    if (!isModeTutorialSeen(GameMode.LEVEL_MIND_MATCH)) {
+      setIsTutorialPlaying(true);
+      const steps = getTutorialSteps('MIND MATCH');
+      setTutorialInstruction(steps[0]);
+    }
+  }, [isInitializing]);
+
+  // --- TUTORIAL SOLVER ---
+  useEffect(() => {
+    if (!isTutorialPlaying || isComplete || isReviewing || timeLeft === 0) return;
+
     const timer = setTimeout(() => {
+      const solvedCount = activeCategoriesInRound.filter(c => c.isSolved).length;
+      const totalCats = activeCategoriesInRound.length;
+      const steps = getTutorialSteps('MIND MATCH');
+
+      // Check if tutorial should end (2+ groups solved or all solved)
+      if (solvedCount >= 2 || solvedCount >= totalCats) {
+        setIsTutorialPlaying(false);
+        markModeTutorialSeen(GameMode.LEVEL_MIND_MATCH);
+        setTutorialInstruction(steps[3]); // "YOUR TURN!"
+        return;
+      }
+
+      if (solvedCount === 0 && selectedIds.length === 0) {
+        setTutorialInstruction(steps[0]);
+      } else if (selectedIds.length > 0 && selectedIds.length < 4) {
+        setTutorialInstruction(steps[1]);
+      } else if (solvedCount === 1) {
+        setTutorialInstruction(steps[2]);
+      }
+
+      const unsolvedCategory = activeCategoriesInRound.find(c => !c.isSolved);
+      if (!unsolvedCategory) return;
+      
+      const unsolvedCategoryTiles = tiles.filter(t => t.categoryId === unsolvedCategory.id && t.status !== 'solved');
+      const nextToClick = unsolvedCategoryTiles.find(t => !selectedIds.includes(t.id));
+      
+      if (nextToClick) {
+        handleTileClick(nextToClick.id);
+      } else {
+        const currentlySelectedUnsolved = tiles.filter(t => selectedIds.includes(t.id) && t.categoryId === unsolvedCategory.id);
+        if (currentlySelectedUnsolved.length === 4) {
+          validateSelection(selectedIds, tiles);
+        }
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [isTutorialPlaying, isComplete, isReviewing, timeLeft, tiles, selectedIds, handleTileClick, round, activeCategoriesInRound, validateSelection]);
+
+  // TIMER LOGIC
+  useEffect(() => {
+    if (isInitializing || isReviewing || isComplete) return;
+
+    if (timeLeft > 0) {
+      const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
+      return () => clearInterval(timer);
+    } else {
+      audio.playError();
+      onComplete({ 
+        failed: true, 
+        timeMs: Date.now() - overallStartTimeRef.current, 
+        mistakes: totalMistakes, 
+        moves: totalMoves,
+        solvedCategoryIds,
+        solvedWords
+      });
+    }
+  }, [timeLeft, isInitializing, isComplete, isReviewing, totalMistakes, totalMoves, solvedCategoryIds, solvedWords, onComplete]);
+
+  // AUTO PLAY LOGIC W/ DEFINITION TESTING
+  useEffect(() => {
+    if (!isAutoPlaying || isComplete || isReviewing || timeLeft === 0 || isTutorialPlaying) return;
+
+    const timer = setTimeout(() => {
+      // PHASE 1: Test definitions on half the unsolved tiles before solving
+      if (definitionTestPhaseRef.current) {
+        const unsolvedTiles = tiles.filter(t => t.status !== 'solved' && t.definition && !definitionTestedRef.current.has(t.id));
+        const targetTestCount = Math.ceil(tiles.filter(t => t.status !== 'solved').length / 2);
+        
+        if (definitionTestedRef.current.size < targetTestCount && unsolvedTiles.length > 0) {
+          if (definitionTestId === null) {
+            const pickTile = unsolvedTiles[Math.floor(Math.random() * unsolvedTiles.length)];
+            setDefinitionTestId(pickTile.id);
+          }
+          return;
+        }
+        
+        definitionTestPhaseRef.current = false;
+        setDefinitionTestId(null);
+        return;
+      }
+
+      // PHASE 2: Normal solving
       const unsolvedCategory = activeCategoriesInRound.find(c => !c.isSolved);
       if (!unsolvedCategory) return;
       
@@ -198,7 +282,26 @@ export default function Level5_Group({
       }
     }, 150);
     return () => clearTimeout(timer);
-  }, [isAutoPlaying, isComplete, isReviewing, timeLeft, tiles, selectedIds, handleTileClick, round, activeCategoriesInRound, validateSelection]);
+  }, [isAutoPlaying, isComplete, isReviewing, timeLeft, isTutorialPlaying, tiles, selectedIds, handleTileClick, round, activeCategoriesInRound, validateSelection, definitionTestId]);
+
+  // Mark definition as tested after showing it for enough time
+  useEffect(() => {
+    if (!isAutoPlaying || definitionTestId === null) return;
+    const timer = setTimeout(() => {
+      definitionTestedRef.current.add(definitionTestId);
+      setDefinitionTestId(null);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [isAutoPlaying, definitionTestId]);
+
+  // Reset definition testing state when level resets
+  useEffect(() => {
+    if (!isAutoPlaying) {
+      definitionTestedRef.current.clear();
+      definitionTestPhaseRef.current = true;
+      setDefinitionTestId(null);
+    }
+  }, [isAutoPlaying, csvData]);
 
   if (isInitializing) return null;
 
@@ -211,6 +314,16 @@ export default function Level5_Group({
         </div> }
       />
       <main className="flex-1 flex flex-col p-1 w-full relative">
+        {/* Tutorial Instruction Overlay */}
+        {tutorialInstruction && (
+          <div className="absolute top-2 left-0 right-0 z-50 flex justify-center pointer-events-none">
+            <div className={`px-4 py-2 bg-black border-2 ${tutorialInstruction.borderColor} rounded-lg shadow-[0_0_20px_rgba(255,255,255,0.3)]`}>
+              <span className={`text-sm font-black uppercase tracking-wider ${tutorialInstruction.colorClass}`}>
+                {tutorialInstruction.message}
+              </span>
+            </div>
+          </div>
+        )}
           <div className="grid grid-cols-2 gap-1 mb-1">
              {activeCategoriesInRound.map(c => (
                <div key={c.name} className={`h-8 rounded-lg border-2 border-white flex items-center justify-center transition-all ${c.isSolved ? (c.color || 'bg-zinc-800') : 'bg-black'}`}>
@@ -224,7 +337,7 @@ export default function Level5_Group({
              ))}
           </div>
           <div className="grid grid-cols-4 gap-0.5 flex-1 p-0.5">
-            {tiles.map(t => <Tile key={t.id} data={t} onClick={handleTileClick} ref={(el: any) => { if(el) tileRefs.current.set(t.id, el); }} />)}
+            {tiles.map(t => <Tile key={t.id} data={t} onClick={handleTileClick} showDefinitionOverride={t.id === definitionTestId} ref={(el: any) => { if(el) tileRefs.current.set(t.id, el); }} />)}
           </div>
       </main>
       <ParticleOverlay ref={particleRef} />

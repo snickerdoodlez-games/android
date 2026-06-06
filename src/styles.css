@@ -1,0 +1,54 @@
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: #000000;
+  color: #FFFFFF;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Oswald', sans-serif;
+}
+
+/* Explicitly target all text to inherit Oswald unless overridden by specific font classes */
+* {
+  font-family: inherit;
+}
+
+/* Allow scrolling on desktop or large viewports if the UI doesn't fit */
+@media (min-width: 1024px) {
+  body {
+    overflow: auto;
+  }
+}
+/* Mobile specific override to ensure absolutely no bounce/scroll */
+@media (max-width: 1023px) {
+  body {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+}
+#root {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.next-puzzle-overlay { background: radial-gradient(circle at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.85) 100%); }
+
+.h-viewport { height: 100dvh; }
+
+/* Added rainbow-bg class */
+.rainbow-bg {
+  background: linear-gradient(to right, #FF073A, #FF5F1F, #F9FF00, #00F000, #00FFFF, #0066FF, #B026FF, #FF1FBF, #FF073A);
+  background-size: 200% 100%;
+  animation: rainbow-bg 3s linear infinite;
+}

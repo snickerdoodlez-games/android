@@ -174,12 +174,16 @@ export const getTileStatusClasses = (status: string, color?: string) => {
 
 export const getTypographicClasses = (word: string, isEmoji?: boolean, isSolved?: boolean, isCascade?: boolean, isNarrow?: boolean, rowCount: number = 0) => {
   if (isEmoji) {
-    // Dynamic Font Scaling: If 7 rows are active, the emoji font-size reduces to maintain fit
+    // Dynamic Font Scaling: If 7+ rows are active, reduce emoji size for fit
     const isCompact = rowCount >= 7;
     if (isCompact) {
-      return isSolved ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl";
+      return isSolved 
+        ? "text-[clamp(1.25rem,5vw,3rem)]" 
+        : "text-[clamp(1.5rem,6vw,3.5rem)]";
     }
-    return isSolved ? "text-3xl md:text-4xl" : "text-4xl md:text-5xl";
+    return isSolved 
+      ? "text-[clamp(1.5rem,6vw,3.5rem)]" 
+      : "text-[clamp(1.75rem,7vw,4rem)]";
   }
   
   const words = (word || '').trim().split(/\s+/);
@@ -189,13 +193,15 @@ export const getTypographicClasses = (word: string, isEmoji?: boolean, isSolved?
   let size = "text-base"; 
   
   if (isCascade || isNarrow) {
-    if (lineCount >= 3 || maxWordLen > 8) size = "text-[10px] md:text-[11px]";
-    else if (lineCount === 2 || maxWordLen > 6) size = "text-[12px] md:text-[13px]";
-    else size = "text-[14px] md:text-[16px]";
+    // Responsive font sizing with clamp(): minimum guarantees readability on small screens,
+    // viewport-relative middle scales smoothly with screen width, max allows bigger text on large screens
+    if (lineCount >= 3 || maxWordLen > 8) size = "text-[clamp(0.625rem,2.5vw,1.5rem)]";
+    else if (lineCount === 2 || maxWordLen > 6) size = "text-[clamp(0.75rem,3vw,1.75rem)]";
+    else size = "text-[clamp(0.875rem,3.5vw,2rem)]";
   } else {
-    if (lineCount >= 3 || maxWordLen > 10) size = "text-[10px] md:text-xs";
-    else if (lineCount === 2 || maxWordLen > 7) size = "text-sm md:text-base";
-    else size = "text-lg md:text-xl";
+    if (lineCount >= 3 || maxWordLen > 10) size = "text-[clamp(0.75rem,3vw,1.5rem)]";
+    else if (lineCount === 2 || maxWordLen > 7) size = "text-[clamp(0.875rem,3.75vw,1.75rem)]";
+    else size = "text-[clamp(1rem,4.5vw,2.25rem)]";
   }
 
   return `${size} font-black font-oswald uppercase leading-[1.1] tracking-wide`;
