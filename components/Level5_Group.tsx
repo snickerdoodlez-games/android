@@ -3,7 +3,6 @@ import { CSVRow, TileData, THEMES, GameMode } from '../types';
 import Tile from './Tile';
 import Header from './Header';
 import { audio } from '../services/audioService';
-import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
 import { ARCADE_OUTLINE } from '../services/tileStyles';
 
 export default function Level5_Group({ 
@@ -21,7 +20,6 @@ export default function Level5_Group({
   const [isInitializing, setIsInitializing] = useState(true);
   
   const lastActivityRef = useRef(Date.now());
-  const particleRef = useRef<ParticleHandle>(null);
   const overallStartTimeRef = useRef(Date.now());
   const tileRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -88,10 +86,6 @@ export default function Level5_Group({
       const color = THEMES[0].solvedColors[colorIndex];
       const next = currentTiles.map(t => ids.includes(t.id) ? { ...t, status: 'solved' as const, color } : t);
       setTiles(next); setSelectedIds([]);
-      ids.forEach(id => {
-          const rect = tileRefs.current.get(id)?.getBoundingClientRect();
-          if (rect && particleRef.current) particleRef.current.explode(rect.left + rect.width / 2, rect.top + rect.height / 2, "#FFFFFF");
-      });
       if (next.every(t => t.status === 'solved')) {
           if (round >= totalRounds) { 
             audio.playWin(); setIsComplete(true);
@@ -171,7 +165,6 @@ export default function Level5_Group({
             {tiles.map(t => <Tile key={t.id} data={t} onClick={handleTileClick} ref={(el: any) => { if(el) tileRefs.current.set(t.id, el); }} />)}
           </div>
       </main>
-      <ParticleOverlay ref={particleRef} />
     </div>
   );
 }

@@ -136,7 +136,7 @@ let cachedMap: Map<string, CSVRow[]> | null = null;
 /**
  * Returns a Map of theme name -> CSVRow[] (categories for that theme).
  * The result is cached after the first call.
- * This matches the API of the old getThemedDataMap from themeData.ts.
+ * Returns a Map of theme name -> CSVRow[] (categories for that theme).
  */
 export function getThemedDataMap(): Map<string, CSVRow[]> {
   if (!cachedMap) {

@@ -213,7 +213,7 @@ function handleAnalyzeLevelProgression(numLevels) {
   const match = data.match(/DETERMINISTIC_LEVEL_SEQUENCE\s*:\s*GameMode\[\]\s*=\s*\[([\s\S]*?)\]/);
   if (!match) return "Could not find DETERMINISTIC_LEVEL_SEQUENCE in types.ts";
   const modeCodes = match[1].split(",").map(s => s.trim()).filter(Boolean);
-  const modeMap = { C: "CLASSIC", E: "LEVEL_EMOJI", M: "LEVEL_MIND_MATCH", S: "LEVEL_SYNONYMS", T: "LEVEL_THEMED", X: "LEVEL_EXPANSION" };
+  const modeMap = { C: "CLASSIC", E: "LEVEL_EMOJI", M: "LEVEL_MIND_MATCH", S: "LEVEL_SYNONYMS", T: "LEVEL_THEME", X: "LEVEL_EXPANSION" };
   const modeCounts = {};
   const sequence = [];
   for (const code of modeCodes) {

@@ -67,8 +67,8 @@ c:/Users/DD/New folder/gitttt/
 │   └── ...other overlays
 ├── services/                  # Data & utility services
 │   ├── csvData.ts             # Main CSV data loader
-│   ├── csvPoolData*.ts        # Pool data files (1–13)
-│   ├── csvThemeData*.ts       # Theme data files (1–9)
+│   ├── csvPoolData*.ts        # Pool data files (1–13) USED IN THE CLASSIC, EXPANSION, MIND MATCH
+│   ├── csvThemeData*.ts       # Theme data files (1–9)  USED IN THE THEMED LEVELS
 │   ├── csvEasy/Medium/Hard.ts # Difficulty-sorted CSV
 │   ├── csvAdd.ts              # CSV addition utilities
 │   ├── csvUtils.ts            # CSV parsing utilities
@@ -118,12 +118,12 @@ id,Category Name,"Description",Word1,"Definition1",Word2,"Definition2",...,Diffi
 - BroadCategory: one of Nature, Animals, Astronomy, Food, History, Geography, Religion, Technology, Science, Music, Literature, Movies, Television, Economics, Politics, Lifestyle, Gaming, Cars, Sports, Art, Mythology
 
 ### Game Modes (from GameMode enum)
-- `CLASSIC` - Group 4 related word tiles
-- `LEVEL_EMOJI` - Emoji tiles instead of words
-- `LEVEL_MIND_MATCH` - Timed matching rounds (20 tiles, 4 per match, 3 rounds, 3 errors)
-- `LEVEL_SYNONYMS` - Group by meaning
-- `LEVEL_THEMED` - Themed categories
-- `LEVEL_EXPANSION` / `LEVEL_CASCADE` - Advanced modes
+- `CLASSIC` - Group 4 related word tiles.  Uses the csvPoolData*.ts for game data
+- `LEVEL_EMOJI` - Emoji tiles instead of words.  Uses emojiData.ts for game data
+- `LEVEL_MIND_MATCH` - Timed matching rounds (20 tiles, 4 per match, 3 rounds, 3 errors).  Uses the csvPoolData*.ts for game data
+- `LEVEL_SYNONYMS` - Group by meaning.  Uses the CSV_SYNONYMS_*.ts for game data
+- `LEVEL_THEMED` - Themed categories.  Uses the csvThemeData*.ts for game data
+- `LEVEL_EXPANSION` / `LEVEL_CASCADE` - Uses the csvPoolData*.ts for game data
 - `HIDDEN` - Tiles start hidden, revealed when row solved
 
 ---
@@ -140,6 +140,17 @@ id,Category Name,"Description",Word1,"Definition1",Word2,"Definition2",...,Diffi
 8. **A game tile should never repeat on the same level, even across categories.**
 9. **Tile swap animation:** First selected = neon blue + white glow; Second = neon pink + white glow. Words fade/fade after swap. Locked = yellow + white glow.
 10. **Hints must respect off/on toggle.**
+11. **Data source by game mode — NEVER CHANGE:**
+    - **THEMED level** → pulls data from **`csvThemeData*.ts`** files ONLY
+    - **CLASSIC level** → pulls data from **`csvPoolData*.ts`** files ONLY
+    - **MIND MATCH level** → pulls data from **`csvPoolData*.ts`** files ONLY
+    - **EXPANSION level** → pulls data from **`csvPoolData*.ts`** files ONLY
+    - **EMOJI level** → pulls data from **`emojiData.ts`** ONLY
+    - **SYNONYMS level** → pulls data from **`CSV_SYNONYMS_*.ts`** files ONLY
+    - **HIDDEN level** → pulls data from **`csvPoolData*.ts`** files ONLY
+    - **FILTER level** → pulls data from **`csvPoolData*.ts`** files ONLY
+    - **GROUP level** → pulls data from **`csvPoolData*.ts`** files ONLY
+    These mappings must never be altered. Each game mode has a dedicated data source.
 
 ---
 

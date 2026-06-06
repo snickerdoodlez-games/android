@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, ReactNode, ErrorInfo, Suspense, lazy, Component } from 'react';
+
 import { GameMode, LevelSummary } from './types';
 import { 
   getSavedLevel, 
@@ -36,6 +37,7 @@ const Level7_Expansion = lazy(() => import('./components/Level7_Expansion'));
 const Level7_Expansion_Easy = lazy(() => import('./components/Level7_Expansion_Easy'));
 const Level7_Expansion_Medium = lazy(() => import('./components/Level7_Expansion_Medium'));
 const Level8_Cascade = lazy(() => import('./components/Level8_Cascade'));
+const Level_Themed = lazy(() => import('./components/Level_Themed'));
 
 const BANNER_AD_ID = 'ca-app-pub-4096368901415767/2019330695';
 const INTERSTITIAL_AD_ID = 'ca-app-pub-4096368901415767/1153913539';
@@ -210,9 +212,10 @@ export const App: React.FC = () => {
       setTimeout(() => setShowDifficultyToast(false), 3500);
     }
 
+    // Fire-and-forget: show interstitial without blocking the level transition
     if (Capacitor.isNativePlatform()) {
-        await AdMob.showInterstitial().catch(() => {});
-        await AdMob.prepareInterstitial({ adId: INTERSTITIAL_AD_ID, isTesting: false }).catch(() => {});
+        AdMob.showInterstitial().catch(() => {});
+        AdMob.prepareInterstitial({ adId: INTERSTITIAL_AD_ID, isTesting: false }).catch(() => {});
     }
 
     const nextLevel = levelIndex + 1;
@@ -223,6 +226,7 @@ export const App: React.FC = () => {
     setIsReviewing(false);
     setCurrentSummary(null);
   };
+
 
   const renderContent = () => {
     if (showHowToPlay) {
@@ -244,7 +248,7 @@ export const App: React.FC = () => {
     
     const { data, themeName } = levelPackage;
 
-
+    // Compute derived data from levelPackage (small dataset, fast)
     const avgDiff = data.reduce((acc, row) => acc + (row.difficulty || 1), 0) / data.length;
     const catCounts: Record<string, number> = {};
     data.forEach(r => { 
@@ -253,12 +257,13 @@ export const App: React.FC = () => {
     });
     const mainCategory = Object.entries(catCounts).sort((a,b) => b[1] - a[1])[0][0];
 
-    // Star Logic for Milestone Component Swapping
     const totalStars = getStats().totalStars;
     const effectiveStars = (isReviewing && currentSummary) ? (totalStars - currentSummary.stars) : totalStars;
     const diffTier = effectiveStars < 20 ? 'easy' : (effectiveStars < 50 ? 'med' : 'hard');
 
     return (
+
+
       <Suspense fallback={<LoadingFallback />}>
         {(() => {
           switch (mode) {
@@ -271,8 +276,10 @@ export const App: React.FC = () => {
                 return <Level7_Expansion key={`exp-hard-${levelIndex}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} />;
               }
             
+            case GameMode.LEVEL_THEME:
+              return <Level_Themed key={`thm-${diffTier}-${levelIndex}`} csvData={data} mode={mode} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} themeName={themeName} stars={currentSummary?.stars} />;
+            
             case GameMode.CLASSIC:
-            case GameMode.LEVEL_THEMED:
             case GameMode.LEVEL_SYNONYMS:
               return <Level1_Standard key={`std-${diffTier}-${levelIndex}`} csvData={data} mode={mode} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} themeName={themeName} stars={currentSummary?.stars} />;
             
@@ -301,23 +308,22 @@ export const App: React.FC = () => {
         <AndroidStatusBar />
         {showDifficultyToast && (
           <div className="fixed inset-0 flex items-center justify-center z-[5000] pointer-events-none p-6">
-            <div className="bg-black border-4 border-[#FE8900] px-10 py-8 rounded-3xl 
-                            shadow-[0_0_30px_#FE8900,inset_0_0_20px_#FE8900] 
+            <div className="bg-black border-4 border-white px-10 py-8 rounded-3xl 
                             flex flex-col items-center justify-center text-center
                             animate-pop">
               
               {/* Word Pairing Logo */}
-              <img src="/logo.svg" alt="Word Pairing" className="w-24 h-24 md:w-28 md:h-28 mb-4 drop-shadow-[0_0_15px_#FE8900]" />
+              <img src="/logo.svg" alt="Word Pairing" className="w-64 h-64 md:w-36 md:h-36 mb-4" />
               
-              {/* Heading - Oswald, Big, Italicized Neon */}
-              <h2 className="text-[#04DEFB] font-black text-5xl md:text-6xl uppercase italic leading-none font-oswald tracking-tighter drop-shadow-[0_0_15px_rgba(4,222,251,0.8)]">
+              {/* Heading - Oswald, Big, Italicized */}
+              <h2 className="text-[#04DEFB] font-black text-5xl md:text-6xl uppercase italic leading-none font-oswald tracking-tighter">
                 {totalStars >= 50 ? "Mastery" : "Difficulty"}
                 <br />
-                <span className="text-[#FE8900] text-4xl md:text-5xl drop-shadow-[0_0_10px_rgba(254,137,0,0.8)]">Unlocked</span>
+                <span className="text-[#FE8900] text-4xl md:text-5xl">Unlocked</span>
               </h2>
               
               {/* Subtext */}
-              <div className="mt-6 bg-[#BED739] px-4 py-1 skew-x-[-12deg] shadow-[4px_4px_0px_#04DEFB]">
+              <div className="mt-6 bg-[#BED739] px-4 py-1 skew-x-[-12deg]">
                 <p className="text-black font-black text-lg md:text-xl uppercase italic font-oswald skew-x-[12deg]">
                   {totalStars >= 50 ? "7-Row Grid Activated" : "Medium Mode Active"}
                 </p>

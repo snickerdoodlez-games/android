@@ -4,7 +4,6 @@ import Tile from './Tile';
 import SolvedRowBackground from './SolvedRowBackground';
 import LevelLayout from './LevelLayout';
 import { audio } from '../services/audioService';
-import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
 import { shuffleArray } from '../services/csvUtils';
 
 const MAX_ROWS = 6;
@@ -32,7 +31,6 @@ const Level7_Expansion_Medium: React.FC<any> = ({
   const [mistakes, setMistakes] = useState(0);
   
   const startTimeRef = useRef(Date.now());
-  const particleRef = useRef<ParticleHandle>(null);
   const tileRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [definitionTestId, setDefinitionTestId] = useState<string | null>(null);
   const definitionTestedRef = useRef<Set<string>>(new Set());
@@ -108,10 +106,6 @@ const Level7_Expansion_Medium: React.FC<any> = ({
         activeColIndices.forEach(cIdx => {
           const tile = updatedGrid[rIdx][cIdx];
           if (tile) {
-            const rect = tileRefs.current.get(tile.id)?.getBoundingClientRect();
-            if (rect && particleRef.current) {
-              particleRef.current.explode(rect.left + rect.width / 2, rect.top + rect.height / 2, "#FFFFFF");
-            }
             updatedGrid[rIdx][cIdx] = { ...tile, status: 'solved', isSolved: true, color };
           }
         });
@@ -313,7 +307,6 @@ const Level7_Expansion_Medium: React.FC<any> = ({
 
   return (
     <LevelLayout modeName="EXPANSION" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)} stars={stars}>
-      <ParticleOverlay ref={particleRef} />
       <div className="flex-1 flex flex-col gap-0.5 pointer-events-auto h-full overflow-visible relative">
          {activeRowIndices.map(rIdx => {
              const rowTiles = activeColIndices.map(cIdx => gridData[rIdx][cIdx]);

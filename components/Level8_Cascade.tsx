@@ -6,7 +6,6 @@ import LevelLayout from './LevelLayout';
 /* fix: Redirected import to levelContent to bypass levelPreCheck filename collision */
 import { getValidatedLevelData } from '../services/levelContent';
 import { audio } from '../services/audioService';
-import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
 
 const COLS = 6;
 const ROWS = 9;
@@ -49,7 +48,6 @@ export default function Level8_Cascade({
   const [isInitializing, setIsInitializing] = useState(true);
   const [activePool, setActivePool] = useState<CSVRow[]>([]);
   
-  const particleRef = useRef<ParticleHandle>(null);
   const startTimeRef = useRef(Date.now());
   const spawnTimerRef = useRef<any>(null);
   const [definitionTestId, setDefinitionTestId] = useState<string | null>(null);
@@ -299,12 +297,6 @@ export default function Level8_Cascade({
               const next = prev.map(row => [...row]);
               toClear.forEach(key => {
                   const [r, c] = key.split(',').map(Number);
-                  const tile = next[r][c];
-                  if (tile && particleRef.current) {
-                      const el = document.querySelector(`[data-tile-id="${tile.id}"]`);
-                      const rect = el?.getBoundingClientRect();
-                      if (rect) particleRef.current.explode(rect.left + rect.width / 2, rect.top + rect.height / 2, "#FFFFFF");
-                  }
                   next[r][c] = null;
               });
               return next;
@@ -468,7 +460,6 @@ export default function Level8_Cascade({
         </div>
       }
     >
-      <ParticleOverlay ref={particleRef} />
       
       <div className="flex-1 flex flex-col items-center justify-center w-full h-full relative p-2 overflow-hidden">
          <div className="w-full h-full max-w-md bg-zinc-900/30 border-2 border-white rounded-medium relative shadow-2xl flex flex-col p-1 overflow-hidden">

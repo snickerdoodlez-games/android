@@ -5,7 +5,6 @@ import LevelLayout from './LevelLayout';
 import { getValidatedLevelData } from '../services/levelContent';
 import { MAX_WORD_LENGTH, shuffleArray } from '../services/csvUtils';
 import { audio } from '../services/audioService';
-import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
 
 interface Level2Props {
   key?: React.Key;
@@ -48,11 +47,7 @@ const Level2_Filter: React.FC<Level2Props> = ({
 
   const lastActivityRef = useRef(Date.now());
   const startTimeRef = useRef(Date.now());
-  const particleRef = useRef<ParticleHandle>(null);
   const solvedWordsRef = useRef<string[]>([]);
-  const [definitionTestId, setDefinitionTestId] = useState<string | null>(null);
-  const definitionTestedRef = useRef<Set<string>>(new Set());
-  const definitionTestPhaseRef = useRef<boolean>(true);
   
   const ROUNDS_TO_PLAY = 6;
   const MISTAKE_LIMIT = 5;
@@ -191,9 +186,8 @@ const Level2_Filter: React.FC<Level2Props> = ({
         </div>
       )}
     >
-      <ParticleOverlay ref={particleRef} />
       <div className="w-full flex-1 grid grid-cols-3 gap-1 p-1 min-h-0 relative z-10 h-full">
-          {tiles.map(tile => (<div key={tile.id} className="relative w-full h-full"><Tile data={tile} onClick={handleTileClick} showDefinitionOverride={tile.id === definitionTestId} /></div>))}
+          {tiles.map(tile => (<div key={tile.id} className="relative w-full h-full"><Tile data={tile} onClick={handleTileClick} /></div>))}
           {feedbackMsg && (
              <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
                  <div className="bg-black/90 border-4 border-white px-8 py-4 rounded-xl shadow-2xl animate-pop">

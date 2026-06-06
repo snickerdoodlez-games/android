@@ -1,6 +1,5 @@
 import { CSVRow } from '../types';
 import { MASTER_CSV_DATA } from './masterData';
-import { FAMOUS_PEOPLE_DATA } from './famousPeopleData';
 import { GLOBAL_CSV_DATA } from './globalCSV';
 import { parseCSV, MAX_WORD_LENGTH, shuffleArray } from './csvUtils';
 
@@ -9,6 +8,7 @@ export { MAX_WORD_LENGTH };
 // Module-level caches to ensure parsing only happens once
 let initializedConsolidatedPool: CSVRow[] = [];
 let initializedGlobalPool: CSVRow[] = [];
+let initializedPoolOnly: CSVRow[] = [];
 
 const FALLBACK_DATA: CSVRow[] = [
     { id: 'fb1', name: 'Colors', words: ['Red', 'Blue', 'Green', 'Yellow'] },
@@ -24,41 +24,53 @@ const FALLBACK_DATA: CSVRow[] = [
  * Initializes the data pools if they haven't been already.
  * This is called internally but can be pre-warmed.
  */
-const ensureDataInitialized = () => {
+    const ensureDataInitialized = () => {
     if (initializedConsolidatedPool.length > 0) return;
 
     try {
-        const allRows: CSVRow[] = [
-            ...parseCSV(MASTER_CSV_DATA || ""),
-            ...parseCSV(FAMOUS_PEOPLE_DATA || "")
-        ];
-
-        if (allRows.length === 0) {
-            initializedConsolidatedPool = FALLBACK_DATA;
-            return;
-        }
-
-        const mergedMap = new Map<string, CSVRow>();
-        for (const row of allRows) {
+        // Parse pool-only data (csvPoolData1-13, without famous people)
+        const poolRows = parseCSV(MASTER_CSV_DATA || "");
+        const poolMap = new Map<string, CSVRow>();
+        for (const row of poolRows) {
             if (!row.name) continue;
             const normalizedName = row.name.toUpperCase().trim();
             if (normalizedName === 'CATEGORY' || normalizedName === 'NAME' || normalizedName === '') continue;
-
-            if (mergedMap.has(normalizedName)) {
-                const existing = mergedMap.get(normalizedName)!;
-                const combinedWords = Array.from(new Set([...existing.words, ...row.words]));
-                existing.words = combinedWords;
-                // Also combine definitions when merging duplicate category names
-                if (row.definitions && row.definitions.length > 0) {
-                    const combinedDefs = Array.from(new Set([...(existing.definitions || []), ...row.definitions]));
-                    existing.definitions = combinedDefs;
+            if (poolMap.has(normalizedName)) {
+                const existing = poolMap.get(normalizedName)!;
+                // Merge words while preserving uniqueness and order
+                const existingWords = new Set(existing.words.map(w => w.toUpperCase().trim()));
+                const newWords: string[] = [];
+                const newDefs: string[] = [];
+                
+                // Start with all existing words and their definitions
+                existing.words.forEach(w => newWords.push(w));
+                if (existing.definitions) {
+                    existing.definitions.forEach(d => newDefs.push(d !== undefined ? d : ''));
                 }
+                
+                // Add new words from the duplicate row (with their definitions)
+                for (let wi = 0; wi < row.words.length; wi++) {
+                    const word = row.words[wi];
+                    const wordUpper = word.toUpperCase().trim();
+                    if (!existingWords.has(wordUpper)) {
+                        existingWords.add(wordUpper);
+                        newWords.push(word);
+                        const def = row.definitions?.[wi];
+                        newDefs.push(def !== undefined ? def : '');
+                    }
+                }
+                
+                existing.words = newWords;
+                existing.definitions = newDefs;
             } else {
-                mergedMap.set(normalizedName, { ...row });
+                poolMap.set(normalizedName, { ...row });
             }
         }
-
-        initializedConsolidatedPool = shuffleArray(Array.from(mergedMap.values()).filter(row => row.words.length >= 4));
+        initializedPoolOnly = shuffleArray(Array.from(poolMap.values()).filter(row => row.words.length >= 4));
+        
+        // Consolidated pool uses the same pool data (csvPoolData1-13)
+        // FamousPeopleData has been removed - only pool data is used
+        initializedConsolidatedPool = [...initializedPoolOnly];
         if (initializedConsolidatedPool.length === 0) initializedConsolidatedPool = FALLBACK_DATA;
         
         // Also pre-warm global data
@@ -67,12 +79,22 @@ const ensureDataInitialized = () => {
     } catch (e) {
         console.error("Critical error during CSV initialization:", e);
         initializedConsolidatedPool = FALLBACK_DATA;
+        initializedPoolOnly = FALLBACK_DATA;
     }
 };
 
 export const getConsolidatedData = (): CSVRow[] => {
   ensureDataInitialized();
   return initializedConsolidatedPool;
+};
+
+/**
+ * Returns only the pool data (csvPoolData1-13), without famous people data.
+ * Used by game modes that need only the standard pool categories.
+ */
+export const getPoolData = (): CSVRow[] => {
+    ensureDataInitialized();
+    return initializedPoolOnly;
 };
 
 export const getGlobalData = (): CSVRow[] => {
@@ -84,14 +106,6 @@ export const getRandomCategories = (count: number, sourceData?: CSVRow[]): CSVRo
   const data = sourceData || getConsolidatedData();
   if (data.length === 0) return [];
   return shuffleArray(data).slice(0, count);
-};
-
-export const getThemedCategories = (count: number, sourceData?: CSVRow[]): { name: string, categories: CSVRow[] } => {
-  const data = sourceData || getConsolidatedData();
-  return { 
-    name: "VARIETY PACK", 
-    categories: shuffleArray(data).slice(0, count) 
-  };
 };
 
 export const getWordsFromCategory = (category: CSVRow, count: number): string[] => {

@@ -141,9 +141,9 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   const renderWordContent = () => {
     if (data.isEmoji) return data.word;
     const words = (data.word || '').trim().split(/\s+/);
-    if (words.length <= 1) return <span className="max-w-full truncate">{data.word}</span>;
+    if (words.length <= 1) return <span className="max-w-full whitespace-nowrap overflow-visible">{data.word}</span>;
     return words.map((word, idx) => (
-      <span key={idx} className="block w-full leading-[1.0] whitespace-nowrap uppercase max-w-full truncate">
+      <span key={idx} className="block w-full leading-[1.0] whitespace-nowrap uppercase max-w-full overflow-visible">
         {word}
       </span>
     ));

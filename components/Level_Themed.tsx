@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { TileData, GameMode, THEMES, CSVRow } from '../types';
+import { TileData, GameMode, THEMES } from '../types';
 import Tile from './Tile';
 import SolvedRowBackground from './SolvedRowBackground';
 import LevelLayout from './LevelLayout';
 import { audio } from '../services/audioService';
 import { shuffleArray } from '../services/csvUtils';
 
-export default function Level1_Standard({ 
+export default function Level_Themed({ 
   csvData, onComplete, mode, levelIndex, hintsEnabled, onOpenSettings, setHintsEnabled,
   isReviewing, onNext, isAutoPlaying, themeName, stars
 }: any) {
@@ -125,7 +125,7 @@ export default function Level1_Standard({
   }, [isAutoPlaying, isComplete, isSwapping, isReviewing, tiles, selectedId, handleTileClick, checkMatches]);
 
   if (isInitializing) return null;
-  const displayModeName = mode === GameMode.LEVEL_SYNONYMS ? "SYNONYMS" : "CLASSIC";
+  const displayModeName = themeName || "THEME";
 
   return (
     <LevelLayout modeName={displayModeName} levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)} stars={stars}>

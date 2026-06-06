@@ -1,0 +1,13 @@
+{
+  "name": "build-pipeline-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Word Pairing: Category Match build & release pipeline",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}

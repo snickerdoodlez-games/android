@@ -130,9 +130,25 @@ export const parseCSV = (csv: string): CSVRow[] => {
  * This mimics the browser's rendering engine to see if a word fits 
  * within the physical boundaries of a game tile on the current device.
  */
+// Reusable canvas for text measurement to avoid creating new DOM elements
+let measurementCanvas: HTMLCanvasElement | null = null;
+let measurementContext: CanvasRenderingContext2D | null = null;
+
+const getMeasurementContext = (): CanvasRenderingContext2D | null => {
+  if (measurementContext) return measurementContext;
+  if (typeof window === 'undefined') return null;
+  try {
+    measurementCanvas = document.createElement('canvas');
+    measurementContext = measurementCanvas.getContext('2d');
+    return measurementContext;
+  } catch {
+    return null;
+  }
+};
+
 export const checkVisualFit = (word: string, colCount: number, isEmoji: boolean): boolean => {
-  // If we're server-side or don't have a window, skip the check
-  if (typeof window === 'undefined' || !document.createElement('canvas')) return true;
+  const context = getMeasurementContext();
+  if (!context) return true;
 
   // 1. Determine the available space for a single tile on THIS device
   const rootElement = document.getElementById('root');
@@ -147,10 +163,6 @@ export const checkVisualFit = (word: string, colCount: number, isEmoji: boolean)
   const availableWidthPerColumn = (effectiveContentWidth - (colCount - 1) * gapSize) / colCount;
 
   // 2. Measure the word using the Game's Font
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  if (!context) return true;
-
   let fontSize;
   if (isEmoji) {
     // Emojis typically use larger font sizes. Text-5xl is 3rem.
@@ -174,3 +186,4 @@ export const checkVisualFit = (word: string, colCount: number, isEmoji: boolean)
   const safetyBuffer = 6; 
   return textWidth < (availableWidthPerColumn - safetyBuffer);
 };
+

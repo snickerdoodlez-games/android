@@ -4,7 +4,6 @@ import Tile from './Tile';
 import SolvedRowBackground from './SolvedRowBackground';
 import LevelLayout from './LevelLayout';
 import { audio } from '../services/audioService';
-import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
 import { shuffleArray } from '../services/csvUtils';
 
 const Level1_Emoji: React.FC<any> = ({ 
@@ -20,7 +19,6 @@ const Level1_Emoji: React.FC<any> = ({
   const startTimeRef = useRef(Date.now());
   const lastActivityRef = useRef(Date.now());
   const tileRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const particleRef = useRef<ParticleHandle>(null);
   const GRID_WIDTH = 3;
 
   const checkMatches = useCallback((currentTiles: TileData[]) => {
@@ -36,8 +34,6 @@ const Level1_Emoji: React.FC<any> = ({
         changed = true; solvedRows++; audio.playRowSolved();
         const color = THEMES[0].solvedColors[r % THEMES[0].solvedColors.length];
         for (let i = r * GRID_WIDTH; i < r * GRID_WIDTH + GRID_WIDTH; i++) {
-          const rect = tileRefs.current.get(updatedTiles[i].id)?.getBoundingClientRect();
-          if (rect && particleRef.current) particleRef.current.explode(rect.left + rect.width / 2, rect.top + rect.height / 2, "#FFFFFF");
           updatedTiles[i] = { ...updatedTiles[i], status: 'solved', color, isSolved: true };
         }
       }
@@ -130,7 +126,6 @@ const Level1_Emoji: React.FC<any> = ({
 
   return (
     <LevelLayout modeName="EMOJI" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)} stars={stars}>
-      <ParticleOverlay ref={particleRef} />
       <div className="flex-1 flex flex-col gap-0 h-full w-full overflow-visible relative">
          {Array.from({ length: currentRowCount }).map((_, r) => {
              const row = tiles.slice(r * GRID_WIDTH, r * GRID_WIDTH + GRID_WIDTH);

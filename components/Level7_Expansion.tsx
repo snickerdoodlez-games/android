@@ -4,17 +4,15 @@ import Tile from './Tile';
 import SolvedRowBackground from './SolvedRowBackground';
 import LevelLayout from './LevelLayout';
 import { audio } from '../services/audioService';
-import ParticleOverlay, { ParticleHandle } from './ParticleOverlay';
 import { shuffleArray } from '../services/csvUtils';
 
 const MAX_ROWS = 7;
-const MAX_COLS = 5;
+const MAX_COLS = 4;
 
 const ROUND_TARGETS = [
   { rows: 3, cols: 2 }, 
   { rows: 5, cols: 3 }, 
-  { rows: 6, cols: 4 }, 
-  { rows: 7, cols: 5 }, 
+  { rows: 7, cols: 4 }, 
 ];
 
 const Level7_Expansion: React.FC<any> = ({ 
@@ -33,20 +31,17 @@ const Level7_Expansion: React.FC<any> = ({
   
   const startTimeRef = useRef(Date.now());
   const lastActivityRef = useRef(Date.now());
-  const particleRef = useRef<ParticleHandle>(null);
   const tileRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const [definitionTestId, setDefinitionTestId] = useState<string | null>(null);
-  const definitionTestedRef = useRef<Set<string>>(new Set());
-  const definitionTestPhaseRef = useRef<boolean>(true);
 
   const getSolvedRowCount = useCallback(() => {
     let count = 0;
     for (let rIdx of activeRowIndices) {
       const row = activeColIndices.map(cIdx => gridData[rIdx][cIdx]);
-      if (row.every(t => t?.status === 'solved')) count++;
+      if (row.length > 0 && row.every(t => t?.status === 'solved')) count++;
     }
     return count;
   }, [activeRowIndices, activeColIndices, gridData]);
+
 
   useEffect(() => {
     const target = ROUND_TARGETS[0];
@@ -87,7 +82,8 @@ const Level7_Expansion: React.FC<any> = ({
     const updatedGrid = currentGrid.map(row => [...row]);
     
     activeRowIndices.forEach(rIdx => {
-      const rowTiles = activeColIndices.map(cIdx => updatedGrid[rIdx][cIdx]!);
+      const rowTiles = activeColIndices.map(cIdx => updatedGrid[rIdx][cIdx]).filter(Boolean) as TileData[];
+      if (rowTiles.length === 0) return;
       const solved = rowTiles.every(t => t.status === 'solved');
       if (solved) { newlySolvedCount++; return; }
       
@@ -98,17 +94,16 @@ const Level7_Expansion: React.FC<any> = ({
         activeColIndices.forEach(cIdx => {
           const tile = updatedGrid[rIdx][cIdx];
           if (tile) {
-            const rect = tileRefs.current.get(tile.id)?.getBoundingClientRect();
-            if (rect && particleRef.current) particleRef.current.explode(rect.left + rect.width / 2, rect.top + rect.height / 2, "#FFFFFF");
             updatedGrid[rIdx][cIdx] = { ...tile, status: 'solved', isSolved: true, color };
           }
         });
       }
     });
+
     
     if (changed) setGridData(updatedGrid);
     if (newlySolvedCount === activeRowIndices.length) {
-      if (round < 4) setTimeout(() => expandGrid(), 1000);
+      if (round < ROUND_TARGETS.length) setTimeout(() => expandGrid(), 1000);
       else if (!isComplete) {
         audio.playWin(); setIsComplete(true);
         setTimeout(() => onComplete({ timeMs: Date.now() - startTimeRef.current, moves, solvedCategoryIds: csvData.slice(0, MAX_ROWS).map((c:any) => c.id), solvedWords: updatedGrid.flat().filter(t => t?.status === 'solved').map(t => t!.word) }), 1000);
@@ -118,7 +113,7 @@ const Level7_Expansion: React.FC<any> = ({
 
   const expandGrid = useCallback(() => {
     const nextRound = round + 1;
-    if (nextRound > 4) return;
+    if (nextRound > ROUND_TARGETS.length) return;
     setIsExpanding(true); audio.playLevelStart();
     const target = ROUND_TARGETS[nextRound - 1];
     setGridData(prev => {
@@ -227,13 +222,12 @@ const Level7_Expansion: React.FC<any> = ({
       }
     }, 200);
     return () => clearTimeout(timer);
-  }, [isAutoPlaying, isComplete, isSwapping, isExpanding, isReviewing, gridData, selectedPos, handleTileClick, activeRowIndices, activeColIndices, csvData, checkMatches, definitionTestId]);
+  }, [isAutoPlaying, isComplete, isSwapping, isExpanding, isReviewing, gridData, selectedPos, handleTileClick, activeRowIndices, activeColIndices, csvData, checkMatches]);
 
   if (isInitializing) return null;
 
   return (
     <LevelLayout modeName="EXPANSION" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)} stars={stars}>
-      <ParticleOverlay ref={particleRef} />
       <div className="flex-1 flex flex-col gap-0 h-full w-full overflow-visible relative">
          {activeRowIndices.map(rIdx => {
              const rowTiles = activeColIndices.map(cIdx => gridData[rIdx][cIdx]);
@@ -252,7 +246,7 @@ const Level7_Expansion: React.FC<any> = ({
                   <div className={`grid gap-0.5 w-full h-full relative z-10 transition-all duration-300 ${solved ? 'p-[10px]' : 'p-0.5'}`}
                        style={{ gridTemplateColumns: `repeat(${activeColIndices.length}, 1fr)` }}>
                     {rowTiles.map((t, cIdx) => (
-                      t && <Tile key={t.id} data={t} onClick={() => handleTileClick(rIdx, cIdx)} isNarrow={activeColIndices.length > 4} showDefinitionOverride={t.id === definitionTestId} ref={el => { if(el) tileRefs.current.set(t.id, el); }} />
+                      t && <Tile key={t.id} data={t} onClick={() => handleTileClick(rIdx, cIdx)} isNarrow={activeColIndices.length > 4} ref={el => { if(el) tileRefs.current.set(t.id, el); }} />
                     ))}
                   </div>
                </div>

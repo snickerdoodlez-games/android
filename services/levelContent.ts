@@ -1,5 +1,5 @@
 import { GameMode, DETERMINISTIC_LEVEL_SEQUENCE, CSVRow } from '../types';
-import { getConsolidatedData, getGlobalData } from './csvData';
+import { getConsolidatedData, getGlobalData, getPoolData } from './csvData';
 import { getSynonymData } from './synonymData';
 import { getEmojiData } from './emojiData';
 import { getThemedDataMap } from './csvThemeDataLoader';
@@ -44,7 +44,7 @@ export function validateStandardLevel(
   const usedWords = new Set<string>();
   const usedCategoryNames = new Set<string>();
   const shuffledPool = shuffleArray([...pool]);
-  const isThemed = mode === GameMode.LEVEL_THEMED;
+  const isThemed = mode === GameMode.LEVEL_THEME;
   const isEmojiMode = mode === GameMode.LEVEL_EMOJI;
 
   for (const cat of shuffledPool) {
@@ -103,9 +103,38 @@ export interface LevelPackage {
   themeName?: string;
 }
 
-const EXPANSION_STAGES = [{ rows: 3, cols: 2 }, { rows: 5, cols: 3 }, { rows: 6, cols: 4 }, { rows: 7, cols: 5 }];
+const EXPANSION_STAGES = [{ rows: 3, cols: 2 }, { rows: 5, cols: 3 }, { rows: 7, cols: 4 }];
+
+// Simple LRU-like cache keyed by `${levelIndex}|${enabledModes.join(',')}|${forcedMode||''}`
+const levelPackageCache = new Map<string, LevelPackage>();
+const MAX_CACHE_SIZE = 5;
+
+const getCachedLevelPackage = (key: string): LevelPackage | undefined => {
+  const cached = levelPackageCache.get(key);
+  if (cached) {
+    // Move to end (most recently used) by re-inserting
+    levelPackageCache.delete(key);
+    levelPackageCache.set(key, cached);
+    return cached;
+  }
+  return undefined;
+};
+
+const setCachedLevelPackage = (key: string, pkg: LevelPackage) => {
+  // Evict oldest if at capacity
+  if (levelPackageCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = levelPackageCache.keys().next().value;
+    if (oldestKey !== undefined) levelPackageCache.delete(oldestKey);
+  }
+  levelPackageCache.set(key, pkg);
+};
+
+export const clearLevelPackageCache = () => {
+  levelPackageCache.clear();
+};
 
 const getTargetDifficulty = (level: number, stars: number): number => {
+
   if (stars >= 50) return 5;
   if (stars >= 20) return 3;
   if (level <= 40) return 1;
@@ -128,6 +157,12 @@ export const getLevelMode = (levelIndex: number, enabledModes: GameMode[] = []):
 
 export const getLevelPackage = (levelIndex: number, enabledModes: GameMode[] = [], customPoolIds: string[] = [], forcedMode?: GameMode): LevelPackage => {
   const mode = forcedMode || getLevelMode(levelIndex, enabledModes);
+  
+  // Check cache first
+  const cacheKey = `${levelIndex}|${enabledModes.join(',')}|${forcedMode || ''}`;
+  const cached = getCachedLevelPackage(cacheKey);
+  if (cached) return cached;
+
   const stats = getStats();
   const targetDiff = getTargetDifficulty(levelIndex, stats.totalStars);
   
@@ -137,6 +172,7 @@ export const getLevelPackage = (levelIndex: number, enabledModes: GameMode[] = [
   const themeNames = Array.from(themesMap.keys()) as string[];
 
   while (attempt < MAX_ATTEMPTS) {
+
     attempt++;
     let pool: CSVRow[] = [];
     let themeName: string | undefined;
@@ -144,9 +180,13 @@ export const getLevelPackage = (levelIndex: number, enabledModes: GameMode[] = [
     switch (mode) {
       case GameMode.LEVEL_SYNONYMS: pool = getSynonymData(); break;
       case GameMode.LEVEL_EMOJI: pool = getEmojiData(); break;
-      case GameMode.LEVEL_THEMED:
-        themeName = themeNames[(levelIndex - 1 + attempt) % themeNames.length];
+      case GameMode.LEVEL_THEME:
+        // Pick ONE deterministic theme per level - NEVER change on retry
+        themeName = themeNames[levelIndex % themeNames.length];
         pool = themesMap.get(themeName || '') || getConsolidatedData();
+        break;
+      case GameMode.LEVEL_EXPANSION:
+        pool = getPoolData();
         break;
       default:
         pool = getConsolidatedData();
@@ -154,21 +194,41 @@ export const getLevelPackage = (levelIndex: number, enabledModes: GameMode[] = [
         break;
     }
 
-    const filteredPool = pool.filter(row => {
-        const rowDiff = row.difficulty || 1;
-        // MASTERY OVERRIDE: If 50+ stars, ignore the win-count gate
-        if (stats.totalStars >= 50) return rowDiff === 5 || rowDiff === 3;
-        
-        if (rowDiff === 3 && stats.totalStars < 20) return false;
-        if (rowDiff === 5) {
-            const progress = stats.categoryStarProgress[row.broadCategory || "General"];
-            if (!progress || progress.rating3ThreeStarCount < 2) return false;
-        }
-        return rowDiff === targetDiff;
-    });
+    let finalPool: CSVRow[];
     
-    let finalPool = filteredPool.length >= 8 ? filteredPool : pool.filter(r => (r.difficulty || 1) <= targetDiff);
-    if (finalPool.length < 5) finalPool = pool;
+    if (mode === GameMode.LEVEL_THEME) {
+      // THEME mode: filter by difficulty and select 5-7 rows from the theme's data
+      const filteredPool = pool.filter(row => {
+          const rowDiff = row.difficulty || 1;
+          if (stats.totalStars >= 50) return true; // Mastery: allow all difficulties
+          if (rowDiff === 1) return true; // Always allow easy
+          if (rowDiff === 3 && stats.totalStars >= 20) return true; // Medium once 20+ stars
+          if (rowDiff === 3) return false;
+          if (rowDiff === 5) {
+              const progress = stats.categoryStarProgress[row.broadCategory || "General"];
+              if (progress && progress.rating3ThreeStarCount >= 2) return true;
+              return false;
+          }
+          return false;
+      });
+      finalPool = filteredPool.length >= 5 ? filteredPool : pool;
+    } else {
+      const filteredPool = pool.filter(row => {
+          const rowDiff = row.difficulty || 1;
+          // MASTERY OVERRIDE: If 50+ stars, ignore the win-count gate
+          if (stats.totalStars >= 50) return rowDiff === 5 || rowDiff === 3;
+          
+          if (rowDiff === 3 && stats.totalStars < 20) return false;
+          if (rowDiff === 5) {
+              const progress = stats.categoryStarProgress[row.broadCategory || "General"];
+              if (!progress || progress.rating3ThreeStarCount < 2) return false;
+          }
+          return rowDiff === targetDiff;
+      });
+      
+      finalPool = filteredPool.length >= 8 ? filteredPool : pool.filter(r => (r.difficulty || 1) <= targetDiff);
+      if (finalPool.length < 5) finalPool = pool;
+    }
 
     let validationResult;
     // Determine grid size based on Mastery stars
@@ -185,8 +245,24 @@ export const getLevelPackage = (levelIndex: number, enabledModes: GameMode[] = [
       validationResult = validateStandardLevel(finalPool, rowCount, 4, levelIndex, mode);
     }
 
-    if (validationResult.isValid) return { mode, data: validationResult.data, themeName };
+    if (validationResult.isValid) {
+      const pkg: LevelPackage = { mode, data: validationResult.data, themeName };
+      setCachedLevelPackage(cacheKey, pkg);
+      return pkg;
+    }
   }
 
-  return { mode, data: getConsolidatedData().slice(0, 7) };
+  // Fallback: use theme data for THEMED levels, otherwise use pool data
+  let fallbackData: CSVRow[];
+  let fallbackThemeName: string | undefined;
+  if (mode === GameMode.LEVEL_THEME) {
+    fallbackThemeName = themeNames[levelIndex % themeNames.length];
+    fallbackData = themesMap.get(fallbackThemeName)?.slice(0, 7) || getConsolidatedData().slice(0, 7);
+  } else {
+    fallbackData = getConsolidatedData().slice(0, 7);
+  }
+  const fallback: LevelPackage = { mode, data: fallbackData, themeName: fallbackThemeName };
+  setCachedLevelPackage(cacheKey, fallback);
+  return fallback;
+
 };

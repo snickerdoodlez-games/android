@@ -36,7 +36,7 @@ const ALL_MODES = [
   GameMode.LEVEL_EMOJI,
   GameMode.LEVEL_SYNONYMS,
   GameMode.LEVEL_MIND_MATCH,
-  GameMode.LEVEL_THEMED,
+  GameMode.LEVEL_THEME,
   GameMode.LEVEL_EXPANSION
 ];
 
@@ -117,22 +117,32 @@ const DEFAULT_STATS: GameStats = {
   categoryStarProgress: {}
 };
 
+// In-memory cache for stats to avoid redundant localStorage reads
+let cachedStats: GameStats | null = null;
+
 export const getStats = (): GameStats => {
+  if (cachedStats) return cachedStats;
   try {
     const stored = localStorage.getItem(STORAGE_KEYS.GAME_STATS);
-    if (!stored) return DEFAULT_STATS;
+    if (!stored) {
+      cachedStats = DEFAULT_STATS;
+      return DEFAULT_STATS;
+    }
     const parsed = JSON.parse(stored);
-    return { 
+    cachedStats = { 
       ...DEFAULT_STATS, 
       ...parsed,
       solvedWords: Array.isArray(parsed.solvedWords) ? parsed.solvedWords : [],
       solvedBroadCategories: Array.isArray(parsed.solvedBroadCategories) ? parsed.solvedBroadCategories : [],
       categoryStarProgress: parsed.categoryStarProgress || {}
     };
+    return cachedStats;
   } catch {
+    cachedStats = DEFAULT_STATS;
     return DEFAULT_STATS;
   }
 };
+
 
 export const updateStats = (updates: Partial<GameStats> & { lastLevelStars?: number, lastLevelDifficulty?: number, lastLevelBroadCategories?: string[] }) => {
   try {
@@ -183,6 +193,9 @@ export const updateStats = (updates: Partial<GameStats> & { lastLevelStars?: num
     };
 
     localStorage.setItem(STORAGE_KEYS.GAME_STATS, JSON.stringify(updated));
+    // Invalidate the in-memory cache so next getStats() re-reads from localStorage
+    cachedStats = null;
+
   } catch (e) {
     console.error("Failed to update stats", e);
   }

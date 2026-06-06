@@ -38,7 +38,7 @@ export interface LevelSummary {
 export enum GameMode {
   MENU = 'MENU',
   CLASSIC = 'CLASSIC',
-  LEVEL_THEMED = 'LEVEL_THEMED',
+  LEVEL_THEME = 'LEVEL_THEME',
   LEVEL_EMOJI = 'LEVEL_EMOJI',
   LEVEL_MIND_MATCH = 'LEVEL_MIND_MATCH',
   LEVEL_SYNONYMS = 'LEVEL_SYNONYMS',
@@ -124,7 +124,7 @@ const C = GameMode.CLASSIC;
 const E = GameMode.LEVEL_EMOJI;
 const M = GameMode.LEVEL_MIND_MATCH;
 const S = GameMode.LEVEL_SYNONYMS;
-const T = GameMode.LEVEL_THEMED;
+const T = GameMode.LEVEL_THEME;
 const X = GameMode.LEVEL_EXPANSION;
 
 export const DETERMINISTIC_LEVEL_SEQUENCE: GameMode[] = [

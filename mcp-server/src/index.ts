@@ -469,7 +469,7 @@ async function handleAnalyzeLevelProgression(numLevels: number): Promise<string>
     "E": "LEVEL_EMOJI",
     "M": "LEVEL_MIND_MATCH",
     "S": "LEVEL_SYNONYMS",
-    "T": "LEVEL_THEMED",
+    "T": "LEVEL_THEME",
     "X": "LEVEL_EXPANSION",
   };
 

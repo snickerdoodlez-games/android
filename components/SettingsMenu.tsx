@@ -24,7 +24,7 @@ export interface SettingsMenuProps {
 
 const MODE_LABELS: Partial<Record<GameMode, string>> = {
   [GameMode.CLASSIC]: "Classic",
-  [GameMode.LEVEL_THEMED]: "Themed",
+  [GameMode.LEVEL_THEME]: "Theme",
   [GameMode.LEVEL_MIND_MATCH]: "Mind",
   [GameMode.LEVEL_SYNONYMS]: "Synonyms",
   [GameMode.LEVEL_EMOJI]: "Emoji",
