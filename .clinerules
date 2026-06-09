@@ -230,6 +230,7 @@ The following MCP tools are available to assist with this project:
 - **verify_dist** - Verify dist/ build output directory
 - **full_build_audit** - Complete build and release audit
 - **diagnose_theme_data** - Diagnose themed level data loading issues
+- **verify_mode_names** - Verify header mode name consistency across all components (checks MODE_NAME_COLORS in Header.tsx, displayModeName in Level1_Standard.tsx, modeNames in all level components, and .clinerules documentation)
 
 ### General MCP Tools
 - **github-integration** - Git status, commits, branches, pushes, changelogs

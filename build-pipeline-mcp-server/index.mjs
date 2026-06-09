@@ -299,6 +299,16 @@ const DIAGNOSE_THEME_DATA_TOOL = {
   },
 };
 
+const VERIFY_MODE_NAMES_TOOL = {
+  name: "verify_mode_names",
+  description: "Verify that header mode names are consistent across all components. Checks MODE_NAME_COLORS in Header.tsx, displayModeName in Level1_Standard.tsx, and mode names passed to LevelLayout in all level components.",
+  inputSchema: {
+    type: "object",
+    properties: {},
+    required: [],
+  },
+};
+
 // ============================================================
 // Tool Implementations
 // ============================================================
@@ -1002,6 +1012,145 @@ async function handleDiagnoseThemeData(args) {
 }
 
 // ============================================================
+// Mode Name Verification
+// ============================================================
+
+/**
+ * Known mode name → color mappings from .clinerules and Header.tsx
+ */
+const KNOWN_MODE_NAMES = {
+  'WORD PAIRING': '#00FFFF',
+  'SYNONYMS': '#39FF14',
+  'THEMED': '#FF00FF',
+  'EMOJI': '#F9FF00',
+  'MIND MATCH': '#FF5F1F',
+  'EXPANSION': '#FF073A',
+  'FILTER': '#0066FF',
+  'CASCADE': '#B026FF',
+  'GROUP': '#FF1FBF',
+  'HIDDEN': '#D400FF',
+};
+
+async function handleVerifyModeNames() {
+  const results = [];
+  results.push("## 🔍 Mode Name Consistency Verification\n");
+
+  // 1. Check Header.tsx MODE_NAME_COLORS
+  results.push("### Step 1: Header.tsx MODE_NAME_COLORS\n");
+  const headerPath = join(COMPONENTS_DIR, "Header.tsx");
+  if (!existsSync(headerPath)) {
+    results.push("❌ Header.tsx not found!\n");
+    return results.join("\n");
+  }
+  const headerContent = readTextFile(headerPath);
+  let headerMismatches = 0;
+  for (const [name, color] of Object.entries(KNOWN_MODE_NAMES)) {
+    const regex = new RegExp(`'${name}'\\s*:\\s*'${color}'`);
+    if (regex.test(headerContent)) {
+      results.push(`   ✅ ${name}: ${color}`);
+    } else {
+      // Check if the name exists with a different color
+      const nameRegex = new RegExp(`'${name}'`);
+      if (nameRegex.test(headerContent)) {
+        const colorMatch = headerContent.match(new RegExp(`'${name}'\\s*:\\s*'([^']+)'`));
+        const actualColor = colorMatch ? colorMatch[1] : 'unknown';
+        results.push(`   ⚠️  ${name}: expected ${color}, found ${actualColor}`);
+        headerMismatches++;
+      } else {
+        results.push(`   ❌ ${name}: MISSING from MODE_NAME_COLORS`);
+        headerMismatches++;
+      }
+    }
+  }
+  if (headerMismatches === 0) results.push("\n✅ All mode names match expected color values in Header.tsx");
+  else results.push(`\n⚠️  ${headerMismatches} mismatches found in Header.tsx`);
+
+  // 2. Check Level1_Standard.tsx displayModeName
+  results.push("\n### Step 2: Level1_Standard.tsx displayModeName\n");
+  const level1Path = join(COMPONENTS_DIR, "Level1_Standard.tsx");
+  if (!existsSync(level1Path)) {
+    results.push("❌ Level1_Standard.tsx not found!\n");
+    return results.join("\n");
+  }
+  const level1Content = readTextFile(level1Path);
+  if (level1Content.includes('"WORD PAIRING"')) {
+    results.push("   ✅ displayModeName uses \"WORD PAIRING\" for classic mode");
+  } else {
+    results.push("   ❌ \"WORD PAIRING\" not found in displayModeName");
+  }
+  if (level1Content.includes('"SYNONYMS"')) {
+    results.push("   ✅ displayModeName uses \"SYNONYMS\" for synonyms mode");
+  } else {
+    results.push("   ❌ \"SYNONYMS\" not found in displayModeName");
+  }
+
+  // 3. Check all level components pass correct modeName to LevelLayout/Header
+  results.push("\n### Step 3: Level Component Mode Names\n");
+  const modeNameMap = {
+    'Level1_Standard': 'WORD PAIRING',
+    'Level1_Emoji': 'EMOJI',
+    'Level_Themed': 'THEMED',
+    'Level2_Filter': 'HIDDEN',
+    'Level5_Group': 'MIND MATCH',
+    'Level7_Expansion_Easy': 'EXPANSION',
+    'Level7_Expansion_Medium': 'EXPANSION',
+    'Level7_Expansion': 'EXPANSION',
+    'Level8_Cascade': 'CASCADE',
+  };
+  let componentErrors = 0;
+  const componentFiles = readdirSync(COMPONENTS_DIR).filter(f => f.endsWith('.tsx') && !f.startsWith('Header') && !f.startsWith('LevelLayout'));
+  const foundFiles = new Set();
+  for (const [component, expectedMode] of Object.entries(modeNameMap)) {
+    const filePath = join(COMPONENTS_DIR, `${component}.tsx`);
+    if (!existsSync(filePath)) {
+      results.push(`   ⚠️  ${component}.tsx not found (may be inline in another file)`);
+      continue;
+    }
+    foundFiles.add(`${component}.tsx`);
+    const content = readTextFile(filePath);
+    const modeRegex = new RegExp(`modeName\\s*=\\s*["']${expectedMode}["']`);
+    if (modeRegex.test(content)) {
+      results.push(`   ✅ ${component}.tsx → "${expectedMode}"`);
+    } else {
+      results.push(`   ❌ ${component}.tsx: expected modeName="${expectedMode}" but not found`);
+      // Try to find what modeName it actually uses
+      const actualMatch = content.match(/modeName\s*=\s*["']([^"']+)["']/);
+      if (actualMatch) {
+        results.push(`      Found: modeName="${actualMatch[1]}"`);
+      }
+      componentErrors++;
+    }
+  }
+
+  if (componentErrors === 0) results.push("\n✅ All level components pass correct mode names");
+  else results.push(`\n⚠️  ${componentErrors} component(s) have mismatched mode names`);
+
+  // 4. Verify .clinerules documentation is consistent
+  results.push("\n### Step 4: .clinerules Documentation\n");
+  const clinerulesPath = join(PROJECT_ROOT, ".clinerules");
+  if (existsSync(clinerulesPath)) {
+    const clinerulesContent = readTextFile(clinerulesPath);
+    const documentedNames = Object.keys(KNOWN_MODE_NAMES);
+    let docErrors = 0;
+    for (const name of documentedNames) {
+      if (clinerulesContent.includes(name)) {
+        results.push(`   ✅ "${name}" documented in .clinerules`);
+      } else {
+        results.push(`   ❌ "${name}" MISSING from .clinerules`);
+        docErrors++;
+      }
+    }
+    if (docErrors === 0) results.push("\n✅ All mode names documented in .clinerules");
+    else results.push(`\n⚠️  ${docErrors} mode names missing from .clinerules`);
+  } else {
+    results.push("   ⚠️  .clinerules not found");
+  }
+
+  results.push("\n---\n✅ Mode name verification complete");
+  return results.join("\n");
+}
+
+// ============================================================
 // Server Setup
 // ============================================================
 
@@ -1020,6 +1169,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     VERIFY_DIST_TOOL,
     FULL_BUILD_AUDIT_TOOL,
     DIAGNOSE_THEME_DATA_TOOL,
+    VERIFY_MODE_NAMES_TOOL,
   ],
 }));
 
@@ -1036,6 +1186,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "verify_dist": result = await handleVerifyDist(); break;
       case "full_build_audit": result = await handleFullBuildAudit(args || {}); break;
       case "diagnose_theme_data": result = await handleDiagnoseThemeData(args || {}); break;
+      case "verify_mode_names": result = await handleVerifyModeNames(); break;
       default: throw new Error(`Unknown tool: ${name}`);
     }
     return { content: [{ type: "text", text: result }] };
