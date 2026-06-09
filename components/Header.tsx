@@ -54,7 +54,7 @@ const Header: React.FC<HeaderProps> = ({
   const MENU_ICON_PATH = "M3 6h18M3 12h18M3 18h18";
 
   const MODE_NAME_COLORS: Record<string, string> = {
-    'CLASSIC': '#00FFFF',
+    'WORD PAIRING': '#00FFFF',
     'SYNONYMS': '#39FF14',
     'THEMED': '#FF00FF',
     'EMOJI': '#F9FF00',
@@ -104,8 +104,11 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center ml-auto">
-          {/* Hint button UI suppressed per requirement */}
-          <button onClick={onOpenSettings} className="transform transition-transform active:scale-90 p-0.5">
+          <button 
+            onClick={onOpenSettings} 
+            className="transform transition-transform active:scale-90 p-0.5 min-w-[48px] min-h-[48px] flex items-center justify-center"
+            aria-label="Open settings menu"
+          >
             <ArcadeIcon path={MENU_ICON_PATH} active={true} sizeClass="w-8 h-8" color="#FFFFFF" />
           </button>
         </div>

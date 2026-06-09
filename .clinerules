@@ -47,28 +47,43 @@ c:/Users/DD/New folder/gitttt/
 ├── capacitor.config.json      # Capacitor config (outputs to dist/)
 ├── metadata.json              # AI Studio metadata
 ├── components/                # React components
-│   ├── Level1_Standard.tsx    # Classic mode
+│   ├── Level1_Standard.tsx    # Classic / Synonyms mode
 │   ├── Level1_Emoji.tsx       # Emoji mode
 │   ├── Level2_Filter.tsx      # Filter mode
-│   ├── Level5_Group.tsx       # Group mode
+│   ├── Level5_Group.tsx       # Mind Match mode
 │   ├── Level6_Hidden.tsx      # Hidden tiles mode
-│   ├── Level7_Expansion.tsx   # Expansion mode
+│   ├── Level7_Expansion.tsx   # Expansion mode (hard)
 │   ├── Level7_Expansion_Easy.tsx
 │   ├── Level7_Expansion_Medium.tsx
 │   ├── Level8_Cascade.tsx     # Cascade mode
+│   ├── Level_Themed.tsx       # Themed categories mode
 │   ├── LevelLayout.tsx        # Shared level layout wrapper
-│   ├── LevelMenu.tsx          # Level selection menu
-│   ├── LevelSuccessScreen.tsx # Level completion overlay
+│   ├── LevelMenu.tsx          # Main menu
+│   ├── LevelSuccessScreen.tsx # Level completion overlay (stub)
 │   ├── Tile.tsx               # Game tile component
-│   ├── Header.tsx / Footer.tsx# Layout components
+│   ├── Header.tsx             # Level header
+│   ├── Footer.tsx             # Ad banner footer
 │   ├── SettingsMenu.tsx       # Settings overlay
-│   ├── StatsOverlay.tsx       # Player stats
-│   ├── TutorialOverlay.tsx    # Tutorial
-│   └── ...other overlays
+│   ├── StatsOverlay.tsx       # Player stats / Hall of Fame
+│   ├── CategorySelectionOverlay.tsx  # Category pool manager
+│   ├── HowToPlay.tsx          # Tutorial screen
+│   ├── LeaderboardOverlay.tsx # Leaderboard (stub)
+│   ├── ScoreBreakdownOverlay.tsx # Score breakdown (stub)
+│   ├── CategoryListOverlay.tsx # Category list (stub)
+│   ├── AndroidSystemBars.tsx  # System bar management
+│   ├── ArcadeIcon.tsx         # SVG icon component
+│   ├── ArcadeStyledText.tsx   # Styled text component
+│   ├── LockedAnimationPool.tsx # Locked tile animation
+│   ├── NextLevelButton.tsx    # Next level button (stub)
+│   ├── SolvedRowBackground.tsx # Solved row background
+│   ├── ThemeContext.tsx        # Theme context provider
+│   └── WindowSizeClassProvider.tsx # Window size detection
 ├── services/                  # Data & utility services
 │   ├── csvData.ts             # Main CSV data loader
-│   ├── csvPoolData*.ts        # Pool data files (1–13) USED IN THE CLASSIC, EXPANSION, MIND MATCH
-│   ├── csvThemeData*.ts       # Theme data files (1–9)  USED IN THE THEMED LEVELS
+│   ├── csvPoolData1-13.ts     # Pool data files USED IN CLASSIC, EXPANSION, MIND MATCH, HIDDEN, FILTER, GROUP, CASCADE
+│   ├── csvThemeData1-9.ts     # Theme data files USED IN THEMED LEVELS
+│   ├── csvThemeDataLoader.ts  # Theme data loader
+│   ├── CSV_SYNONYMS_1-4.ts    # Synonyms data USED IN SYNONYMS LEVEL
 │   ├── csvEasy/Medium/Hard.ts # Difficulty-sorted CSV
 │   ├── csvAdd.ts              # CSV addition utilities
 │   ├── csvUtils.ts            # CSV parsing utilities
@@ -76,10 +91,26 @@ c:/Users/DD/New folder/gitttt/
 │   ├── levelPreCheck.ts       # Level validation
 │   ├── storage.ts             # LocalStorage persistence
 │   ├── audioService.ts        # Sound effects
-│   └── ...other data services
-├── *.tree.csv                 # CSV tree data files
+│   ├── antonymData.ts         # Antonym data
+│   ├── emojiData.ts           # Emoji data USED IN EMOJI LEVEL
+│   ├── globalCSV.ts           # Global CSV data
+│   ├── masterData.ts          # Master data aggregator
+│   ├── newCatData.ts          # New category data
+│   ├── rhyme.ts               # Rhyme data
+│   ├── synonymData.ts         # Synonym data
+│   ├── tileStyles.ts          # Tile styling utilities
+│   └── translationData.ts     # Translation data
+├── plugins/                   # Native plugins
+│   ├── consent.ts             # Consent management
+│   ├── privacy.ts             # Privacy options
+│   └── windowSizeClass.ts     # Window size class
 ├── android/                   # Android/Capacitor native project
-└── app/                       # App build directory
+├── app/                       # App build directory
+├── assets/                    # Build assets
+├── build-pipeline-mcp-server/ # MCP build pipeline server
+├── mcp-server/                # MCP server
+├── public/                    # Public static assets
+└── src/                       # Source styles
 ```
 
 ---
@@ -125,6 +156,31 @@ id,Category Name,"Description",Word1,"Definition1",Word2,"Definition2",...,Diffi
 - `LEVEL_THEMED` - Themed categories.  Uses the csvThemeData*.ts for game data
 - `LEVEL_EXPANSION` / `LEVEL_CASCADE` - Uses the csvPoolData*.ts for game data
 - `HIDDEN` - Tiles start hidden, revealed when row solved
+- `FILTER` / `GROUP` - Uses the csvPoolData*.ts for game data
+
+---
+
+## Accessibility Requirements
+
+### Touch Target Size
+- All interactive elements (buttons, toggles, icon buttons, clickable tiles) MUST have a minimum touch target of 48dp × 48dp.
+- Use Tailwind classes `min-w-[48px] min-h-[48px]` on buttons to ensure this.
+- Icon-only buttons (close/X, hamburger menu, etc.) must also meet this requirement.
+- If a button's visual size is smaller than 48dp, add padding or use `min-w-[48px] min-h-[48px]` with `flex items-center justify-center`.
+
+### Content Description
+- All interactive non-TextView elements MUST have a `contentDescription` or `aria-label` attribute for screen reader accessibility.
+- Icon-only buttons MUST have a descriptive `aria-label` explaining the action (e.g., `"Close settings"`, `"Open settings menu"`).
+- Images MUST have meaningful `alt` text.
+- Game tiles should have descriptive content via their visible word text.
+
+### Visual Contrast
+- App text and foreground content must maintain:
+  - **3:1 contrast ratio** for large text (18pt+ or 14pt+ bold) and graphics
+  - **4.5:1 contrast ratio** for small text (less than 18pt or less than 14pt bold)
+- The neon color scheme on black background generally provides strong contrast.
+- Avoid pairing low-contrast colors (e.g., light gray on white, dark gray on black) for text readability.
+- Text on `bg-zinc-900` or `bg-black` backgrounds should use white or bright neon colors for sufficient contrast.
 
 ---
 
@@ -165,11 +221,42 @@ The following MCP tools are available to assist with this project:
 - **audit_csv_consistency** - Check for duplicate entries or structural issues in CSV files
 - **find_unused_categories** - Find categories in data that aren't referenced by any level
 
+### Build Pipeline MCP Tools (build-pipeline-mcp-server)
+- **bump_version** - Bump the app version in capacitor.config.json, package.json, and build.gradle
+- **validate_build** - Run `npm run build` and validate output
+- **validate_capacitor_config** - Validate Capacitor configuration for Android
+- **check_admob_ids** - Check AdMob ad unit IDs (test vs production)
+- **generate_changelog** - Generate changelog from git history
+- **verify_dist** - Verify dist/ build output directory
+- **full_build_audit** - Complete build and release audit
+- **diagnose_theme_data** - Diagnose themed level data loading issues
+
 ### General MCP Tools
 - **github-integration** - Git status, commits, branches, pushes, changelogs
 - **kanban** - Task/board management for sprint tracking
 - **guesswho-game-tester** - Game simulation and bug scanning (generic use)
 - **memory** - Knowledge graph for persistent context
+
+---
+
+## Header Mode Names
+
+The Header component displays the current game mode name using `ArcadeStyledText`. Each mode maps to a color:
+
+| Mode Name | Color |
+|-----------|-------|
+| `WORD PAIRING` | `#00FFFF` (cyan) |
+| `SYNONYMS` | `#39FF14` (green) |
+| `THEMED` | `#FF00FF` (magenta) |
+| `EMOJI` | `#F9FF00` (yellow) |
+| `MIND MATCH` | `#FF5F1F` (orange) |
+| `EXPANSION` | `#FF073A` (red) |
+| `FILTER` | `#0066FF` (blue) |
+| `CASCADE` | `#B026FF` (violet) |
+| `GROUP` | `#FF1FBF` (pink) |
+| `HIDDEN` | `#D400FF` (purple) |
+
+In `Level1_Standard.tsx`, the `displayModeName` is set to `"WORD PAIRING"` (the default CLASSIC mode display name) or `"SYNONYMS"` when in synonyms mode.
 
 ---
 
@@ -195,3 +282,8 @@ The following MCP tools are available to assist with this project:
 - Check `LevelPrecheckLog.txt` for level validation issues
 - Use `LevelPreCheck` service warnings for CSV data problems
 - Browser console for runtime errors
+
+### Accessibility Audits
+1. Verify touch target sizes: All interactive buttons must have `min-w-[48px] min-h-[48px]`
+2. Verify content descriptions: Check for `aria-label` on all icon-only buttons and interactive elements
+3. Check color contrast: Ensure text on dark backgrounds uses bright neon or white colors
