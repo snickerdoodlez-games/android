@@ -3,9 +3,8 @@ plugins {
     id 'com.google.gms.google-services'
     id 'com.google.firebase.firebase-perf'
     id 'com.google.firebase.crashlytics'
-
-    // This line is now correct because the plugin is defined in the root project
-
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 android {
     namespace "com.snickerdoodlez.wordpairing"
@@ -14,13 +13,22 @@ android {
         applicationId "com.snickerdoodlez.wordpairing"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5005909
-        versionName "5005909"
+        versionCode 5005927
+        versionName "5005927"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
     }
+    signingConfigs {
+        release {
+            storeFile file('../../key')
+            storePassword 'Proto123@'
+            keyAlias 'key0'
+            keyPassword 'Proto123@'
+        }
+    }
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             ndk {
@@ -35,9 +43,15 @@ android {
     testOptions {
         execution 'ANDROID_TEST_ORCHESTRATOR'
     }
+    buildFeatures {
+        compose = true
+    }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = '21'
     }
     lintOptions {
         abortOnError false
@@ -60,7 +74,15 @@ dependencies {
     implementation "androidx.webkit:webkit:$androidxWebkitVersion"
     implementation project(':capacitor-android')
     annotationProcessor project(':capacitor-android')
+    // Local unit test dependencies
     testImplementation "junit:junit:$junitVersion"
+    testImplementation "org.mockito:mockito-core:$mockitoVersion"
+    testImplementation "org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion"
+    testImplementation "io.mockk:mockk:$mockkVersion"
+    testImplementation "androidx.test:core:$androidxTestCoreVersion"
+    testImplementation "org.robolectric:robolectric:$robolectricVersion"
+
+    // Instrumented test dependencies
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test:rules:1.5.0'
@@ -69,6 +91,16 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
     implementation "com.google.android.datatransport:transport-runtime:3.1.8"
     implementation "androidx.profileinstaller:profileinstaller:1.3.1"
+
+    // Compose BOM and Material3 Adaptive for window size classes
+    implementation platform('androidx.compose:compose-bom:2025.05.00')
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material3.adaptive:adaptive'
+    implementation 'androidx.compose.material3.adaptive:adaptive-layout'
+    implementation 'androidx.compose.material3.adaptive:adaptive-navigation'
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.activity:activity-compose:1.10.0'
 
 }
 

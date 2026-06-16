@@ -9,9 +9,12 @@ import { audio } from '../services/audioService';
 
 const COLS = 6;
 const ROWS = 9;
-const INITIAL_SPAWN_INTERVAL = 2500; // ms
+const TOTAL_CELLS = COLS * ROWS; // 54
+const ROWS_TO_CLEAR_BEFORE_SPAWNING = 3;
+const INITIAL_SPAWN_INTERVAL = 4000; // ms — slow initial drop
 const SPEED_STEP = 200; // ms decrease per speed level
 const MIN_SPAWN_INTERVAL = 800; // ms
+const REQUIRED_CLUSTER_SIZE = 4; // tiles must match in groups of exactly 4
 
 interface CascadeLevelProps {
   // Added key to satisfy strict JSX attribute checking in App.tsx
@@ -30,23 +33,65 @@ interface CascadeLevelProps {
   onNext?: () => void;
   isAutoPlaying?: boolean;
   stars?: number;
+  hintCount?: number;
+  onHintClick?: () => void;
+  hintsDisabledForLevel?: boolean;
 }
 
 type CascadeTile = TileData & { row: number; col: number };
 
+function generateRandomTile(pool: CSVRow[]): CascadeTile | null {
+  if (pool.length === 0) return null;
+  const cat = pool[Math.floor(Math.random() * pool.length)];
+  const wordIdx = Math.floor(Math.random() * cat.words.length);
+  const word = cat.words[wordIdx];
+  const wordDef = cat.definitions?.[wordIdx];
+  const definition = (wordDef && wordDef.trim().length > 0) ? wordDef : (cat.catDict || '');
+  return {
+    id: Math.random().toString(36).substr(2, 9),
+    word,
+    definition,
+    categoryId: cat.id,
+    categoryName: cat.name.includes(':') ? cat.name.split(':')[1].trim() : cat.name,
+    status: 'neutral',
+    isSolved: false,
+    row: 0,
+    col: 0,
+    color: THEMES[0].solvedColors[parseInt(cat.id) % THEMES[0].solvedColors.length]
+  };
+}
+
+function buildFullGrid(pool: CSVRow[]): (CascadeTile | null)[][] {
+  const grid: (CascadeTile | null)[][] = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const tile = generateRandomTile(pool);
+      if (tile) {
+        tile.row = r;
+        tile.col = c;
+        grid[r][c] = tile;
+      }
+    }
+  }
+  return grid;
+}
+
 export default function Level8_Cascade({ 
   csvData, onComplete, onExit, levelIndex, hintsEnabled, onOpenSettings, setHintsEnabled,
-  isReviewing, onNext, isAutoPlaying, stars
+  isReviewing, onNext, isAutoPlaying, stars, hintCount, onHintClick, hintsDisabledForLevel
 }: CascadeLevelProps) {
-  const [grid, setGrid] = useState<(CascadeTile | null)[][]>(
-    Array.from({ length: ROWS }, () => Array(COLS).fill(null))
-  );
+  const [grid, setGrid] = useState<(CascadeTile | null)[][]>(() => {
+    // Start with an empty grid; we'll fill it once pool is ready
+    return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isSwapping, setIsSwapping] = useState(false);
   const [clearedCount, setClearedCount] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [activePool, setActivePool] = useState<CSVRow[]>([]);
+  // Spawning (dropping new tiles) only starts after player clears 3 rows
+  const [spawningEnabled, setSpawningEnabled] = useState(false);
   
   const startTimeRef = useRef(Date.now());
   const spawnTimerRef = useRef<any>(null);
@@ -61,13 +106,26 @@ export default function Level8_Cascade({
     /* fix: Use data as-is for cascade pool - validation with 8 rows/10 cols fails since data has ~5-7 rows with 4 cols each */
     const categories = csvData && csvData.length > 0 ? csvData : [];
     setActivePool(categories);
+    
+    // Pre-fill the entire grid on initialization
+    if (categories.length > 0) {
+      setGrid(buildFullGrid(categories));
+    }
     setIsInitializing(false);
   }, [csvData]);
+
+  // Enable spawning once 3 rows worth of tiles are cleared
+  useEffect(() => {
+    if (!spawningEnabled && clearedCount >= ROWS_TO_CLEAR_BEFORE_SPAWNING * COLS) {
+      setSpawningEnabled(true);
+    }
+  }, [clearedCount, spawningEnabled]);
 
   const handleGameOver = useCallback(() => {
     if (isGameOver) return;
     setIsGameOver(true);
     audio.playError();
+    if (spawnTimerRef.current) clearTimeout(spawnTimerRef.current);
     
     onComplete({
       timeMs: Date.now() - startTimeRef.current,
@@ -79,12 +137,15 @@ export default function Level8_Cascade({
     });
   }, [isGameOver, clearedCount, speedLevel, onComplete]);
 
+  // Track last few spawn columns to avoid repeating the same column
+  const lastSpawnColsRef = useRef<number[]>([]);
+
   const spawnTile = useCallback(() => {
-    if (isGameOver || isReviewing || activePool.length === 0) return;
+    if (isGameOver || isReviewing || !spawningEnabled || activePool.length === 0) return;
 
     setGrid(prev => {
       const next = prev.map(row => [...row]);
-      const availableCols = [];
+      const availableCols: number[] = [];
       for (let c = 0; c < COLS; c++) {
         if (next[0][c] === null) availableCols.push(c);
       }
@@ -94,34 +155,41 @@ export default function Level8_Cascade({
         return prev;
       }
 
-      const col = availableCols[Math.floor(Math.random() * availableCols.length)];
-      const cat = activePool[Math.floor(Math.random() * activePool.length)];
-      const wordIdx = Math.floor(Math.random() * cat.words.length);
-      const word = cat.words[wordIdx];
-      // Prefer word-level definition (WORDDEF), fall back to category description (CATDICT)
-      const wordDef = cat.definitions?.[wordIdx];
-      const definition = (wordDef && wordDef.trim().length > 0) ? wordDef : (cat.catDict || '');
-      
-      const newTile: CascadeTile = {
-        id: Math.random().toString(36).substr(2, 9),
-        word: word,
-        definition,
-        categoryId: cat.id,
-        categoryName: cat.name.includes(':') ? cat.name.split(':')[1].trim() : cat.name,
-        status: 'neutral',
-        isSolved: false,
-        row: 0,
-        col: col,
-        color: THEMES[0].solvedColors[parseInt(cat.id) % THEMES[0].solvedColors.length]
-      };
+      // Prefer columns not recently used
+      const recentCols = lastSpawnColsRef.current;
+      let preferredCols = availableCols.filter(c => !recentCols.includes(c));
+      if (preferredCols.length === 0) preferredCols = availableCols;
 
-      next[0][col] = newTile;
+      // Pick 1 or 2 columns — 2 columns < 50% of the time (35%)
+      const useTwoCols = availableCols.length >= 2 && Math.random() < 0.35;
+      const numCols = useTwoCols ? 2 : 1;
+      const chosenCols: number[] = [];
+      const remaining = [...preferredCols];
+
+      for (let i = 0; i < numCols && remaining.length > 0; i++) {
+        const idx = Math.floor(Math.random() * remaining.length);
+        chosenCols.push(remaining[idx]);
+        remaining.splice(idx, 1);
+      }
+
+      // Track recently used cols (keep last 3)
+      lastSpawnColsRef.current = [...lastSpawnColsRef.current, ...chosenCols].slice(-3);
+
+      for (const col of chosenCols) {
+        const tile = generateRandomTile(activePool);
+        if (!tile) continue;
+        tile.row = 0;
+        tile.col = col;
+        next[0][col] = tile;
+      }
       return next;
     });
-  }, [isGameOver, isReviewing, activePool, handleGameOver]);
+  }, [isGameOver, isReviewing, spawningEnabled, activePool, handleGameOver]);
 
+  // Gravity — only run once spawning is enabled
   useEffect(() => {
     if (isGameOver || isReviewing || isInitializing) return;
+    if (!spawningEnabled) return;
 
     const gravityInterval = setInterval(() => {
       setGrid(prev => {
@@ -143,10 +211,12 @@ export default function Level8_Cascade({
     }, 200);
 
     return () => clearInterval(gravityInterval);
-  }, [isGameOver, isReviewing, isInitializing]);
+  }, [isGameOver, isReviewing, isInitializing, spawningEnabled]);
 
+  // Spawn timer — only active when spawning is enabled
   useEffect(() => {
     if (isGameOver || isReviewing || isInitializing) return;
+    if (!spawningEnabled) return;
 
     const tick = () => {
       spawnTile();
@@ -157,7 +227,7 @@ export default function Level8_Cascade({
     return () => {
       if (spawnTimerRef.current) clearTimeout(spawnTimerRef.current);
     };
-  }, [isGameOver, isReviewing, isInitializing, spawnInterval, spawnTile]);
+  }, [isGameOver, isReviewing, isInitializing, spawningEnabled, spawnInterval, spawnTile]);
 
   const handleTileClick = (id: string) => {
     if (isGameOver || isReviewing || isSwapping) return;
@@ -239,7 +309,7 @@ export default function Level8_Cascade({
               setTimeout(() => {
                   setGrid(prev => {
                       const final = prev.map(row => row.map(t => {
-                        if (!t) null;
+                        if (!t) return null;
                         if (t.status === 'fading-out-bg') {
                           return { ...t, status: 'neutral' as const };
                         }
@@ -284,7 +354,8 @@ export default function Level8_Cascade({
                 }
               }
 
-              if (cluster.length >= 2) {
+              // Require at least 4 matching connected tiles
+              if (cluster.length >= REQUIRED_CLUSTER_SIZE) {
                   cluster.forEach(coord => toClear.add(`${coord.r},${coord.c}`));
               }
           }
@@ -371,7 +442,7 @@ export default function Level8_Cascade({
               if (curr.c < COLS - 1) stack.push({ r: curr.r, c: curr.c + 1 });
             }
           }
-          if (cluster.length >= 2) {
+          if (cluster.length >= REQUIRED_CLUSTER_SIZE) {
              checkClusters(grid);
              foundCluster = true;
              break;
@@ -447,6 +518,9 @@ export default function Level8_Cascade({
       hintsEnabled={hintsEnabled}
       onToggleHints={() => setHintsEnabled?.(!hintsEnabled)}
       stars={stars}
+      hintCount={hintCount}
+      onHintClick={onHintClick}
+      hintsDisabledForLevel={hintsDisabledForLevel}
       headerExtras={
         <div className="flex items-center gap-3 pr-2">
            <div className="flex flex-col items-end">
@@ -493,8 +567,8 @@ export default function Level8_Cascade({
             </div>
 
             <div 
-              className="absolute top-0 left-0 w-full bg-neon-red/10 animate-pulse pointer-events-none" 
-              style={{ height: `${100/9}%` }}
+               className="absolute top-0 left-0 w-full bg-neon-red/10 animate-pulse pointer-events-none" 
+               style={{ height: `${100/9}%` }}
             />
          </div>
       </div>

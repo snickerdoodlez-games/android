@@ -1,0 +1,1 @@
+const fs = require('fs'); process.stdin.setEncoding('utf8'); let data = ''; process.stdin.on('data', chunk => data += chunk); process.stdin.on('end', () => { fs.writeFileSync('c:/Users/DD/New folder/gitttt/components/Level1_Emoji.tsx', data, 'utf8'); console.log('File written successfully'); });

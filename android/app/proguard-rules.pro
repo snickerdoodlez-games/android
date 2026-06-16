@@ -45,3 +45,8 @@
 
 # Capacitor Community AdMob
 -keep class com.getcapacitor.community.admob.** { *; }
+
+# Compose — needed for WindowSizeClassPlugin
+-keep class androidx.compose.material3.adaptive.** { *; }
+-keep class * extends androidx.compose.runtime.Composable { *; }
+-keep class com.snickerdoodlez.wordpairing.WindowSizeClassPlugin { *; }

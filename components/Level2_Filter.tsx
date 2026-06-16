@@ -24,12 +24,16 @@ interface Level2Props {
   onNext?: () => void;
   isAutoPlaying?: boolean;
   stars?: number;
+  hintCount?: number;
+  onHintClick?: () => void;
+  hintsDisabledForLevel?: boolean;
 }
 
 const Level2_Filter: React.FC<Level2Props> = ({ 
     csvData, onComplete, onGameOver, levelIndex, 
     onThemeChange, hintsEnabled, setHintsEnabled, onOpenSettings,
-    isReviewing, onNext, isAutoPlaying, stars
+    isReviewing, onNext, isAutoPlaying, stars,
+    hintCount, onHintClick, hintsDisabledForLevel
 }) => {
   const [targetCategory, setTargetCategory] = useState<CSVRow | null>(null);
   const [tiles, setTiles] = useState<TileData[]>([]);
@@ -123,7 +127,7 @@ const Level2_Filter: React.FC<Level2Props> = ({
             next[tileIndex] = { ...tile, status: 'solved', color };
             return next;
         });
-        solvedWordsRef.current.push(tile.word);
+solvedWordsRef.current.push(`${tile.word}|${tile.categoryName}`);
         setFoundCount(prev => {
             const next = prev + 1;
             if (next === 6) {
@@ -172,7 +176,7 @@ const Level2_Filter: React.FC<Level2Props> = ({
   if (initError) return null;
 
   return (
-    <LevelLayout modeName="HIDDEN" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([{ name: targetCategory?.name || "Loading", isSolved: foundCount === 6 }])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)} stars={stars}
+    <LevelLayout modeName="HIDDEN" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([{ name: targetCategory?.name || "Loading", isSolved: foundCount === 6 }])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)} stars={stars} hintCount={hintCount} onHintClick={onHintClick} hintsDisabledForLevel={hintsDisabledForLevel}
       headerExtras={(
         <div className="flex items-center gap-3">
             <div className="flex flex-col items-end">
@@ -187,7 +191,7 @@ const Level2_Filter: React.FC<Level2Props> = ({
       )}
     >
       <div className="w-full flex-1 grid grid-cols-3 gap-1 p-1 min-h-0 relative z-10 h-full">
-          {tiles.map(tile => (<div key={tile.id} className="relative w-full h-full"><Tile data={tile} onClick={handleTileClick} /></div>))}
+          {tiles.map((tile, idx) => (<div key={tile.id} className="relative w-full h-full"><Tile data={tile} onClick={handleTileClick} gridEntryDelay={0.05 + Math.floor(idx / 3) * 0.1} /></div>))}
           {feedbackMsg && (
              <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
                  <div className="bg-black/90 border-4 border-white px-8 py-4 rounded-xl shadow-2xl animate-pop">

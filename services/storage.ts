@@ -4,7 +4,10 @@ export const STORAGE_KEYS = {
   DAILY_HISTORY: 'wpm_daily_history',
   ENABLED_MODES: 'wpm_enabled_modes',
   CUSTOM_POOL: 'wpm_custom_pool',
-  AUTO_PLAY: 'wpm_auto_play'
+  AUTO_PLAY: 'wpm_auto_play',
+  APP_STATE: 'wpm_app_state',
+  LAST_ACTIVE: 'wpm_last_active_timestamp',
+  SELECTED_DIFFICULTY: 'wpm_selected_difficulty'
 };
 
 export const getLocalISODate = (date: Date = new Date()): string => {
@@ -120,6 +123,11 @@ const DEFAULT_STATS: GameStats = {
 // In-memory cache for stats to avoid redundant localStorage reads
 let cachedStats: GameStats | null = null;
 
+// Exported for testing - clears the in-memory stats cache
+export const clearStatsCache = (): void => {
+  cachedStats = null;
+};
+
 export const getStats = (): GameStats => {
   if (cachedStats) return cachedStats;
   try {
@@ -222,4 +230,87 @@ export const markDailyCompleted = (dateStr: string) => {
   } catch (e) {
     console.error("Failed to update daily history", e);
   }
+};
+
+/**
+ * App State Preservation
+ * Saves the current game session state to localStorage so it can be restored
+ * when the user returns to the app (from Recents, sleep, or relaunch).
+ */
+export interface SavedAppState {
+  mode: string;
+  levelIndex: number;
+  isReviewing: boolean;
+  isAutoPlaying: boolean;
+  hintsEnabled: boolean;
+  isMusicOn: boolean;
+  showHowToPlay: boolean;
+  timestamp: number;
+}
+
+export const saveAppState = (state: SavedAppState) => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.APP_STATE, JSON.stringify(state));
+    localStorage.setItem(STORAGE_KEYS.LAST_ACTIVE, Date.now().toString());
+  } catch (e) {
+    console.error("Failed to save app state", e);
+  }
+};
+
+export const getAppState = (): SavedAppState | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.APP_STATE);
+    if (!stored) return null;
+    return JSON.parse(stored) as SavedAppState;
+  } catch {
+    return null;
+  }
+};
+
+export const clearAppState = () => {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.APP_STATE);
+  } catch (e) {
+    console.error("Failed to clear app state", e);
+  }
+};
+
+/**
+ * Returns the time in milliseconds since the app was last active.
+ * Returns Infinity if no timestamp is saved.
+ */
+export const getTimeSinceLastActive = (): number => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.LAST_ACTIVE);
+    if (!stored) return Infinity;
+    const lastActive = parseInt(stored, 10);
+    if (isNaN(lastActive)) return Infinity;
+    return Date.now() - lastActive;
+  } catch {
+    return Infinity;
+  }
+};
+
+export const updateLastActiveTimestamp = () => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.LAST_ACTIVE, Date.now().toString());
+  } catch (e) {
+    console.error("Failed to update last active timestamp", e);
+  }
+};
+
+export type DifficultyLevel = 'easy' | 'medium' | 'hard';
+
+export const getSelectedDifficulty = (): DifficultyLevel | undefined => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.SELECTED_DIFFICULTY);
+    if (stored === 'easy' || stored === 'medium' || stored === 'hard') return stored;
+    return undefined; // No difficulty explicitly selected
+  } catch {
+    return undefined;
+  }
+};
+
+export const saveSelectedDifficulty = (difficulty: DifficultyLevel) => {
+  localStorage.setItem(STORAGE_KEYS.SELECTED_DIFFICULTY, difficulty);
 };

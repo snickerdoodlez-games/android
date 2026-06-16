@@ -207,7 +207,8 @@ id,Category Name,"Description",Word1,"Definition1",Word2,"Definition2",...,Diffi
     - **FILTER level** → pulls data from **`csvPoolData*.ts`** files ONLY
     - **GROUP level** → pulls data from **`csvPoolData*.ts`** files ONLY
     These mappings must never be altered. Each game mode has a dedicated data source.
-
+12. **When a game tile and a category tab is long pressed the definition of the word in the game tile appears.**
+13.  **Hints can only be used twice per level.  Player starts the game with 2 hints.  Rewarded hints net 2 new hints** 
 ---
 
 ## MCP Server Tools Available
@@ -237,28 +238,6 @@ The following MCP tools are available to assist with this project:
 - **kanban** - Task/board management for sprint tracking
 - **guesswho-game-tester** - Game simulation and bug scanning (generic use)
 - **memory** - Knowledge graph for persistent context
-
----
-
-## Header Mode Names
-
-The Header component displays the current game mode name using `ArcadeStyledText`. Each mode maps to a color:
-
-| Mode Name | Color |
-|-----------|-------|
-| `WORD PAIRING` | `#00FFFF` (cyan) |
-| `SYNONYMS` | `#39FF14` (green) |
-| `THEMED` | `#FF00FF` (magenta) |
-| `EMOJI` | `#F9FF00` (yellow) |
-| `MIND MATCH` | `#FF5F1F` (orange) |
-| `EXPANSION` | `#FF073A` (red) |
-| `FILTER` | `#0066FF` (blue) |
-| `CASCADE` | `#B026FF` (violet) |
-| `GROUP` | `#FF1FBF` (pink) |
-| `HIDDEN` | `#D400FF` (purple) |
-
-In `Level1_Standard.tsx`, the `displayModeName` is set to `"WORD PAIRING"` (the default CLASSIC mode display name) or `"SYNONYMS"` when in synonyms mode.
-
 ---
 
 ## Common Tasks
@@ -273,6 +252,7 @@ In `Level1_Standard.tsx`, the `displayModeName` is set to `"WORD PAIRING"` (the 
 1. `npm run build` (builds to `dist/`)
 2. `npx cap copy android` (copies web assets to Android)
 3. `npx cap open android` (opens Android Studio)
+4.  Only build apk or aab when asked to build
 
 ### Testing levels
 1. Start dev server: `npm run dev`

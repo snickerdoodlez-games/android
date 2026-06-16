@@ -1,0 +1,39 @@
+=== CLASSIC MODE ===
+"Find 4 tiles that are related and place them in a row."
+→ on Next: auto-solver selects tiles to solve the first row of tiles
+"Click on two tiles to swap spots"
+→ on Next: auto-solver swaps with matching tiles and completes another row(swap animations play)
+"Long press a tile to reveal the defintion of the word in the tile."
+→ on Next: long press a tile and show the defintion.  Once the user hits the next button move to the next step
+"Your turn!  Find the remaining matches."
+→ on Next: tutorial ends (marked seen), user plays freely
+
+=== THEMED MODE ===
+"All of the tiles in the level are themed to a category."
+→ on Next: Match up one row of tiles
+"Your turn!  Finish the level."
+→ on Next: tutorial ends, user plays freely
+
+=== SYNONYMS MODE ===
+"Find the four synonyms to complete a row."
+→ on Next: solve a row
+"Your turn!  Finish the level."
+→ on Next: tutorial ends, user plays freely
+
+=== EMOJI MODE ===
+"Find the emojis that relate to their related category"
+→ on Next: solve the first row of emojis
+"Your turn!  Finish the level."
+→ on Next: tutorial ends, user plays freely
+
+=== MIND MATCH MODE ===
+"Find all of the related tiles before time runs out"
+→ on Next: auto-solver clicks four tiles from the first unsolved category
+"Your turn!  Finish the level."
+→ on Next: tutorial ends, user plays freely
+
+=== EXPANSION MODE ===
+"Solve every row to expand the level."
+→ on Next: solve every available tile.  This should be like 4 tiles.
+"Your turn!  Finish the level."
+→ on Next: tutorial ends, user plays freely

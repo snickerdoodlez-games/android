@@ -64,7 +64,7 @@ const CategorySelectionOverlay: React.FC<Props> = ({ isOpen, onClose, selectedId
       >
         <div className="flex justify-between items-center border-b-2 border-zinc-800 pb-2 shrink-0">
           <h2 className="text-xl font-black text-neon-yellow uppercase tracking-widest italic drop-shadow-[0_0_5px_rgba(249,255,0,0.8)]">MANAGE POOL</h2>
-          <button className="text-zinc-400 hover:text-white transition-colors p-1" onClick={onClose}>
+          <button className="text-zinc-400 hover:text-white transition-colors p-1 min-w-[48px] min-h-[48px] flex items-center justify-center" onClick={onClose} aria-label="Close category pool">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -84,8 +84,8 @@ const CategorySelectionOverlay: React.FC<Props> = ({ isOpen, onClose, selectedId
         </div>
 
         <div className="flex gap-2 shrink-0">
-            <button onClick={handleSelectAll} className="flex-1 py-1.5 bg-zinc-900 border border-zinc-700 text-[9px] font-black uppercase text-zinc-400 rounded-small hover:text-white transition-colors">Select All</button>
-            <button onClick={handleDeselectAll} className="flex-1 py-1.5 bg-zinc-900 border border-zinc-700 text-[9px] font-black uppercase text-zinc-400 rounded-small hover:text-white transition-colors">Clear All</button>
+            <button onClick={handleSelectAll} className="flex-1 py-2 min-w-[48px] min-h-[48px] bg-zinc-900 border border-zinc-700 text-[9px] font-black uppercase text-zinc-400 rounded-small hover:text-white transition-colors" aria-label="Select all categories">Select All</button>
+            <button onClick={handleDeselectAll} className="flex-1 py-2 min-w-[48px] min-h-[48px] bg-zinc-900 border border-zinc-700 text-[9px] font-black uppercase text-zinc-400 rounded-small hover:text-white transition-colors" aria-label="Clear all selected categories">Clear All</button>
         </div>
 
         <div className="flex-1 overflow-y-auto no-scrollbar pr-1 flex flex-col gap-1.5 bg-black/40 rounded-medium p-1">
@@ -98,7 +98,7 @@ const CategorySelectionOverlay: React.FC<Props> = ({ isOpen, onClose, selectedId
                         <button 
                             key={cat.id}
                             onClick={() => handleToggleId(cat.id)}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-medium border-2 transition-all ${isSelected ? 'bg-zinc-900 border-neon-blue text-white shadow-[0_0_8px_rgba(0,229,255,0.2)]' : 'bg-black border-zinc-800 text-zinc-600'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 min-h-[48px] rounded-medium border-2 transition-all ${isSelected ? 'bg-zinc-900 border-neon-blue text-white shadow-[0_0_8px_rgba(0,229,255,0.2)]' : 'bg-black border-zinc-800 text-zinc-600'}`}
                         >
                             <span className="font-bold text-[11px] uppercase tracking-tight truncate mr-2">{cat.name}</span>
                             <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-neon-blue bg-neon-blue shadow-[0_0_5px_#00E5FF]' : 'border-zinc-800'}`}>
@@ -113,10 +113,10 @@ const CategorySelectionOverlay: React.FC<Props> = ({ isOpen, onClose, selectedId
         <div className="pt-2 border-t border-zinc-800 shrink-0">
              <button 
                 onClick={onClose}
-                className="w-full py-3 bg-white text-black font-black text-lg uppercase rounded-medium active:scale-95 transition-all shadow-[0_0_15px_white]"
+                className="w-full py-3 min-h-[48px] bg-white text-black font-black text-lg uppercase rounded-medium active:scale-95 transition-all shadow-[0_0_15px_white]"
                 style={ARCADE_OUTLINE}
              >
-                CONFIRM POOL ({selectedIds.length})
+                 CONFIRM POOL ({selectedIds.length})
              </button>
         </div>
       </MotionDiv>

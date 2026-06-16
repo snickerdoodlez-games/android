@@ -7,6 +7,7 @@ import {
   ARCADE_OUTLINE, 
   CASCADE_OUTLINE,
   EMOJI_OUTLINE,
+  SOLVED_OUTLINE,
   getTileStatusClasses, 
   getTypographicClasses,
 } from '../services/tileStyles';
@@ -23,21 +24,25 @@ interface TileProps {
   isNarrow?: boolean;
   rowCount?: number;
   showDefinitionOverride?: boolean;
+  gridEntryDelay?: number;
 }
 
-const LONG_PRESS_DURATION = 400; // ms
+const LONG_PRESS_DURATION = 600; // ms
 
 const FONT_STYLE = { 
   fontFamily: '"Oswald", sans-serif',
   backfaceVisibility: 'hidden' as const,
 };
 
-const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disabled, targetColor, isCascade, isNarrow, rowCount, showDefinitionOverride, ...props }, ref) => {
+const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disabled, targetColor, isCascade, isNarrow, rowCount, showDefinitionOverride, gridEntryDelay, ...props }, ref) => {
   const [showDefinition, setShowDefinition] = useState(false);
+  const [isShining, setIsShining] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
   const pointerWasCancelled = useRef(false);
   const tileRef = useRef<HTMLDivElement | null>(null);
+  const shineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shineEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isTransitioning = data.status === 'swapping' || data.status === 'swap-target';
   const isSolved = data.status === 'solved';
@@ -46,6 +51,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   const isSwapTarget = data.status === 'swap-target';
   const isCorrectPreview = data.status === 'correct-preview';
   const isLocked = data.status === 'locked';
+  const isHint = data.status === 'hint';
 
   const statusClasses = getTileStatusClasses(data.status, (isCascade || isSolved) ? (data.color || targetColor) : undefined);
   const textClasses = getTypographicClasses(data.word, data.isEmoji, isSolved, isCascade, isNarrow, rowCount);
@@ -54,12 +60,13 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   
   if (isSelected || isSwapTarget || isSwapping) {
     styleOverride.backgroundColor = '#000000';
+  } else if (isSolved) {
+    // Solved tiles keep their background color but no glow
   } else if (isLocked) {
     styleOverride.backgroundColor = '#F9FF00';
   } else if (isCorrectPreview) {
     styleOverride.backgroundColor = '#39FF14';
   }
-
   const clearLongPress = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
@@ -98,17 +105,21 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
     cancelLongPress();
   }, [cancelLongPress]);
 
+  // NOTE: handlePointerLeave intentionally does NOT cancel the long press timer.
+  // On mobile browsers (Android Chrome), pointerleave fires BEFORE pointercancel
+  // during gesture recognition (long-press detection). If we cancel here, the timer
+  // never reaches LONG_PRESS_DURATION and the definition overlay never appears.
+  // The timer is only cancelled on pointerup (finger lifts) or pointercancel (browser gesture cancel).
   const handlePointerLeave = useCallback(() => {
-    // Only cancel if this wasn't a long-press scenario (pointer was cancelled)
-    if (pointerWasCancelled.current) return;
-    cancelLongPress();
-  }, [cancelLongPress]);
+    // Do NOT cancel long press timer - see note above
+  }, []);
 
   // CRITICAL FIX: When the browser detects a potential gesture (like scroll or long-press),
   // it fires pointercancel. We mark this so handlePointerUp won't clear the timer,
   // allowing the timeout to fire and show the definition overlay.
   const handlePointerCancel = useCallback(() => {
     pointerWasCancelled.current = true;
+    longPressTriggered.current = true; // Suppress subsequent click from processing as tap
     // Intentionally do NOT clear the long press timer - let it fire.
   }, []);
 
@@ -138,6 +149,35 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
     };
   }, [showDefinition]);
 
+  // RANDOM SHINE: schedule a brief shimmer on neutral tiles at random intervals
+  useEffect(() => {
+    const isNeutral = data.status === 'neutral';
+    if (!isNeutral || disabled) {
+      setIsShining(false);
+      if (shineTimerRef.current) { clearTimeout(shineTimerRef.current); shineTimerRef.current = null; }
+      if (shineEndTimerRef.current) { clearTimeout(shineEndTimerRef.current); shineEndTimerRef.current = null; }
+      return;
+    }
+
+    const scheduleShine = () => {
+      const delay = 4000 + Math.random() * 10000; // 4-14 seconds between shines
+      shineTimerRef.current = setTimeout(() => {
+        setIsShining(true);
+        shineEndTimerRef.current = setTimeout(() => {
+          setIsShining(false);
+          scheduleShine();
+        }, 900); // shine duration ~900ms
+      }, delay);
+    };
+
+    scheduleShine();
+
+    return () => {
+      if (shineTimerRef.current) clearTimeout(shineTimerRef.current);
+      if (shineEndTimerRef.current) clearTimeout(shineEndTimerRef.current);
+    };
+  }, [data.status, disabled]);
+
   const renderWordContent = () => {
     if (data.isEmoji) return data.word;
     const words = (data.word || '').trim().split(/\s+/);
@@ -154,6 +194,18 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   } : {};
 
   const rainbowGradient = 'linear-gradient(to right, #FF073A, #FF5F1F, #F9FF00, #00F000, #00FFFF, #0066FF, #B026FF, #FF1FBF, #FF073A)';
+
+  // Build additional CSS classes for new animations
+  const animClasses: string[] = [];
+  if (isHint) animClasses.push('tile-hint');
+  if (isSolved) animClasses.push('tile-flip-lock');
+  if (gridEntryDelay !== undefined && gridEntryDelay >= 0) animClasses.push('tile-grid-entry');
+  const extraClasses = animClasses.join(' ');
+
+  // Grid entry inline delay style
+  const gridEntryStyle: React.CSSProperties = (gridEntryDelay !== undefined && gridEntryDelay >= 0)
+    ? { animationDelay: `${gridEntryDelay}s` }
+    : {};
 
   // Definition overlay - renders in a portal to avoid clipping
   const definitionOverlay = (
@@ -185,8 +237,8 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
           <>
             <div className="w-12 h-0.5 bg-neon-aqua mx-auto my-4 shadow-[0_0_8px_#00FFFF]" />
             
-            {/* Definition text */}
-            <p className="text-[clamp(0.8125rem,3.5vw,1.125rem)] leading-relaxed text-white font-raleway text-center whitespace-normal break-words">
+            {/* Definition text — LINE LENGTH limited to 65ch for readability */}
+            <p className="text-[clamp(0.8125rem,3.5vw,1.125rem)] leading-relaxed text-white font-raleway text-center whitespace-normal break-words max-w-[65ch] mx-auto">
               {data.definition}
             </p>
           </>
@@ -197,8 +249,9 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
 
         {/* Close button */}
         <button
-          className="block mx-auto px-8 py-2 bg-white text-black font-black font-raleway text-[clamp(0.75rem,3vw,1rem)] uppercase rounded-medium hover:scale-105 active:scale-95 transition-all"
+          className="block mx-auto px-8 py-2 min-h-[48px] bg-white text-black font-black font-raleway text-[clamp(0.75rem,3vw,1rem)] uppercase rounded-medium hover:scale-105 active:scale-95 transition-all"
           onClick={handleCloseDefinition}
+          aria-label="Close definition overlay"
         >
           TAP TO CLOSE
         </button>
@@ -209,7 +262,6 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center overflow-visible touch-action-manipulation">
       <m.div 
-        layout
         ref={(el) => {
           tileRef.current = el;
           if (typeof ref === 'function') ref(el);
@@ -229,76 +281,81 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
         onPointerLeave={handlePointerLeave}
         onPointerCancel={handlePointerCancel}
         onContextMenu={(e: React.MouseEvent) => { e.preventDefault(); }}
-        className={`relative w-full flex items-center justify-center cursor-pointer select-none rounded-small z-10 ${statusClasses} h-full touch-action-manipulation overflow-hidden`}
+        className={`relative w-full flex items-center justify-center cursor-pointer select-none rounded-small z-10 ${statusClasses} ${extraClasses} h-full touch-action-manipulation overflow-hidden`}
         style={{
           ...FONT_STYLE,
           ...styleOverride,
+          ...gridEntryStyle,
           boxSizing: 'border-box',
           transition: 'background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out'
         }}
         {...props}
       >
-         {/* SELECTION BORDER LAYERS - SYNCED 0.4s FADE (Sped up from 0.8s) */}
-         <AnimatePresence>
-           {(isSelected || isSwapTarget || isSwapping) && (
-             <m.div 
-                key="selection-border-container"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                className="absolute inset-0 z-0"
-             >
-               <m.div 
-                 className="absolute inset-0"
-                 style={{ 
-                   background: isSwapTarget ? rainbowGradient : '#FFFFFF',
-                   backgroundSize: '200% 100%',
-                   animation: isSwapTarget ? 'rainbow-flow 1.5s linear infinite' : 'none'
-                 }}
-               >
-                 <m.div 
-                   className="absolute inset-[4px] rounded-[4px]"
-                   style={{ 
-                     background: isSwapTarget ? '#FFFFFF' : rainbowGradient,
-                     backgroundSize: '200% 100%',
-                     animation: (isSelected || isSwapping) ? 'rainbow-flow 1.5s linear infinite' : 'none'
-                   }}
-                 >
-                   <div className="absolute inset-[3px] bg-black rounded-[2px]" />
-                 </m.div>
-               </m.div>
-             </m.div>
-           )}
-         </AnimatePresence>
-
-         {/* SHINE / SHIMMER LAYER - No shimmer on solved tiles to preserve neon color */}
-         <AnimatePresence>
-           {(isSelected || isSwapTarget || isTransitioning) && (
-             <m.div 
-                className="absolute inset-0 pointer-events-none z-20 overflow-hidden"
-                initial={{ opacity: 0 }}
-                animate={{ 
-                  opacity: isTransitioning ? 0.9 : (isSelected || isSwapTarget) ? [0.3, 0.5, 0.3] : 0.4 
+         {/* SELECTION BORDER LAYERS - SYNCED 0.3s FADE (optimized from 0.4s) */}
+         {(isSelected || isSwapTarget || isSwapping) && (
+           <m.div 
+              key="selection-border-container"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="absolute inset-0 z-0"
+           >
+             <div 
+               className="absolute inset-0"
+                style={{ 
+                  backgroundImage: isSwapTarget ? rainbowGradient : 'none',
+                  backgroundColor: isSwapTarget ? 'transparent' : '#FFFFFF',
+                  backgroundSize: '200% 100%',
+                  animation: isSwapTarget ? 'rainbow-flow 1.5s linear infinite' : 'none'
                 }}
-                transition={(isSelected || isSwapTarget) ? { duration: 0.75, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
-                exit={{ opacity: 0 }}
-             >
-               <m.div 
-                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-[200%]"
-                 animate={{ 
-                    x: ['-100%', '100%'],
-                 }}
-                 transition={{ 
-                    duration: isTransitioning ? 0.2 : (isSelected || isSwapTarget) ? 1.0 : 1.25, 
-                    repeat: Infinity, 
-                    ease: "linear" 
-                 }}
-                 style={{ skewX: '-25deg' }}
-               />
-             </m.div>
-           )}
-         </AnimatePresence>
+              >
+                <div 
+                  className="absolute inset-[4px] rounded-[4px]"
+                  style={{ 
+                    backgroundImage: isSwapTarget ? 'none' : rainbowGradient,
+                    backgroundColor: isSwapTarget ? '#FFFFFF' : 'transparent',
+                    backgroundSize: '200% 100%',
+                    animation: (isSelected || isSwapping) ? 'rainbow-flow 1.5s linear infinite' : 'none'
+                  }}
+               >
+                 <div className="absolute inset-[3px] bg-black rounded-[2px]" />
+               </div>
+             </div>
+           </m.div>
+         )}
+
+         {/* SHINE / SHIMMER LAYER - for selection/swap transitions */}
+         {(isSelected || isSwapTarget || isTransitioning) && (
+           <div 
+              className="absolute inset-0 pointer-events-none z-20 overflow-hidden opacity-50"
+              style={{ animation: 'shimmer-tile 1.25s linear infinite' }}
+           >
+             <div 
+               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+               style={{ 
+                 transform: 'skewX(-25deg) translateX(-100%)',
+                 animation: 'shimmer-tile-slide 1.25s linear infinite'
+               }}
+             />
+           </div>
+         )}
+
+         {/* RANDOM SHINE on neutral tiles at random times */}
+         {isShining && (
+           <div 
+              className="absolute inset-0 pointer-events-none z-20 overflow-hidden opacity-40"
+              style={{ animation: 'shimmer-tile 1.25s linear infinite' }}
+           >
+             <div 
+               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+               style={{ 
+                 transform: 'skewX(-25deg) translateX(-100%)',
+                 animation: 'shimmer-tile-slide 1.25s linear infinite'
+               }}
+             />
+           </div>
+         )}
 
          <AnimatePresence mode="wait">
            <m.span 
@@ -309,7 +366,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
               exit="exit"
               className={`${textClasses} text-white z-30 text-center px-2 pointer-events-none w-full flex flex-col items-center justify-center max-w-full`}
               style={{
-                ...(data.isEmoji ? EMOJI_OUTLINE : isCascade ? CASCADE_OUTLINE : ARCADE_OUTLINE),
+                ...(data.isEmoji ? EMOJI_OUTLINE : isSolved ? SOLVED_OUTLINE : isCascade ? CASCADE_OUTLINE : ARCADE_OUTLINE),
                 ...emojiFilterStyle,
                 maxHeight: '100%'
               }}

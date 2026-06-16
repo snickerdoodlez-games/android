@@ -16,6 +16,9 @@ interface LevelLayoutProps {
   children: React.ReactNode;
   rowsLeft?: number;
   stars?: number;
+  hintCount?: number;
+  onHintClick?: () => void;
+  hintsDisabledForLevel?: boolean;
 }
 
 const LevelLayout: React.FC<LevelLayoutProps> = ({
@@ -32,7 +35,10 @@ const LevelLayout: React.FC<LevelLayoutProps> = ({
   headerExtras,
   children,
   rowsLeft,
-  stars
+  stars,
+  hintCount,
+  onHintClick,
+  hintsDisabledForLevel,
 }) => {
   return (
     <div className="flex flex-col h-full w-full max-w-6xl mx-auto select-none overflow-hidden relative bg-black font-oswald">
@@ -50,6 +56,9 @@ const LevelLayout: React.FC<LevelLayoutProps> = ({
         rowsLeft={rowsLeft}
         leftContent={headerExtras}
         stars={stars}
+        hintCount={hintCount}
+        onHintClick={onHintClick}
+        hintsDisabledForLevel={hintsDisabledForLevel}
       />
 
       <main className="flex-1 w-full relative z-[20] flex flex-col p-0 bg-black overflow-visible min-h-0">

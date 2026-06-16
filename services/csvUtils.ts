@@ -1,6 +1,7 @@
 import { CSVRow } from '../types';
 
 export const MAX_WORD_LENGTH = 50;
+export const MAX_CHARACTERS_PER_LINE = 14;
 
 // Fisher-Yates shuffle algorithm for unbiased randomization
 // This ensures every element has an equal probability of being selected.
@@ -13,7 +14,18 @@ export function shuffleArray<T>(array: T[]): T[] {
   return newArray;
 }
 
-// Parse a single CSV line into its field parts, handling quoted values
+/**
+ * Checks whether a word fits within the max characters per line constraint.
+ * A word is rejected (returns false) if it exceeds MAX_CHARACTERS_PER_LINE
+ * and does NOT contain a space or newline (i.e., it's a single long unbreakable word).
+ * Multi-word strings with spaces or line breaks are acceptable at any length
+ * because they can wrap across lines in the tile.
+ */
+export const wordFitsPerLine = (word: string): boolean => {
+  const hasBreak = word.includes(' ') || word.includes('\n');
+  if (!hasBreak && word.length > MAX_CHARACTERS_PER_LINE) return false;
+  return true;
+};
 // Two formats are supported:
 //   1. "" pairs toggle quote mode (e.g., ""hello"" → hello)
 //   2. Single " toggles quote mode (standard CSV, e.g., "hello" → hello)
@@ -93,6 +105,9 @@ export const parseCSV = (csv: string): CSVRow[] => {
         }
       }
 
+      // Reject row if any word exceeds max characters per line without a break
+      if (!words.every(wordFitsPerLine)) continue;
+
       if (words.length >= 3) {
         rawData.push({ 
           id, 
@@ -110,6 +125,9 @@ export const parseCSV = (csv: string): CSVRow[] => {
       const words = parts.slice(2, parts.length - 2)
           .map(w => w.trim())
           .filter(w => w.length > 0 && w.length <= MAX_WORD_LENGTH);
+
+      // Reject row if any word exceeds max characters per line without a break
+      if (!words.every(wordFitsPerLine)) continue;
 
       if (words.length >= 3) {
         rawData.push({ 
@@ -145,6 +163,86 @@ const getMeasurementContext = (): CanvasRenderingContext2D | null => {
     return null;
   }
 };
+
+/**
+ * Distributes tiles across rows so no row contains more than one tile from the same category.
+ * Tiles are built in category-major order (all words of category A, then B, then C...).
+ * This function redistributes them round-robin: each row gets exactly one tile from each category,
+ * making the initial grid as scrambled as possible.
+ *
+ * @param tiles - Tiles built in category-major order (category[0].tile[0..n], category[1].tile[0..n], ...)
+ * @param colCount - Number of columns per row (e.g., 4 for standard, 3 for emoji)
+ * @returns A new array with tiles distributed such that no row has duplicate categories
+ */
+export function distributeTilesAcrossRows<T extends { categoryId: string }>(tiles: T[], colCount: number): T[] {
+  const rowCount = Math.floor(tiles.length / colCount);
+  if (rowCount === 0) return shuffleArray(tiles);
+  
+  // Group tiles by category (preserving order within each category)
+  const categoryGroups: Map<string, T[]> = new Map();
+  for (const tile of tiles) {
+    const existing = categoryGroups.get(tile.categoryId);
+    if (existing) {
+      existing.push(tile);
+    } else {
+      categoryGroups.set(tile.categoryId, [tile]);
+    }
+  }
+  
+  // Create result grid: rowCount rows × colCount columns, initially empty
+  const grid: (T | null)[][] = Array.from({ length: rowCount }, () => Array(colCount).fill(null));
+  
+  // Track which columns have been filled for each row
+  const rowFillCount: number[] = Array(rowCount).fill(0);
+  
+  // For each category, place its tiles into different rows (one per row)
+  for (const [_, catTiles] of categoryGroups) {
+    // Fisher-Yates shuffle the category's tiles first for unpredictability
+    const shuffled = [...catTiles];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    // Pick random distinct rows for each tile in this category
+    const availableRows = Array.from({ length: rowCount }, (_, i) => i);
+    // Shuffle available rows
+    for (let i = availableRows.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [availableRows[i], availableRows[j]] = [availableRows[j], availableRows[i]];
+    }
+    
+    for (let t = 0; t < shuffled.length && t < rowCount; t++) {
+      const row = availableRows[t];
+      if (rowFillCount[row] < colCount) {
+        grid[row][rowFillCount[row]] = shuffled[t];
+        rowFillCount[row]++;
+      }
+    }
+  }
+  
+  // Flatten grid back to 1D array, putting any remaining unplaced tiles at the end
+  const result: T[] = [];
+  const placed = new Set<T>();
+  for (let r = 0; r < rowCount; r++) {
+    for (let c = 0; c < colCount; c++) {
+      const tile = grid[r][c];
+      if (tile) {
+        result.push(tile);
+        placed.add(tile);
+      }
+    }
+  }
+  
+  // Append any tiles that didn't fit (shouldn't happen if category<->count math is right)
+  for (const tile of tiles) {
+    if (!placed.has(tile)) {
+      result.push(tile);
+    }
+  }
+  
+  return result;
+}
 
 export const checkVisualFit = (word: string, colCount: number, isEmoji: boolean): boolean => {
   const context = getMeasurementContext();

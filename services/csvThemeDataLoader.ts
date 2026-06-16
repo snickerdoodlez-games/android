@@ -1,16 +1,5 @@
 import { CSVRow } from '../types';
-import { parseCSVLine, shuffleArray } from './csvUtils';
-
-// Import all 9 csvThemeData files
-import { CSV_THEME_DATA_1 } from './csvThemeData1';
-import { CSV_THEME_DATA_2 } from './csvThemeData2';
-import { CSV_THEME_DATA_3 } from './csvThemeData3';
-import { CSV_THEME_DATA_4 } from './csvThemeData4';
-import { CSV_THEME_DATA_5 } from './csvThemeData5';
-import { CSV_THEME_DATA_6 } from './csvThemeData6';
-import { CSV_THEME_DATA_7 } from './csvThemeData7';
-import { CSV_THEME_DATA_8 } from './csvThemeData8';
-import { CSV_THEME_DATA_9 } from './csvThemeData9';
+import { parseCSVLine, shuffleArray, wordFitsPerLine } from './csvUtils';
 
 /**
  * Strips leading/trailing double-quote characters from a string.
@@ -48,7 +37,17 @@ function stripQuotes(value: string): string {
  *   13 = score (difficulty)
  *   14 = cat21 (broad category)
  */
-function parseAllThemeData(): Map<string, CSVRow[]> {
+function parseAllThemeData(
+  CSV_THEME_DATA_1: string,
+  CSV_THEME_DATA_2: string,
+  CSV_THEME_DATA_3: string,
+  CSV_THEME_DATA_4: string,
+  CSV_THEME_DATA_5: string,
+  CSV_THEME_DATA_6: string,
+  CSV_THEME_DATA_7: string,
+  CSV_THEME_DATA_8: string,
+  CSV_THEME_DATA_9: string,
+): Map<string, CSVRow[]> {
   const themeMap = new Map<string, CSVRow[]>();
 
   // Combine all CSV strings
@@ -91,7 +90,7 @@ function parseAllThemeData(): Map<string, CSVRow[]> {
         if (wordIdx < parts.length && defIdx < parts.length) {
           const word = stripQuotes(parts[wordIdx]);
           const def = stripQuotes(parts[defIdx]);
-          if (word) {
+          if (word && wordFitsPerLine(word)) {
             words.push(word);
             definitions.push(def || '');
           }
@@ -132,15 +131,45 @@ function parseAllThemeData(): Map<string, CSVRow[]> {
 
 // Module-level cache
 let cachedMap: Map<string, CSVRow[]> | null = null;
+let initPromise: Promise<void> | null = null;
+
+async function loadThemeData(): Promise<void> {
+  if (cachedMap) return;
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    // Dynamic imports to avoid eager parsing of ~2MB of theme data at startup
+    const { CSV_THEME_DATA_1 } = await import('./csvThemeData1');
+    const { CSV_THEME_DATA_2 } = await import('./csvThemeData2');
+    const { CSV_THEME_DATA_3 } = await import('./csvThemeData3');
+    const { CSV_THEME_DATA_4 } = await import('./csvThemeData4');
+    const { CSV_THEME_DATA_5 } = await import('./csvThemeData5');
+    const { CSV_THEME_DATA_6 } = await import('./csvThemeData6');
+    const { CSV_THEME_DATA_7 } = await import('./csvThemeData7');
+    const { CSV_THEME_DATA_8 } = await import('./csvThemeData8');
+    const { CSV_THEME_DATA_9 } = await import('./csvThemeData9');
+
+    cachedMap = parseAllThemeData(
+      CSV_THEME_DATA_1, CSV_THEME_DATA_2, CSV_THEME_DATA_3,
+      CSV_THEME_DATA_4, CSV_THEME_DATA_5, CSV_THEME_DATA_6,
+      CSV_THEME_DATA_7, CSV_THEME_DATA_8, CSV_THEME_DATA_9,
+    );
+  })();
+
+  return initPromise;
+}
+
+// Start loading immediately at module scope (non-blocking)
+loadThemeData();
 
 /**
  * Returns a Map of theme name -> CSVRow[] (categories for that theme).
  * The result is cached after the first call.
- * Returns a Map of theme name -> CSVRow[] (categories for that theme).
+ * Returns an empty Map if data hasn't loaded yet (caller should retry or use fallback).
  */
 export function getThemedDataMap(): Map<string, CSVRow[]> {
-  if (!cachedMap) {
-    cachedMap = parseAllThemeData();
-  }
-  return cachedMap;
+  if (cachedMap) return cachedMap;
+  // Trigger async load if not already started
+  loadThemeData();
+  return new Map(); // Empty map as fallback until data loads
 }

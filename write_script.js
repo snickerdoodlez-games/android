@@ -1,0 +1,1 @@
+const fs = require('fs'); let c = fs.readFileSync('c:/Users/DD/New folder/gitttt/components/Level1_Emoji.tsx', 'utf8'); fs.writeFileSync('c:/Users/DD/New folder/gitttt/final_content.txt', c, 'utf8'); console.log('ok');

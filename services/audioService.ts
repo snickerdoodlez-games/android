@@ -224,6 +224,14 @@ class AudioService {
     this.playTone(880, 'sine', 0.2, now + 0.1, 0.1);
   }
 
+  playStar() {
+    // Bright, shimmering chime for each star earned
+    const now = 0;
+    this.playTone(1318.51, 'sine', 0.25, now, 0.15);
+    this.playTone(1567.98, 'sine', 0.35, now + 0.08, 0.12);
+    this.playTone(2093.00, 'triangle', 0.45, now + 0.16, 0.1);
+  }
+
   toggleMute() {
     this.isMuted = !this.isMuted;
     if (this.isMuted) {

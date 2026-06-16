@@ -55,7 +55,7 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
               <h2 className="text-3xl font-black text-neon-blue uppercase tracking-tighter italic">HALL OF FAME</h2>
               <span className="text-neon-yellow text-sm font-bold tracking-widest uppercase">RANK: {playerRank.name}</span>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white p-2">
+          <button onClick={onClose} className="text-zinc-500 hover:text-white p-2 min-w-[48px] min-h-[48px] flex items-center justify-center" aria-label="Close statistics">
              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -108,7 +108,7 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
 
         <button 
           onClick={onClose}
-          className="w-full py-4 bg-white text-black font-black text-xl uppercase rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg mt-auto"
+          className="w-full py-4 min-h-[48px] bg-white text-black font-black text-xl uppercase rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg mt-auto"
         >
           BACK TO GAME
         </button>

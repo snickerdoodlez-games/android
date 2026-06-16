@@ -1,9 +1,18 @@
 WORD PAIRING MACHINE - LEVEL PRECHECK LOG
 =========================================
-This file records instances where the LevelPrecheck system identified an invalid or unsolvable board configuration.
+This file records instances where the LevelPrecheck system either:
+  - Identified an invalid or unsolvable board configuration (FAILED entry), OR
+  - Successfully selected a themed level board (SUCCESS entry — THEMED levels only).
+
 Invalid boards are automatically rejected and a new board is generated before the player ever sees it.
 
+"Needed X, found Y" explanation:
+  - Needed = rowCount — how many category rows the grid requires (e.g., 5 for Easy, 6 for Medium, 7 for Hard).
+  - Found  = selectedCategories.length — how many categories had at least N valid, non-duplicate words that fit the grid visually.
+  - When Found < Needed, the board is rejected and a different theme/data pool is tried.
+  - "Needed 5, found 3" means the level requires 5 rows of categories but only 3 rows could be populated with valid, non-conflicting words.
+
 [FORMAT]
-[TIMESTAMP] LEVEL: X | MODE: Y | REASON: Z | CATEGORIES: [A, B, C] | CONFLICTS: [D, E]
+[TIMESTAMP] Level: X | Mode: Y | Reason: Z | Theme: A | Cats: [B, C, D] | Conflicts: [E]
 
 --- LOG START ---

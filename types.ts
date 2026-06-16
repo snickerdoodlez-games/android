@@ -77,21 +77,21 @@ export const NEON_PALETTE: Record<string, string> = {
 };
 
 export const SOLVED_COLORS = [
-  'bg-neon-red shadow-[0_0_15px_#FF073A,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-neon-orange shadow-[0_0_15px_#FF5F1F,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-neon-yellow shadow-[0_0_15px_#F9FF00,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-neon-lime shadow-[0_0_15px_#39FF14,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-[#00FFFF] shadow-[0_0_15px_#00FFFF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-[#FF00FF] shadow-[0_0_15px_#FF00FF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  // SEVENTH ROW (Index 6): Deep Purple with precise 0.95 white inset glow as requested
-  'bg-[#A020F0] shadow-[0_0_15px_#A020F0,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-neon-sky-blue shadow-[0_0_15px_#00BFFF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-neon-blue shadow-[0_0_15px_#0066FF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-neon-violet shadow-[0_0_15px_#B026FF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-neon-purple shadow-[0_0_15px_#D400FF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-neon-magenta shadow-[0_0_15px_#FF00FF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-neon-pink shadow-[0_0_15px_#FF1FBF,inset_0_0_15px_rgba(255,255,255,0.95)] border-white',
-  'bg-neon-rose shadow-[0_0_15_#FF0055,inset_0_0_15px_rgba(255,255,255,0.95)] border-white'
+  'bg-neon-red border-white',
+  'bg-neon-orange border-white',
+  'bg-neon-yellow border-white',
+  'bg-neon-lime border-white',
+  'bg-[#00FFFF] border-white',
+  'bg-[#FF00FF] border-white',
+  // SEVENTH ROW (Index 6): Deep Purple
+  'bg-[#A020F0] border-white',
+  'bg-neon-sky-blue border-white',
+  'bg-neon-blue border-white',
+  'bg-neon-violet border-white',
+  'bg-neon-purple border-white',
+  'bg-neon-magenta border-white',
+  'bg-neon-pink border-white',
+  'bg-neon-rose border-white'
 ];
 
 export const THEMES: Theme[] = [

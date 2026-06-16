@@ -1,0 +1,15 @@
+{
+  "gameVersion": "1.0.0",
+  "appId": "com.snickerdoodlez.wordpairing",
+  "appName": "Word Pairing: Category Match",
+  "server": {
+    "androidScheme": "https",
+    "hostname": "localhost",
+    "cleartext": false
+  },
+  "webView": {
+    "assetLoaderDomain": "appassets.androidplatform.net",
+    "allowedSchemas": ["https"],
+    "assetPath": "public"
+  }
+}

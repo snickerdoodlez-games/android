@@ -127,7 +127,7 @@ public class StorageBridge extends Plugin {
     public void execute(PluginCall call) {
         String command = call.getString("command");
         String sql = call.getString("sql");
-        JSArray paramsArray = call.getArray("params");
+        JSONArray paramsArray = call.getArray("params");
 
         if (command == null || sql == null) {
             call.reject("Missing required parameters: 'command' and 'sql'");
@@ -367,7 +367,7 @@ public class StorageBridge extends Plugin {
      * Converts a JSArray of parameter values to a String array
      * for use with SQLite execSQL/rawQuery bind arguments.
      */
-    private static String[] convertParams(JSArray paramsArray) {
+    private static String[] convertParams(JSONArray paramsArray) {
         if (paramsArray == null || paramsArray.length() == 0) {
             return new String[0];
         }

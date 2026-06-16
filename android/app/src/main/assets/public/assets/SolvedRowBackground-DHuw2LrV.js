@@ -1,1 +1,0 @@
-import{R as s,j as e}from"./index-DBYkcbzW.js";const r=({seed:a,className:o=""})=>e.jsx("div",{className:`absolute inset-0 z-0 bg-black border-4 border-white rounded-medium overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.5)] ${o}`,children:e.jsx("div",{className:"absolute inset-0 bg-black/40 pointer-events-none z-[2]"})}),n=s.memo(r);export{n as S};

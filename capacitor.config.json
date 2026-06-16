@@ -1,5 +1,10 @@
 {
   "appId": "com.snickerdoodlez.wordpairing",
   "appName": "Word Pairing: Category Match",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "hostname": "localhost",
+    "allowNavigation": []
+  }
 }

@@ -27,32 +27,33 @@ const ArcadeStyledText: React.FC<Props> = ({
           color: gradient,
           // Using a multi-layer text-shadow stack produces a much smoother "thick outline"
           // than -webkit-text-stroke, which miters sharply on bold fonts.
+          // GRAPHIC QUALITY: All values are whole pixels for crisp, non-blurry rendering
           textShadow: `
             /* Black high-contrast inner border */
-            -1.5px -1.5px 0 ${innerShadowColor},  
-             1.5px -1.5px 0 ${innerShadowColor},
-            -1.5px  1.5px 0 ${innerShadowColor},
-             1.5px  1.5px 0 ${innerShadowColor},
+            -2px -2px 0px ${innerShadowColor},  
+             2px -2px 0px ${innerShadowColor},
+            -2px  2px 0px ${innerShadowColor},
+             2px  2px 0px ${innerShadowColor},
             
             /* Smooth white outer "Arcade Cabinet" boundary */
-            -3px -3px 0 ${outlineColor},
-             0px -3px 0 ${outlineColor},
-             3px -3px 0 ${outlineColor},
-             3px  0px 0 ${outlineColor},
-             3px  3px 0 ${outlineColor},
-             0px  3px 0 ${outlineColor},
-            -3px  3px 0 ${outlineColor},
-            -3px  0px 0 ${outlineColor},
+            -3px -3px 0px ${outlineColor},
+             0px -3px 0px ${outlineColor},
+             3px -3px 0px ${outlineColor},
+             3px  0px 0px ${outlineColor},
+             3px  3px 0px ${outlineColor},
+             0px  3px 0px ${outlineColor},
+            -3px  3px 0px ${outlineColor},
+            -3px  0px 0px ${outlineColor},
             
             /* Fills for corner smoothing */
-            -2px -3px 0 ${outlineColor},
-             2px -3px 0 ${outlineColor},
-             3px -2px 0 ${outlineColor},
-             3px  2px 0 ${outlineColor},
-             2px  3px 0 ${outlineColor},
-            -2px  3px 0 ${outlineColor},
-            -3px  2px 0 ${outlineColor},
-            -3px -2px 0 ${outlineColor},
+            -2px -3px 0px ${outlineColor},
+             2px -3px 0px ${outlineColor},
+             3px -2px 0px ${outlineColor},
+             3px  2px 0px ${outlineColor},
+             2px  3px 0px ${outlineColor},
+            -2px  3px 0px ${outlineColor},
+            -3px  2px 0px ${outlineColor},
+            -3px -2px 0px ${outlineColor},
 
             /* Deep background shadow for arcade depth */
             4px 4px 0px rgba(0,0,0,1)
