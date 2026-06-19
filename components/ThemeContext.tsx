@@ -21,7 +21,7 @@ const THEME_STORAGE_KEY = 'word-pairing-theme';
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>('dark');
 
-  // On mount: read stored preference OR system preference, then apply
+  // On mount: read stored preference; if none, default to dark mode
   useEffect(() => {
     const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
     if (stored === 'light' || stored === 'dark') {
@@ -29,11 +29,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       document.documentElement.setAttribute('data-theme', stored);
       return;
     }
-    // Fall back to system preference
-    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-    const systemTheme: Theme = prefersLight ? 'light' : 'dark';
-    setThemeState(systemTheme);
-    document.documentElement.setAttribute('data-theme', systemTheme);
+    // No stored preference — default to dark mode
+    setThemeState('dark');
+    document.documentElement.setAttribute('data-theme', 'dark');
   }, []);
 
   const setTheme = useCallback((t: Theme) => {

@@ -166,6 +166,21 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
           </div>
         </div>
 
+        {onToggleAutoPlay && (
+          <div className="flex flex-col gap-2 shrink-0">
+            <button
+              onClick={onToggleAutoPlay}
+              className={`w-full py-2.5 min-h-[48px] rounded-medium border-2 transition-all font-bold font-raleway text-lg uppercase ${
+                autoIsOn
+                  ? 'bg-zinc-900 border-neon-green text-neon-green shadow-[0_0_8px_rgba(0,240,0,0.4)]'
+                  : 'bg-black border-zinc-800 text-zinc-600 hover:border-white hover:text-white'
+              }`}
+              aria-label={`Auto play ${autoIsOn ? 'on' : 'off'}`}
+            >
+              AUTO PLAY: {autoIsOn ? 'ON' : 'OFF'}
+            </button>
+          </div>
+        )}
         <div className="mt-auto flex flex-col gap-2 pt-2 border-t border-zinc-800 shrink-0">
             {privacyOptionsRequired && (
               <button onClick={handleConsent} className="py-2 min-h-[48px] bg-zinc-900 border border-zinc-600 text-zinc-400 rounded-medium font-bold text-lg font-raleway uppercase hover:text-white hover:border-white transition-all" aria-label="Open privacy consent options">CONSENT</button>

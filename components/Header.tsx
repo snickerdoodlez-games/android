@@ -87,7 +87,11 @@ const Header: React.FC<HeaderProps> = ({
       for (let s = 1; s <= (stars || 0); s++) {
         timers.push(setTimeout(() => {
           setVisibleStars(s);
-          audio.playStar();
+          // Delay sound by the CSS starPop animation-delay for each star:
+          //   Star 1: 0.2s → 200ms  |  Star 2: 0.4s → 400ms  |  Star 3: 0.6s → 600ms
+          timers.push(setTimeout(() => {
+            audio.playStar();
+          }, s * 200));
         }, s * 400));
       }
       return () => timers.forEach(clearTimeout);
