@@ -124,18 +124,17 @@ const C = GameMode.CLASSIC;
 const E = GameMode.LEVEL_EMOJI;
 const M = GameMode.LEVEL_MIND_MATCH;
 const S = GameMode.LEVEL_SYNONYMS;
-const T = GameMode.LEVEL_THEME;
 const X = GameMode.LEVEL_EXPANSION;
 
 export const DETERMINISTIC_LEVEL_SEQUENCE: GameMode[] = [
-  C, E, M, S, X, T, C, E, M, 
-  S, X, T, C, E, M, S, X, T, 
-  C, E, M, S, X, T, C, E, 
-  M, S, X, T, C, E, M, S, X, 
-  T, C, E, M, S, X, T, C, 
-  E, M, S, X, T, C, E, M, S, 
-  X, T, C, E, M, S, X, T, 
-  C, E, M, S, X, T, C, E, M, 
-  S, X, T, C, E, M, S, X, T, 
-  C, E, M, S, X, T, C, E
+  C, E, M, S, X, C, E, M, 
+  S, X, C, E, M, S, X, 
+  C, E, M, S, X, C, E, 
+  M, S, X, C, E, M, S, X, 
+  C, E, M, S, X, C, 
+  E, M, S, X, C, E, M, S, 
+  X, C, E, M, S, X, 
+  C, E, M, S, X, C, E, M, 
+  S, X, C, E, M, S, X, 
+  C, E, M, S, X, C, E
 ];

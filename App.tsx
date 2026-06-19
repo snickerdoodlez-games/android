@@ -34,7 +34,7 @@ import {
 import { AdMob, BannerAdSize, BannerAdPosition, AdmobConsentStatus } from '@capacitor-community/admob';
 import { ensureDataInitialized, waitForDataInit } from './services/csvData';
 import { waitForSynonymDataInit } from './services/synonymData';
-import { getAvailableHints, useHint as useHintService, addHints, checkAndAwardStarHint, recordHintUsedOnLevel, getHintsUsedOnLevel, MAX_HINTS_PER_LEVEL } from './services/hintService';
+import { getAvailableHints, useHint as useHintService, addHints, checkAndAwardStarHint } from './services/hintService';
 import { isTestLabRun, writeTestLabResults } from './plugins/testLab';
 
 // Kick off async CSV data initialization immediately to minimize wait time
@@ -62,8 +62,6 @@ const Level7_Expansion = lazy(() => import('./components/Level7_Expansion'));
 const Level7_Expansion_Easy = lazy(() => import('./components/Level7_Expansion_Easy'));
 const Level7_Expansion_Medium = lazy(() => import('./components/Level7_Expansion_Medium'));
 const Level8_Cascade = lazy(() => import('./components/Level8_Cascade'));
-const Level_Themed = lazy(() => import('./components/Level_Themed'));
-
 const BANNER_AD_ID = 'ca-app-pub-4096368901415767/2019330695';
 const INTERSTITIAL_AD_ID = 'ca-app-pub-4096368901415767/1153913539';
 const REWARDED_AD_ID = 'ca-app-pub-4096368901415767/2572185411';
@@ -133,10 +131,8 @@ export const App: React.FC = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel | undefined>(getSelectedDifficulty);
   const [hintCount, setHintCount] = useState(getAvailableHints);
   const [showHintAd, setShowHintAd] = useState(false);
-  const [hintsUsedThisLevel, setHintsUsedThisLevel] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [isAdLoading, setIsAdLoading] = useState(false);
-  const [showMaxHintsOverlay, setShowMaxHintsOverlay] = useState(false);
 
 
   // Layout dimension validation guard: prevent rendering game content
@@ -456,8 +452,6 @@ export const App: React.FC = () => {
     setMode(getLevelMode(nextLevel, enabledModes));
     setIsReviewing(false);
     setCurrentSummary(null);
-    // Reset per-level hint tracking for the new level
-    setHintsUsedThisLevel(0);
   };
 
 
@@ -490,8 +484,8 @@ export const App: React.FC = () => {
     });
     const mainCategory = Object.entries(catCounts).sort((a,b) => b[1] - a[1])[0][0];
 
-    // Hints are disabled when: toggle is off OR per-level max (2) reached
-    const hintsBlocked = !hintsEnabled || hintsUsedThisLevel >= MAX_HINTS_PER_LEVEL;
+    // Hints are disabled when: toggle is off
+    const hintsBlocked = !hintsEnabled;
 
     const totalStars = getStats().totalStars;
     const effectiveStars = (isReviewing && currentSummary) ? (totalStars - currentSummary.stars) : totalStars;
@@ -513,9 +507,6 @@ export const App: React.FC = () => {
               } else {
                 return <Level7_Expansion key={`exp-hard-${levelIndex}-${diffTier}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
               }
-            
-            case GameMode.LEVEL_THEME:
-              return <Level_Themed key={`thm-${diffTier}-${levelIndex}`} csvData={data} mode={mode} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} themeName={themeName} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
             
             case GameMode.CLASSIC:
             case GameMode.LEVEL_SYNONYMS:
@@ -554,7 +545,7 @@ export const App: React.FC = () => {
   // Hint system handlers
   // Two-step flow: click dispatches hint-used, level component applies the hint
   // and dispatches hint-applied only on success, then we decrement the counter.
-  // Per-level limit: max 2 hints per level (MAX_HINTS_PER_LEVEL).
+  // No per-level limit — users can use as many hints as they have available.
   const handleHintClick = () => {
     if (isReviewing) return;
     if (!hintsEnabled) {
@@ -563,14 +554,11 @@ export const App: React.FC = () => {
       return;
     }
     const current = getAvailableHints();
-    if (current > 0 && hintsUsedThisLevel < MAX_HINTS_PER_LEVEL) {
-      // Hints available and not at per-level limit — dispatch hint-use event
+    if (current > 0) {
+      // Hints available — dispatch hint-use event
       window.dispatchEvent(new CustomEvent('hint-used'));
-    } else if (hintsUsedThisLevel >= MAX_HINTS_PER_LEVEL) {
-      // Per-level max reached — show max hints overlay
-      setShowMaxHintsOverlay(true);
     } else {
-      // Out of hints (hintCount <= 0) — show HintAdOverlay to watch for more hints
+      // Out of hints — show HintAdOverlay to watch for more hints
       setShowHintAd(true);
     }
   };
@@ -581,9 +569,6 @@ export const App: React.FC = () => {
       if (current > 0) {
         const next = useHintService();
         setHintCount(next);
-        // Record and track per-level hint usage
-        const usedNow = recordHintUsedOnLevel(levelIndex);
-        setHintsUsedThisLevel(usedNow);
       }
     };
     window.addEventListener('hint-applied', handler);
@@ -705,8 +690,6 @@ export const App: React.FC = () => {
           selectedDifficulty={selectedDifficulty}
           unlockedDifficulties={unlockedDifficulties}
           onDifficultyChange={handleDifficultyChange}
-          isAutoPlaying={isAutoPlaying}
-          onToggleAutoPlay={() => { setIsAutoPlaying(prev => { const next = !prev; saveAutoPlay(next); return next; }); }}
         />}
         {showCategorySelector && <CategorySelectionOverlay isOpen={showCategorySelector} onClose={() => setShowCategorySelector(false)} selectedIds={customPoolIds} onToggle={(ids) => { setCustomPoolIds(ids); saveCustomPool(ids); }} />}
         {showStats && <StatsOverlay onClose={() => setShowStats(false)} />}
@@ -727,37 +710,6 @@ export const App: React.FC = () => {
           hintsAvailable={hintCount}
           isNative={Capacitor.isNativePlatform()}
         />
-        {/* Max Hints Per Level Overlay */}
-        {showMaxHintsOverlay && createPortal(
-          <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/80" onClick={() => setShowMaxHintsOverlay(false)}>
-            <div
-              className="bg-black border-2 border-white rounded-large px-6 py-8 mx-4 shadow-[0_0_40px_rgba(255,7,58,0.6)] max-w-[90vw] w-full"
-              style={{ maxWidth: '380px' }}
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            >
-              {/* Warning Icon */}
-              <div className="flex justify-center mb-4">
-                <svg viewBox="0 0 24 24" className="w-16 h-16" style={{ filter: 'drop-shadow(0 0 12px #FF073A)' }}>
-                  <path d="M12 2L2 22h20L12 2zm-1 8h2v6h-2v-6zm0 8h2v2h-2v-2z" fill="#FF073A" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <h2 className="text-[clamp(1.25rem,5vw,1.75rem)] font-black font-oswald uppercase text-center text-neon-red tracking-wider leading-tight mb-2">
-                Maximum Hints Used
-              </h2>
-              <p className="text-sm text-white font-oswald text-center mb-6">
-                Hints can be used maximum two times per level.
-              </p>
-              <button
-                onClick={() => setShowMaxHintsOverlay(false)}
-                className="w-full px-6 py-3 min-h-[48px] bg-transparent text-white font-black font-oswald text-lg uppercase rounded-medium border-2 border-white hover:bg-white hover:text-black active:scale-95 transition-all"
-                aria-label="Close maximum hints overlay"
-              >
-                OK
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
       </div>
       </WindowSizeClassProvider>
     </ErrorBoundary>

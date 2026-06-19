@@ -209,31 +209,31 @@ export const getLevelPackage = (levelIndex: number, enabledModes: GameMode[] = [
     switch (mode) {
       case GameMode.LEVEL_SYNONYMS: pool = getSynonymData(); break;
       case GameMode.LEVEL_EMOJI: pool = getEmojiData(); break;
-      case GameMode.LEVEL_THEME:
-        // Try deterministic themes in order, skipping any that fail validation.
-        // Start at the deterministic index and advance on each retry.
-        {
-          const startIdx = levelIndex % themeNames.length;
-          const triedCount = attempt - 1;
-          const themeIdx = (startIdx + triedCount) % themeNames.length;
-          const candidateName = themeNames[themeIdx];
-          const themedPool = themesMap.get(candidateName || '');
-          if (themedPool && themedPool.length > 0) {
-            pool = themedPool;
-            themeName = candidateName;
-          } else if (themedPool && themedPool.length === 0) {
-            // Empty themed pool — skip to consolidated data
-            pool = getConsolidatedData();
-            themeName = undefined;
-          } else {
-            // No themed data for this name — try next or fallback
-            pool = getConsolidatedData();
-            themeName = undefined;
-          }
-          // If we've tried all themes and none work, the loop will naturally
-          // exhaust; the fallback code after the loop handles the consolidated case.
-        }
-        break;
+       case GameMode.LEVEL_THEME:
+         // Try deterministic themes in order, skipping any that fail validation.
+         // Start at the deterministic index and advance on each retry.
+         {
+           const startIdx = levelIndex % themeNames.length;
+           const triedCount = attempt - 1;
+           const themeIdx = (startIdx + triedCount) % themeNames.length;
+           const candidateName = themeNames[themeIdx];
+           const themedPool = themesMap.get(candidateName || '');
+           if (themedPool && themedPool.length > 0) {
+             pool = themedPool;
+             themeName = candidateName;
+           } else if (themedPool && themedPool.length === 0) {
+             // Empty themed pool — skip to consolidated data
+             pool = getConsolidatedData();
+             themeName = undefined;
+           } else {
+             // No themed data for this name — try next or fallback
+             pool = getConsolidatedData();
+             themeName = undefined;
+           }
+           // If we've tried all themes and none work, the loop will naturally
+           // exhaust; the fallback code after the loop handles the consolidated case.
+         }
+         break;
       case GameMode.LEVEL_EXPANSION:
         pool = getPoolData();
         break;
@@ -314,31 +314,31 @@ export const getLevelPackage = (levelIndex: number, enabledModes: GameMode[] = [
     ? (selectedDifficulty === 'easy' ? 5 : selectedDifficulty === 'medium' ? 6 : 7)
     : (stats.totalStars >= 50 ? 7 : (stats.totalStars >= 20 ? 6 : 5));
   
-  let fallbackData: CSVRow[];
-  let fallbackThemeName: string | undefined;
-  if (mode === GameMode.LEVEL_THEME) {
-    const fallbackThemesMap = getThemedDataMap();
-    const fallbackThemeNames = Array.from(fallbackThemesMap.keys()) as string[];
-    fallbackThemeName = fallbackThemeNames[levelIndex % fallbackThemeNames.length];
-    const themedData = fallbackThemesMap.get(fallbackThemeName);
-    if (themedData && themedData.length > 0) {
-      // Run validation with the full themed pool to pick only valid categories
-      const fallbackValidation = validateStandardLevel(themedData, fallbackRowCount, 4, levelIndex, GameMode.LEVEL_THEME, fallbackThemeName);
-      if (fallbackValidation.isValid) {
-        fallbackData = fallbackValidation.data;
-      } else {
-        // Themed pool still insufficient — fall back to consolidated data
-        const consValidation = validateStandardLevel(getConsolidatedData(), fallbackRowCount, 4, levelIndex, mode);
-        fallbackData = consValidation.isValid ? consValidation.data : getConsolidatedData().slice(0, fallbackRowCount);
-        fallbackThemeName = undefined;
-      }
-    } else {
-      // No themed data available — use consolidated data and clear themeName to avoid mislabeling
-      const consValidation = validateStandardLevel(getConsolidatedData(), fallbackRowCount, 4, levelIndex, mode);
-      fallbackData = consValidation.isValid ? consValidation.data : getConsolidatedData().slice(0, fallbackRowCount);
-      fallbackThemeName = undefined;
-    }
-  } else if (mode === GameMode.LEVEL_SYNONYMS) {
+   let fallbackData: CSVRow[];
+   let fallbackThemeName: string | undefined;
+   if (mode === GameMode.LEVEL_THEME) {
+     const fallbackThemesMap = getThemedDataMap();
+     const fallbackThemeNames = Array.from(fallbackThemesMap.keys()) as string[];
+     fallbackThemeName = fallbackThemeNames[levelIndex % fallbackThemeNames.length];
+     const themedData = fallbackThemesMap.get(fallbackThemeName);
+     if (themedData && themedData.length > 0) {
+       // Run validation with the full themed pool to pick only valid categories
+       const fallbackValidation = validateStandardLevel(themedData, fallbackRowCount, 4, levelIndex, GameMode.LEVEL_THEME, fallbackThemeName);
+       if (fallbackValidation.isValid) {
+         fallbackData = fallbackValidation.data;
+       } else {
+         // Themed pool still insufficient — fall back to consolidated data
+         const consValidation = validateStandardLevel(getConsolidatedData(), fallbackRowCount, 4, levelIndex, mode);
+         fallbackData = consValidation.isValid ? consValidation.data : getConsolidatedData().slice(0, fallbackRowCount);
+         fallbackThemeName = undefined;
+       }
+     } else {
+       // No themed data available — use consolidated data and clear themeName to avoid mislabeling
+       const consValidation = validateStandardLevel(getConsolidatedData(), fallbackRowCount, 4, levelIndex, mode);
+       fallbackData = consValidation.isValid ? consValidation.data : getConsolidatedData().slice(0, fallbackRowCount);
+       fallbackThemeName = undefined;
+     }
+   } else if (mode === GameMode.LEVEL_SYNONYMS) {
     const synonymPool = getSynonymData();
     fallbackData = synonymPool.length > 0 ? synonymPool.slice(0, fallbackRowCount) : getConsolidatedData().slice(0, fallbackRowCount);
   } else {

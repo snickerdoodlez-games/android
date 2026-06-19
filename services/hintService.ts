@@ -13,9 +13,6 @@ const DEFAULT_HINTS = 2;
 const AD_REWARD_HINTS = 3;
 const STARS_PER_HINT = 100;
 
-/** Maximum hints allowed per level (across all modes). */
-export const MAX_HINTS_PER_LEVEL = 2;
-
 /**
  * Get the current number of available hints.
  */
