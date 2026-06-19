@@ -1,0 +1,40 @@
+name: Deploy to Play Store
+
+# You must have this section to trigger the workflow
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Required for OIDC authentication
+    permissions:
+      contents: 'read'
+      id-token: 'write' 
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1. Authenticate using Workload Identity Federation
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/1079794258930/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'github-actions@word-pairing-category-match.iam.gserviceaccount.com'
+
+      # 2. Build the Bundle
+      - name: Build Release Bundle
+        run: ./gradlew bundleRelease
+
+      # 3. Upload to Google Play
+      - name: Release to Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          # This tells the action to use the auth credentials from Step 1
+          serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
+          packageName: com.snickerdoodlez.wordpairing
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          track: internal
