@@ -53,27 +53,22 @@ jobs:
           workload_identity_provider: 'projects/1079794258930/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           service_account: 'github-actions@word-pairing-category-match.iam.gserviceaccount.com'
 
-      # 4. Decode Keystore (Inside the android folder)
-      - name: Decode Keystore
-        working-directory: android
-        run: printf '%s' "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > release.keystore
-
-      # 5. Make gradlew executable
+      # 4. Make gradlew executable
       - name: Make gradlew executable
         working-directory: android
         run: chmod +x gradlew
 
-      # 6. Build the Bundle
+      # 5. Build the Bundle (uses key file from repo + password secrets)
       - name: Build Release Bundle
         working-directory: android
         env:
-          MYAPP_RELEASE_KEYSTORE_PATH: ${{ github.workspace }}/android/release.keystore
+          MYAPP_RELEASE_KEYSTORE_PATH: ${{ github.workspace }}/key
           MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.MYAPP_RELEASE_STORE_PASSWORD }}
           MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.MYAPP_RELEASE_KEY_ALIAS }}
           MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.MYAPP_RELEASE_KEY_PASSWORD }}
         run: ./gradlew bundleRelease
 
-      # 7. Upload to Google Play
+      # 6. Upload to Google Play
       - name: Release to Play Store
         uses: r0adkll/upload-google-play@v1
         with:
