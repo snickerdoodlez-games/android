@@ -22,11 +22,17 @@ android {
         release {
             // Read environment variables passed by GitHub Actions
             def envStoreFile = System.getenv("MYAPP_RELEASE_KEYSTORE_PATH")
-            if (envStoreFile != null && !envStoreFile.isEmpty()) {
+            def envStorePassword = System.getenv("MYAPP_RELEASE_STORE_PASSWORD")
+            def envKeyAlias = System.getenv("MYAPP_RELEASE_KEY_ALIAS")
+            def envKeyPassword = System.getenv("MYAPP_RELEASE_KEY_PASSWORD")
+            if (envStoreFile != null && !envStoreFile.isEmpty()
+                    && envStorePassword != null && !envStorePassword.isEmpty()
+                    && envKeyAlias != null && !envKeyAlias.isEmpty()
+                    && envKeyPassword != null && !envKeyPassword.isEmpty()) {
                 storeFile = file(envStoreFile)
-                storePassword = System.getenv("MYAPP_RELEASE_STORE_PASSWORD")
-                keyAlias = System.getenv("MYAPP_RELEASE_KEY_ALIAS")
-                keyPassword = System.getenv("MYAPP_RELEASE_KEY_PASSWORD")
+                storePassword = envStorePassword
+                keyAlias = envKeyAlias
+                keyPassword = envKeyPassword
             } else {
                 storeFile = file('../../key')
                 storePassword = 'Proto123@'
