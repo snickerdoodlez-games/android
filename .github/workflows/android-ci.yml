@@ -24,7 +24,7 @@ jobs:
           cache: 'npm'
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --no-optional
 
       - name: Build frontend to dist/
         run: npm run build
