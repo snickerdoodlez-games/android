@@ -21,12 +21,12 @@ android {
     signingConfigs {
         release {
             // Read environment variables passed by GitHub Actions
-            def envStoreFile = System.getenv("KEYSTORE_PATH")
+            def envStoreFile = System.getenv("MYAPP_RELEASE_KEYSTORE_PATH")
             if (envStoreFile != null && !envStoreFile.isEmpty()) {
                 storeFile = file(envStoreFile)
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
+                storePassword = System.getenv("MYAPP_RELEASE_STORE_PASSWORD")
+                keyAlias = System.getenv("MYAPP_RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("MYAPP_RELEASE_KEY_PASSWORD")
             } else {
                 storeFile = file('../../key')
                 storePassword = 'Proto123@'

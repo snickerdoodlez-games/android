@@ -67,10 +67,10 @@ jobs:
       - name: Build Release Bundle
         working-directory: android
         env:
-          KEYSTORE_PATH: ${{ github.workspace }}/android/release.keystore
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          MYAPP_RELEASE_KEYSTORE_PATH: ${{ github.workspace }}/android/release.keystore
+          MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.MYAPP_RELEASE_STORE_PASSWORD }}
+          MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.MYAPP_RELEASE_KEY_ALIAS }}
+          MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.MYAPP_RELEASE_KEY_PASSWORD }}
         run: ./gradlew bundleRelease
 
       # 7. Upload to Google Play
