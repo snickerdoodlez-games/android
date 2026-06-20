@@ -30,23 +30,29 @@ jobs:
       - name: Decode Keystore
         run: echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > release.keystore
 
-      # 3. Build the Bundle
+      # 3. Make gradlew executable (required when repo is on Windows)
+      - name: Make gradlew executable
+        working-directory: android
+        run: chmod +x gradlew
+
+      # 4. Build the Bundle
       - name: Build Release Bundle
+        working-directory: android
         env:
-          KEYSTORE_PATH: release.keystore
+          KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew bundleRelease
 
-      # 4. Upload to Google Play
+      # 5. Upload to Google Play
       - name: Release to Play Store
         uses: r0adkll/upload-google-play@v1
         with:
           # This tells the action to use the auth credentials from Step 1
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: com.snickerdoodlez.wordpairing
-          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
 
 
