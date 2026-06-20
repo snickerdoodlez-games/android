@@ -56,7 +56,7 @@ jobs:
       # 4. Decode Keystore (Inside the android folder)
       - name: Decode Keystore
         working-directory: android
-        run: echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > release.keystore
+        run: printf '%s' "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > release.keystore
 
       # 5. Make gradlew executable
       - name: Make gradlew executable
