@@ -28,10 +28,10 @@ android {
                 keyAlias = System.getenv("KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD")
             } else {
-                storeFile file('../../key')
-                storePassword 'Proto123@'
-                keyAlias 'key0'
-                keyPassword 'Proto123@'
+                storeFile = file('../../key')
+                storePassword = 'Proto123@'
+                keyAlias = 'key0'
+                keyPassword = 'Proto123@'
             }
         }
     }

@@ -16,20 +16,6 @@ plugins {
 
 apply from: "variables.gradle"
 
-// Inject kotlin-android into pure Java library subprojects so they produce
-// org.jetbrains.kotlin.platform.type=androidJvm variants that the :app consumer expects
-subprojects {
-    afterEvaluate {
-        if (plugins.hasPlugin('com.android.library') && !plugins.hasPlugin('org.jetbrains.kotlin.android')) {
-            plugins.apply('org.jetbrains.kotlin.android')
-            // Set minimal kotlin options for Java-only libraries
-            kotlin {
-                jvmToolchain(21)
-            }
-        }
-    }
-}
-
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
