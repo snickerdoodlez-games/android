@@ -50,7 +50,7 @@ jobs:
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: 'projects/1079794258930/locations/global/workloadIdentityPools/github-provider'
+          workload_identity_provider: 'projects/1079794258930/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           service_account: 'github-actions@word-pairing-category-match.iam.gserviceaccount.com'
 
       # 4. Decode Keystore (Inside the android folder)
