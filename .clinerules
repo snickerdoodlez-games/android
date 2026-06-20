@@ -32,6 +32,8 @@
 | `npm run dev` | Start Vite dev server (port 3000) |
 | `npm run build` | Production build to `dist/` |
 | `npm run preview` | Preview production build |
+| `npx cap copy android` | Copy web assets to Android |
+| `npx cap open android` | Open Android Studio |
 
 ---
 
@@ -61,7 +63,7 @@ c:/Users/DD/New folder/gitttt/
 │   ├── LevelMenu.tsx          # Main menu
 │   ├── LevelSuccessScreen.tsx # Level completion overlay (stub)
 │   ├── Tile.tsx               # Game tile component
-│   ├── Header.tsx             # Level header
+│   ├── Header.tsx             # Level header (NEXT LEVEL button + hint lightbulb)
 │   ├── Footer.tsx             # Ad banner footer
 │   ├── SettingsMenu.tsx       # Settings overlay
 │   ├── StatsOverlay.tsx       # Player stats / Hall of Fame
@@ -70,11 +72,14 @@ c:/Users/DD/New folder/gitttt/
 │   ├── LeaderboardOverlay.tsx # Leaderboard (stub)
 │   ├── ScoreBreakdownOverlay.tsx # Score breakdown (stub)
 │   ├── CategoryListOverlay.tsx # Category list (stub)
+│   ├── DailyCalendar.tsx      # Daily challenge calendar (stub)
+│   ├── CategoryTabLabel.tsx   # Long-press category tab definition overlay
+│   ├── HintAdOverlay.tsx      # "Watch ad for hints" modal
 │   ├── AndroidSystemBars.tsx  # System bar management
 │   ├── ArcadeIcon.tsx         # SVG icon component
 │   ├── ArcadeStyledText.tsx   # Styled text component
 │   ├── LockedAnimationPool.tsx # Locked tile animation
-│   ├── NextLevelButton.tsx    # Next level button (stub)
+│   ├── NextLevelButton.tsx    # Next level button (stub — button rendered in Header.tsx)
 │   ├── SolvedRowBackground.tsx # Solved row background
 │   ├── ThemeContext.tsx        # Theme context provider
 │   └── WindowSizeClassProvider.tsx # Window size detection
@@ -84,13 +89,16 @@ c:/Users/DD/New folder/gitttt/
 │   ├── csvThemeData1-9.ts     # Theme data files USED IN THEMED LEVELS
 │   ├── csvThemeDataLoader.ts  # Theme data loader
 │   ├── CSV_SYNONYMS_1-4.ts    # Synonyms data USED IN SYNONYMS LEVEL
-│   ├── csvEasy/Medium/Hard.ts # Difficulty-sorted CSV
+│   ├── csvEasy.ts             # Easy difficulty CSV
+│   ├── csvMedium.ts           # Medium difficulty CSV
+│   ├── csvHard.ts             # Hard difficulty CSV
 │   ├── csvAdd.ts              # CSV addition utilities
 │   ├── csvUtils.ts            # CSV parsing utilities
 │   ├── levelContent.ts        # Level content generation
 │   ├── levelPreCheck.ts       # Level validation
 │   ├── storage.ts             # LocalStorage persistence
-│   ├── audioService.ts        # Sound effects
+│   ├── audioService.ts        # Sound effects (Web Audio API synthesis)
+│   ├── hintService.ts         # Hint count management, ad rewards, star-milestone earning
 │   ├── antonymData.ts         # Antonym data
 │   ├── emojiData.ts           # Emoji data USED IN EMOJI LEVEL
 │   ├── globalCSV.ts           # Global CSV data
@@ -102,7 +110,9 @@ c:/Users/DD/New folder/gitttt/
 │   └── translationData.ts     # Translation data
 ├── plugins/                   # Native plugins
 │   ├── consent.ts             # Consent management
+│   ├── powerManagement.ts     # Doze/battery monitoring and throttling
 │   ├── privacy.ts             # Privacy options
+│   ├── testLab.ts             # Firebase Test Lab integration
 │   └── windowSizeClass.ts     # Window size class
 ├── android/                   # Android/Capacitor native project
 ├── app/                       # App build directory
@@ -149,14 +159,59 @@ id,Category Name,"Description",Word1,"Definition1",Word2,"Definition2",...,Diffi
 - BroadCategory: one of Nature, Animals, Astronomy, Food, History, Geography, Religion, Technology, Science, Music, Literature, Movies, Television, Economics, Politics, Lifestyle, Gaming, Cars, Sports, Art, Mythology
 
 ### Game Modes (from GameMode enum)
-- `CLASSIC` - Group 4 related word tiles.  Uses the csvPoolData*.ts for game data
-- `LEVEL_EMOJI` - Emoji tiles instead of words.  Uses emojiData.ts for game data
-- `LEVEL_MIND_MATCH` - Timed matching rounds (20 tiles, 4 per match, 3 rounds, 3 errors).  Uses the csvPoolData*.ts for game data
-- `LEVEL_SYNONYMS` - Group by meaning.  Uses the CSV_SYNONYMS_*.ts for game data
-- `LEVEL_THEMED` - Themed categories.  Uses the csvThemeData*.ts for game data
-- `LEVEL_EXPANSION` / `LEVEL_CASCADE` - Uses the csvPoolData*.ts for game data
-- `HIDDEN` - Tiles start hidden, revealed when row solved
-- `FILTER` / `GROUP` - Uses the csvPoolData*.ts for game data
+- `CLASSIC` - Group 4 related word tiles. Uses `csvPoolData*.ts` for game data
+- `LEVEL_EMOJI` - Emoji tiles instead of words. Uses `emojiData.ts` for game data
+- `LEVEL_MIND_MATCH` - Timed matching rounds (20 tiles, 4 per match, 3 rounds, 3 errors). Uses `csvPoolData*.ts` for game data
+- `LEVEL_SYNONYMS` - Group by meaning. Uses `CSV_SYNONYMS_*.ts` for game data
+- `LEVEL_THEMED` - Themed categories. Uses `csvThemeData*.ts` for game data
+- `LEVEL_EXPANSION` / `LEVEL_CASCADE` - Uses `csvPoolData*.ts` for game data
+- `LEVEL_FILTER` - Filter mode. Uses `csvPoolData*.ts` for game data
+- `LEVEL_GROUP` - Group mode. Uses `csvPoolData*.ts` for game data
+- `LEVEL_HIDDEN` - Tiles start hidden, revealed when row solved. Uses `csvPoolData*.ts` for game data
+
+---
+
+## Button & Interaction Animations
+
+### Next Level Button
+- Located in `Header.tsx`, rendered during review state when `isReviewing && onNext` are truthy
+- Background color cycles through `NEON_CYCLE_COLORS` array every 1500ms via `useEffect` interval
+- Border uses `animate-border-pulse` CSS animation (white glow pulse)
+- Active press: `active:scale-95`
+- On click: Calls `onNext` → `proceedToNextLevel()` in App.tsx which advances levelIndex, saves progress, shows interstitial ad
+
+### Start Game Button
+- Located in `LevelMenu.tsx`, rendered on main menu
+- Hover: `group hover:scale-105` with `transition-transform duration-300`
+- Active press: `active:scale-95` + `active:translate-y-[2px]`
+- On click: `onStart` → navigates to HowToPlay (first time) or game mode
+
+### Hint Lightbulb Button
+- Located in `Header.tsx`, rendered in header top-right when `onHintClick && hintCount !== undefined`
+- Active press: `active:scale-90`
+- Three visual states: Active (yellow `#F9FF00`), Depleted (dimmed `#444444` with glow pulse), Blocked (grey `#555555`)
+- Badge shows remaining hint count
+- On click: Triggers `handleHintClick` in App.tsx → dispatches `'hint-used'` CustomEvent or shows `HintAdOverlay`
+- Hint sound effect: `audio.playHint()` — bright ascending chime (procedural Web Audio API)
+
+---
+
+## Sound Effects
+
+All sound effects are synthesized procedurally using the Web Audio API (`audioService.ts`). No audio files are loaded.
+
+| Method | Description | Used By |
+|--------|-------------|---------|
+| `playTick()` | Short square wave beep | General interaction feedback |
+| `playSelect()` | Sine tone at 850Hz | Tile selection |
+| `playSwap()` | Frequency sweep 350→700Hz | Tile swap animation |
+| `playCorrect()` | Two ascending sine tones (660Hz + 880Hz) | Correct match |
+| `playRowSolved()` | Three-note ascending chord (440, 554, 659Hz) | Row completion |
+| `playError()` | Descending sawtooth buzz (120→60Hz) | Wrong match |
+| `playWin()` | Ascending fanfare (523, 659, 784, 1046Hz) | Level completion |
+| `playLevelStart()` | Two-tone startup (440Hz + 880Hz) | Level start |
+| `playStar()` | Bright shimmering chime | Star earned in review |
+| `playHint()` | Ascending sparkle chime (1046, 1318, 1567, 2093Hz) | Hint usage confirmation |
 
 ---
 
@@ -194,8 +249,8 @@ id,Category Name,"Description",Word1,"Definition1",Word2,"Definition2",...,Diffi
 6. **Header/footer must not bleed into system bars.**
 7. **Timer should only appear on Mind Match level.**
 8. **A game tile should never repeat on the same level, even across categories.**
-9. **Tile swap animation:** First selected = neon blue + white glow; Second = neon pink + white glow. Words fade/fade after swap. Locked = yellow + white glow.
-10. **Hints must respect off/on toggle.**
+9. **Tile swap animation:** First selected = neon blue + white glow; Second = neon pink + white glow. Words fade after swap. Locked = yellow + white glow. Unlocked tiles animate with a fade-in transition.
+10. **Hints must respect off/on toggle.** When hints are off, the lightbulb is grey and clicking it opens the HintAdOverlay.
 11. **Data source by game mode — NEVER CHANGE:**
     - **THEMED level** → pulls data from **`csvThemeData*.ts`** files ONLY
     - **CLASSIC level** → pulls data from **`csvPoolData*.ts`** files ONLY
@@ -206,9 +261,21 @@ id,Category Name,"Description",Word1,"Definition1",Word2,"Definition2",...,Diffi
     - **HIDDEN level** → pulls data from **`csvPoolData*.ts`** files ONLY
     - **FILTER level** → pulls data from **`csvPoolData*.ts`** files ONLY
     - **GROUP level** → pulls data from **`csvPoolData*.ts`** files ONLY
+    - **CASCADE level** → pulls data from **`csvPoolData*.ts`** files ONLY
     These mappings must never be altered. Each game mode has a dedicated data source.
-12. **When a game tile and a category tab is long pressed the definition of the word in the game tile appears.**
-13.  **Hints can only be used twice per level.  Player starts the game with 2 hints.  Rewarded hints net 2 new hints** 
+12. **When a game tile or category tab is long pressed the definition of the word in the game tile appears.** (Implemented via `CategoryTabLabel.tsx` portal overlay and Tile long-press handler.)
+13. **Hints can only be used twice per level. Player starts the game with 2 hints. Rewarded hints net 2 new hints.** (Managed by `hintService.ts` with localStorage persistence. Hint counts are per-level; remaining hints carry forward. Stars earned also trigger milestone hint rewards every 30 stars.)
+
+---
+
+## Hint System
+
+- **Service:** `services/hintService.ts` — manages `getAvailableHints()`, `useHint()`, `addHints()`, `checkAndAwardStarHint()`
+- **Storage:** Persisted in localStorage under `hints-available` key
+- **Flow:** App.tsx `handleHintClick` → dispatches `'hint-used'` CustomEvent → level component listener applies hint → dispatches `'hint-applied'` → App decrements counter
+- **Ad reward:** `addHints(2)` called after successful rewarded ad
+- **Star milestones:** Every 30 total stars, awards +2 hints (checked on level completion)
+
 ---
 
 ## MCP Server Tools Available
@@ -234,10 +301,9 @@ The following MCP tools are available to assist with this project:
 - **verify_mode_names** - Verify header mode name consistency across all components (checks MODE_NAME_COLORS in Header.tsx, displayModeName in Level1_Standard.tsx, modeNames in all level components, and .clinerules documentation)
 
 ### General MCP Tools
-- **github-integration** - Git status, commits, branches, pushes, changelogs
-- **kanban** - Task/board management for sprint tracking
-- **guesswho-game-tester** - Game simulation and bug scanning (generic use)
-- **memory** - Knowledge graph for persistent context
+- **git** (`github.com/modelcontextprotocol/servers/tree/main/src/git`) — Git status, diff, commit, branch, log, show
+- **sequentialthinking** (`github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking`) — Multi-step reasoning and problem-solving
+
 ---
 
 ## Common Tasks
@@ -268,3 +334,10 @@ The following MCP tools are available to assist with this project:
 1. Verify touch target sizes: All interactive buttons must have `min-w-[48px] min-h-[48px]`
 2. Verify content descriptions: Check for `aria-label` on all icon-only buttons and interactive elements
 3. Check color contrast: Ensure text on dark backgrounds uses bright neon or white colors
+
+### Adding Sound Effects
+1. Add a new method to `AudioService` class in `services/audioService.ts`
+2. Use the `playTone()` helper for single tones or create custom oscillator nodes for complex sounds
+3. Export the singleton `audio` instance and call the method where the sound should trigger
+4. All sounds are procedurally synthesized — no audio files needed
+5. The `isMuted` flag is respected automatically via `playTone()` early return

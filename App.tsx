@@ -569,6 +569,7 @@ export const App: React.FC = () => {
       if (current > 0) {
         const next = useHintService();
         setHintCount(next);
+        audio.playHint();
       }
     };
     window.addEventListener('hint-applied', handler);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DifficultyLevel } from '../services/storage';
 
 interface MenuProps {
@@ -29,6 +29,15 @@ export const LevelMenu: React.FC<MenuProps> = ({
 }) => {
   const levelToDisplay = lastLevel ? lastLevel : 1;
   const buttonText = levelToDisplay > 1 ? `CONTINUE LEVEL ${levelToDisplay}` : "START GAME";
+  
+  // Start button click burst animation
+  const [startBurst, setStartBurst] = useState(false);
+
+  const handleStartClick = () => {
+    setStartBurst(true);
+    setTimeout(() => setStartBurst(false), 600);
+    onStart();
+  };
 
   return (
     <div className="flex flex-col items-center h-full w-full max-w-2xl mx-auto px-4 relative bg-black font-oswald overflow-y-auto no-scrollbar">
@@ -79,21 +88,24 @@ export const LevelMenu: React.FC<MenuProps> = ({
         <div className="flex flex-col gap-4 w-full max-w-xs animate-fade-in items-center z-30" style={{ animationDelay: '0.4s' }}>
 
           {/* Button Container with Hover Scale */}
-          <div className="relative w-full group hover:scale-105 transition-transform duration-300 active:scale-95 cursor-pointer" onClick={onStart}>
+          <div className={`relative w-full group hover:scale-105 transition-transform duration-300 active:scale-95 cursor-pointer ${startBurst ? 'scale-110' : ''}`} onClick={handleStartClick} style={{ transition: startBurst ? 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'transform 0.3s ease' }}>
             
             {/* The Button with Standard White Text */}
             <button
-              className="
+              className={`
                 relative w-full min-w-[48px] min-h-[48px] bg-black rounded-large px-8 py-5
                 flex items-center justify-center
                 border-2 border-white
-                shadow-none
                 active:translate-y-[2px]
                 transition-all duration-75 z-10
-              "
+                ${startBurst ? 'shadow-[0_0_30px_rgba(255,255,255,0.8)] border-[3px]' : 'shadow-none'}
+              `}
               aria-label={buttonText}
+              style={{
+                transition: startBurst ? 'box-shadow 0.3s ease-out, border-width 0.3s ease' : 'all 0.075s ease',
+              }}
             >
-              <span className="text-2xl md:text-3xl font-black font-oswald text-white tracking-widest uppercase">
+              <span className={`text-2xl md:text-3xl font-black font-oswald text-white tracking-widest uppercase ${startBurst ? 'scale-105' : ''}`} style={{ transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
                 {buttonText}
               </span>
             </button>

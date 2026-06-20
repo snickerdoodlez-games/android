@@ -1,8 +1,9 @@
 /**
  * PowerManagement Service
  * 
- * Provides power management utilities for the app, handling Doze mode,
- * App Standby, battery optimization status, and battery-aware behavior.
+ * Monitors battery state and power conditions to optimize app behavior
+ * for battery conservation. Detects power save mode, Doze/idle mode,
+ * and low battery to throttle non-essential operations.
  * 
  * Uses the native PowerManagementPlugin on Android, with web fallbacks
  * using the Battery Status API.
@@ -12,15 +13,12 @@ import { Capacitor } from '@capacitor/core';
 
 // Define the native plugin interface
 interface PowerManagementPlugin {
-  isIgnoringBatteryOptimizations(): Promise<{ isIgnoring: boolean }>;
-  openBatteryOptimizationSettings(): Promise<void>;
   getBatteryInfo(): Promise<{ batteryLevel: number; isCharging: boolean; level: number; scale: number }>;
   isPowerSaveMode(): Promise<{ isPowerSaveMode: boolean }>;
   isDeviceIdleMode(): Promise<{ isDeviceIdleMode: boolean }>;
   getPowerManagementStatus(): Promise<{
     isDeviceIdleMode: boolean;
     isPowerSaveMode: boolean;
-    isIgnoringBatteryOptimizations: boolean;
     batteryLevel: number;
     isCharging: boolean;
     apiLevel: number;
@@ -34,7 +32,6 @@ export type PowerStateCallback = (state: PowerManagementState) => void;
 export interface PowerManagementState {
   isDeviceIdleMode: boolean;
   isPowerSaveMode: boolean;
-  isIgnoringBatteryOptimizations: boolean;
   batteryLevel: number;
   isCharging: boolean;
   apiLevel: number;
@@ -59,36 +56,6 @@ function getNativePlugin(): PowerManagementPlugin | null {
 }
 
 /**
- * Check if the app is ignoring battery optimizations.
- * Returns true if already whitelisted, false otherwise.
- */
-export async function isIgnoringBatteryOptimizations(): Promise<boolean> {
-  const plugin = getNativePlugin();
-  if (!plugin) return true; // Web/non-native: assume ignoring
-
-  try {
-    const result = await plugin.isIgnoringBatteryOptimizations();
-    return result.isIgnoring;
-  } catch {
-    return true;
-  }
-}
-
-/**
- * Open the system battery optimization settings so the user can whitelist this app.
- */
-export async function openBatteryOptimizationSettings(): Promise<void> {
-  const plugin = getNativePlugin();
-  if (!plugin) return;
-
-  try {
-    await plugin.openBatteryOptimizationSettings();
-  } catch (e) {
-    console.error('Could not open battery optimization settings:', e);
-  }
-}
-
-/**
  * Get battery level (0.0 to 1.0) and charging status.
  * On web, uses the Battery Status API with fallback.
  */
@@ -108,7 +75,7 @@ export async function getBatteryInfo(): Promise<{ batteryLevel: number; isChargi
     if (battery) {
       return {
         batteryLevel: battery.level,
-        isCharging: battery.charging
+        isCharging: battery.charging,
       };
     }
   } catch {
@@ -156,8 +123,15 @@ export async function getPowerManagementStatus(): Promise<PowerManagementState> 
   if (plugin) {
     try {
       const status = await plugin.getPowerManagementStatus();
-      cachedPowerState = status;
-      return status;
+      const state: PowerManagementState = {
+        isDeviceIdleMode: status.isDeviceIdleMode,
+        isPowerSaveMode: status.isPowerSaveMode,
+        batteryLevel: status.batteryLevel,
+        isCharging: status.isCharging,
+        apiLevel: status.apiLevel,
+      };
+      cachedPowerState = state;
+      return state;
     } catch {
       // Fall through
     }
@@ -168,10 +142,9 @@ export async function getPowerManagementStatus(): Promise<PowerManagementState> 
   const fallback: PowerManagementState = {
     isDeviceIdleMode: false,
     isPowerSaveMode: false,
-    isIgnoringBatteryOptimizations: true,
     batteryLevel: batteryLevel.batteryLevel,
     isCharging: batteryLevel.isCharging,
-    apiLevel: 0
+    apiLevel: 0,
   };
   cachedPowerState = fallback;
   return fallback;
@@ -227,13 +200,21 @@ export function onBatteryChange(callback: BatteryEventCallback): () => void {
 }
 
 /**
- * Pause game timers when battery is low or power save mode is active.
- * This helps apps conform to Doze/App Standby best practices.
+ * Determine if the app should throttle non-essential operations to conserve battery.
+ * Returns true when battery is critically low (< 15%) and not charging,
+ * or when power save mode is active.
+ * 
+ * Use this to disable animations, reduce render frequency, or pause
+ * background work when the device needs to preserve battery.
  */
-export function shouldThrottleForBattery(batteryLevel: number, isCharging: boolean, isPowerSave: boolean): boolean {
+export function shouldThrottleForBattery(
+  batteryLevel: number,
+  isCharging: boolean,
+  isPowerSave: boolean
+): boolean {
   // Throttle if:
-  // - Battery level is critically low (< 15%) and NOT charging
   // - Power save mode is active
+  // - Battery level is critically low (< 15%) and NOT charging
   if (isPowerSave) return true;
   if (!isCharging && batteryLevel >= 0 && batteryLevel < 0.15) return true;
   return false;
@@ -241,6 +222,7 @@ export function shouldThrottleForBattery(batteryLevel: number, isCharging: boole
 
 /**
  * Register for power management state changes using the Web Battery API.
+ * Polls every 30 seconds (low frequency to save battery).
  * Returns a function to clean up the listener.
  */
 export function monitorPowerState(callback: PowerStateCallback): () => void {

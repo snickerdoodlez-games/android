@@ -193,6 +193,13 @@ img, svg { image-rendering: -webkit-optimize-contrast; image-rendering: crisp-ed
 @keyframes hintGlowPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 .animate-hint-glow-pulse { animation: hintGlowPulse 2s ease-in-out infinite; }
 
+/* Hint flash burst on usage */
+@keyframes pingOnce {
+  0% { transform: scale(0.9); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.animate-ping-once { animation: pingOnce 0.5s cubic-bezier(0, 0, 0.2, 1) forwards; }
+
 /* ===========================
    6. EXPANSION ANIMATIONS
    =========================== */

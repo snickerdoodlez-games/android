@@ -61,6 +61,26 @@ const Header: React.FC<HeaderProps> = ({
   const LIGHTBULB_PATH = "M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zM9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1z";
   const MENU_ICON_PATH = "M3 6h18M3 12h18M3 18h18";
 
+  // Next Level button click burst animation
+  const [nextButtonBurst, setNextButtonBurst] = useState(false);
+  // Light bulb hint flash animation
+  const [hintFlash, setHintFlash] = useState(false);
+
+  // Listen for hint-used event to trigger light bulb flash animation
+  useEffect(() => {
+    const handleHintUsed = () => setHintFlash(true);
+    window.addEventListener('hint-used', handleHintUsed);
+    return () => window.removeEventListener('hint-used', handleHintUsed);
+  }, []);
+
+  // Reset hint flash after animation completes
+  useEffect(() => {
+    if (hintFlash) {
+      const timer = setTimeout(() => setHintFlash(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [hintFlash]);
+
   const MODE_NAME_COLORS: Record<string, string> = {
     'WORD PAIRING': '#00FFFF',
     'SYNONYMS': '#39FF14',
@@ -113,6 +133,13 @@ const Header: React.FC<HeaderProps> = ({
     }
   }, [isReviewing]);
 
+  // Handle Next Level button click with burst animation
+  const handleNextClick = () => {
+    setNextButtonBurst(true);
+    setTimeout(() => setNextButtonBurst(false), 500);
+    if (onNext) onNext();
+  };
+
   return (
     <header 
       className="relative flex flex-col justify-between px-2 sm:px-4 shrink-0 z-[10] bg-black select-none w-full overflow-hidden border-b border-zinc-900 transition-all duration-300 ease-in-out"
@@ -155,12 +182,25 @@ const Header: React.FC<HeaderProps> = ({
                   />
                 </div>
               )}
+              {/* Hint flash burst effect */}
+              {hintFlash && hintCount > 0 && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div 
+                    className="rounded-full animate-ping-once"
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      background: 'radial-gradient(circle, rgba(249,255,0,0.9) 0%, rgba(249,255,0,0.4) 30%, transparent 70%)',
+                    }}
+                  />
+                </div>
+              )}
               <ArcadeIcon 
                 path={LIGHTBULB_PATH} 
                 active={!hintsDisabledForLevel && hintCount > 0} 
-                sizeClass="w-8 h-8" 
+                sizeClass={`w-8 h-8 ${hintFlash ? 'scale-125 transition-transform duration-300' : 'transition-transform duration-300'}`} 
                 color={hintsDisabledForLevel ? "#555555" : (hintCount > 0 ? "#F9FF00" : "#444444")}
-                className={hintsDisabledForLevel ? "drop-shadow-[0_0_6px_rgba(85,85,85,0.6)]" : (hintCount <= 0 ? "drop-shadow-[0_0_15px_rgba(249,255,0,0.5)]" : "")}
+                className={hintsDisabledForLevel ? "drop-shadow-[0_0_6px_rgba(85,85,85,0.6)]" : (hintCount <= 0 ? "drop-shadow-[0_0_15px_rgba(249,255,0,0.5)]" : hintFlash ? "drop-shadow-[0_0_20px_rgba(249,255,0,0.9)]" : "")}
               />
               {/* Hint count badge — never greyed out */}
               <span 
@@ -190,12 +230,13 @@ const Header: React.FC<HeaderProps> = ({
 
       {isReviewing && onNext && (
         <div className="relative flex flex-col items-center justify-center py-4 md:py-6 w-full">
-            <button 
-              onClick={onNext} 
-              className="px-10 py-5 min-w-[48px] min-h-[48px] text-white font-black font-oswald text-3xl md:text-4xl uppercase rounded-medium border-4 border-white shadow-[0_0_25px_rgba(255,255,255,0.6)] active:scale-95 animate-border-pulse transition-colors duration-[1500ms] ease-linear relative z-[1]"
+          <button 
+            onClick={handleNextClick} 
+            className={`px-10 py-5 min-w-[48px] min-h-[48px] text-white font-black font-oswald text-3xl md:text-4xl uppercase rounded-medium border-4 border-white shadow-[0_0_25px_rgba(255,255,255,0.6)] active:scale-95 animate-border-pulse transition-colors duration-[1500ms] ease-linear relative z-[1] ${nextButtonBurst ? 'scale-110 shadow-[0_0_45px_rgba(255,255,255,0.9)]' : ''}`}
             style={{
               ...ARCADE_OUTLINE,
-              backgroundColor: NEON_CYCLE_COLORS[cycleIndex]
+              backgroundColor: NEON_CYCLE_COLORS[cycleIndex],
+              transition: nextButtonBurst ? 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease-out, background-color 1500ms ease-linear' : 'background-color 1500ms ease-linear',
             }}
           >
             NEXT LEVEL

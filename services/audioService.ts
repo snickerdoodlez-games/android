@@ -232,6 +232,15 @@ class AudioService {
     this.playTone(2093.00, 'triangle', 0.45, now + 0.16, 0.1);
   }
 
+  playHint() {
+    // Ascending sparkle chime for hint usage confirmation
+    const now = 0;
+    this.playTone(1046.50, 'sine', 0.1, now, 0.12);
+    this.playTone(1318.51, 'sine', 0.12, now + 0.06, 0.1);
+    this.playTone(1567.98, 'triangle', 0.15, now + 0.12, 0.1);
+    this.playTone(2093.00, 'triangle', 0.2, now + 0.18, 0.08);
+  }
+
   toggleMute() {
     this.isMuted = !this.isMuted;
     if (this.isMuted) {
