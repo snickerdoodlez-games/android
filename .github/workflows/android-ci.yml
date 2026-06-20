@@ -3,7 +3,8 @@ name: Deploy to Play Store
 # You must have this section to trigger the workflow
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
+  workflow_dispatch: # This adds the "Run workflow" button in the UI
 
 jobs:
   deploy:
@@ -25,11 +26,20 @@ jobs:
           workload_identity_provider: 'projects/1079794258930/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           service_account: 'github-actions@word-pairing-category-match.iam.gserviceaccount.com'
 
-      # 2. Build the Bundle
+      # 2. Decode Keystore
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > release.keystore
+
+      # 3. Build the Bundle
       - name: Build Release Bundle
+        env:
+          KEYSTORE_PATH: release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew bundleRelease
 
-      # 3. Upload to Google Play
+      # 4. Upload to Google Play
       - name: Release to Play Store
         uses: r0adkll/upload-google-play@v1
         with:
@@ -38,3 +48,7 @@ jobs:
           packageName: com.snickerdoodlez.wordpairing
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
           track: internal
+
+
+
+          

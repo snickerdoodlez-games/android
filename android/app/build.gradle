@@ -20,10 +20,19 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file('../../key')
-            storePassword 'Proto123@'
-            keyAlias 'key0'
-            keyPassword 'Proto123@'
+            // Read environment variables passed by GitHub Actions
+            def envStoreFile = System.getenv("KEYSTORE_PATH")
+            if (envStoreFile != null && !envStoreFile.isEmpty()) {
+                storeFile = file(envStoreFile)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            } else {
+                storeFile file('../../key')
+                storePassword 'Proto123@'
+                keyAlias 'key0'
+                keyPassword 'Proto123@'
+            }
         }
     }
     buildTypes {
