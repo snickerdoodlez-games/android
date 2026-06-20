@@ -28,12 +28,6 @@ dependencyResolutionManagement {
 }
 
 include ':app'
-// ... etc.
-
-include ':capacitor-android'
-project(':capacitor-android').projectDir = new File(project(':capacitor-android').projectDir.parentFile, '../node_modules/@capacitor/android/capacitor')
-include ':capacitor-community-admob'
-project(':capacitor-community-admob').projectDir = new File(project(':capacitor-community-admob').projectDir.parentFile, '../node_modules/@capacitor-community/admob/android')
 include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 
