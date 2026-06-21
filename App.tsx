@@ -602,7 +602,7 @@ export const App: React.FC = () => {
 
     if (!Capacitor.isNativePlatform()) {
       // Non-native: simulate ad reward immediately
-      const next = addHints(2);
+      const next = addHints(3);
       setHintCount(next);
       adInFlightRef.current = false;
       return;
@@ -613,7 +613,7 @@ export const App: React.FC = () => {
 
     // Listen for the reward event BEFORE showing the ad
     const rewardHandler = AdMob.addListener('onRewardedVideoAdReward', () => {
-      const next = addHints(2);
+      const next = addHints(3);
       setHintCount(next);
       adInFlightRef.current = false;
       setIsAdLoading(false);

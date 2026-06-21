@@ -109,6 +109,33 @@ const Level7_Expansion_Easy: React.FC<any> = ({
       for (let r = 0; r < target.rows; r++) for (let c = 0; c < target.cols; c++) { const t = next[r][c]; if (!t || t.status !== 'solved') { nonSolvedIndices.push([r, c]); if (t) nonSolvedTiles.push(t); } }
       const scrambled = shuffleArray(nonSolvedTiles);
       nonSolvedIndices.forEach(([r, c], i) => { if (scrambled[i]) next[r][c] = scrambled[i]; });
+
+      // Prevent auto-solved rows after expansion
+      for (let r = 0; r < target.rows; r++) {
+        const rowNonSolved: { c: number; tile: TileData }[] = [];
+        for (let c = 0; c < target.cols; c++) {
+          const t = next[r][c];
+          if (t && t.status !== 'solved') rowNonSolved.push({ c, tile: t });
+        }
+        if (rowNonSolved.length < 2) continue;
+        const firstCat = rowNonSolved[0].tile.categoryId;
+        if (rowNonSolved.every(item => item.tile.categoryId === firstCat)) {
+          let swapped = false;
+          const lastIdx = rowNonSolved.length - 1;
+          const swapC = rowNonSolved[lastIdx].c;
+          for (let sr = 0; sr < target.rows && !swapped; sr++) {
+            if (sr === r) continue;
+            for (let sc = 0; sc < target.cols && !swapped; sc++) {
+              const st = next[sr][sc];
+              if (st && st.status !== 'solved' && st.categoryId !== firstCat) {
+                next[r][swapC] = st;
+                next[sr][sc] = rowNonSolved[lastIdx].tile;
+                swapped = true;
+              }
+            }
+          }
+        }
+      }
       return next;
     });
     setActiveRowIndices(Array.from({ length: target.rows }, (_, i) => i));

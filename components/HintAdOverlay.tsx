@@ -53,8 +53,8 @@ const HintAdOverlay: React.FC<HintAdOverlayProps> = ({
         {/* Description */}
         <p className="text-sm text-white font-oswald text-center mb-4">
           {hintsAvailable > 0
-            ? 'Watch a short video to earn 2 more hints!'
-            : 'Watch a short video to earn 2 hints!'}
+            ? 'Watch a short video to earn 3 more hints!'
+            : 'Watch a short video to earn 3 hints!'}
         </p>
 
         {/* Current hints display */}
@@ -63,7 +63,7 @@ const HintAdOverlay: React.FC<HintAdOverlayProps> = ({
           <span className="text-2xl font-black font-oswald text-neon-yellow">
             {hintsAvailable}
           </span>
-          <span className="text-xs text-neon-yellow font-oswald">+2</span>
+          <span className="text-xs text-neon-yellow font-oswald">+3</span>
         </div>
 
         {/* Buttons */}
@@ -72,9 +72,9 @@ const HintAdOverlay: React.FC<HintAdOverlayProps> = ({
             <button
               onClick={onWatchAd}
               className="w-full px-6 py-3 min-h-[48px] bg-neon-yellow text-black font-black font-oswald text-lg uppercase rounded-medium border-2 border-white shadow-[0_0_20px_rgba(249,255,0,0.5)] active:scale-95 transition-all"
-              aria-label="Watch an ad to earn 2 hints"
+              aria-label="Watch an ad to earn 3 hints"
             >
-              Watch Ad (+2 Hints)
+              Watch Ad (+3 Hints)
             </button>
           ) : (
             <button
@@ -83,9 +83,9 @@ const HintAdOverlay: React.FC<HintAdOverlayProps> = ({
                 onWatchAd();
               }}
               className="w-full px-6 py-3 min-h-[48px] bg-neon-yellow text-black font-black font-oswald text-lg uppercase rounded-medium border-2 border-white shadow-[0_0_20px_rgba(249,255,255,0.5)] active:scale-95 transition-all"
-              aria-label="Earn 2 hints (dev mode)"
+              aria-label="Earn 3 hints (dev mode)"
             >
-              Earn 2 Hints (Dev)
+              Earn 3 Hints (Dev)
             </button>
           )}
 
