@@ -218,6 +218,29 @@ class AudioService {
     this.playTone(2093.00, 'triangle', 0.2, now + 0.18, 0.08);
   }
 
+  playFlip() {
+    if (this.isMuted) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    try {
+      const t = ctx.currentTime;
+      // Quick ascending sweep — simulates a card flipping over
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(600, t);
+      osc.frequency.exponentialRampToValueAtTime(1200, t + 0.12);
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.linearRampToValueAtTime(0.001, t + 0.15);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.18);
+      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+    } catch(e) {}
+  }
+
   toggleMute() {
     this.isMuted = !this.isMuted;
     if (this.isMuted) { this.stopNodes(); }

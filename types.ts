@@ -32,7 +32,8 @@ export type TileStatus =
   | 'locked'
   | 'swap-target'
   | 'swapping'
-  | 'fading-out-bg';
+  | 'fading-out-bg'
+  | 'falling-out';
 
 /** A single game tile displayed on the board. */
 export interface TileData {

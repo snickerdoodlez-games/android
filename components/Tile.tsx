@@ -53,6 +53,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   const isLocked = data.status === 'locked';
   const isHint = data.status === 'hint';
   const isFlippingOut = data.status === 'flipping-out';
+  const isFallingOut = data.status === 'falling-out';
 
   const statusClasses = getTileStatusClasses(data.status, (isCascade || isSolved) ? (data.color || targetColor) : undefined);
   const textClasses = getTypographicClasses(data.word, data.isEmoji, isSolved, isCascade, isNarrow, rowCount);
@@ -201,6 +202,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   if (isHint) animClasses.push('tile-hint');
   if (isSolved) animClasses.push('tile-flip-lock');
   if (isFlippingOut) animClasses.push('expansion-tile-unsolve');
+  if (isFallingOut) animClasses.push('animate-tile-fall-out');
   if (gridEntryDelay !== undefined && gridEntryDelay >= 0) animClasses.push('tile-grid-entry');
   const extraClasses = animClasses.join(' ');
 
@@ -225,8 +227,8 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.85, opacity: 0 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className="bg-black border-2 border-white rounded-large px-8 py-8 mx-6 shadow-[0_0_40px_rgba(0,255,255,0.5)] max-w-[90vw] w-full"
-        style={{ maxWidth: '400px' }}
+        className="rounded-large px-8 py-8 mx-6 max-w-[90vw] w-full surface-card"
+        style={{ maxWidth: '400px', borderColor: 'var(--color-border-strong)', boxShadow: '0 0 40px rgba(0,229,255,0.12)' }}
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
         {/* Word heading */}
@@ -237,7 +239,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
         {/* Separator */}
         {data.definition && (
           <>
-            <div className="w-12 h-0.5 bg-neon-aqua mx-auto my-4 shadow-[0_0_8px_#00FFFF]" />
+            <div className="w-12 h-0.5 mx-auto my-4" style={{ backgroundColor: 'var(--accent-active)', boxShadow: '0 0 8px rgba(0,229,255,0.5)' }} />
             
             {/* Definition text — LINE LENGTH limited to 65ch for readability */}
             <p className="text-[clamp(0.8125rem,3.5vw,1.125rem)] leading-relaxed text-white font-raleway text-center whitespace-normal break-words max-w-[65ch] mx-auto">
