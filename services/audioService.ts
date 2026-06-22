@@ -52,7 +52,6 @@ class AudioService {
     const ctx = this.getContext();
     if (!ctx) return;
     
-    // Always ensure running
     if (ctx.state === 'suspended') {
         ctx.resume().catch(() => {});
     }
@@ -110,9 +109,7 @@ class AudioService {
 
   private stopNodes() {
     this.musicNodes.forEach(node => {
-      try {
-        node.disconnect();
-      } catch (e) { /* ignore */ }
+      try { node.disconnect(); } catch (e) { /* ignore */ }
     });
     this.musicNodes = [];
   }
@@ -124,7 +121,6 @@ class AudioService {
   }
 
   playSelect() {
-    // Enhanced Select Sound: Sharper, more audible frequency
     this.playTone(850, 'sine', 0.12, 0, 0.3);
   }
 
@@ -132,39 +128,22 @@ class AudioService {
     if (this.isMuted) return;
     const ctx = this.getContext();
     if (!ctx) return;
-    
-    // Ensure the context is active
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
-    }
-
+    if (ctx.state === 'suspended') { ctx.resume().catch(() => {}); }
     try {
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        
         osc.type = 'sine';
-        // Frequency sweep for "whoosh" sound
         osc.frequency.setValueAtTime(350, now);
         osc.frequency.exponentialRampToValueAtTime(700, now + 0.1);
-        
-        // Volume envelope for punchy feedback
         gain.gain.setValueAtTime(0.2, now);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
-
         osc.connect(gain);
         gain.connect(ctx.destination);
-        
         osc.start(now);
         osc.stop(now + 0.2);
-
-        osc.onended = () => {
-            osc.disconnect();
-            gain.disconnect();
-        };
-    } catch(e) {
-      // Audio issues shouldn't crash gameplay
-    }
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+    } catch(e) {}
   }
 
   playCorrect() {
@@ -183,39 +162,30 @@ class AudioService {
     const ctx = this.getContext();
     if (!ctx) return;
     if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-
     try {
         const t = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(120, t);
         osc.frequency.exponentialRampToValueAtTime(60, t + 0.3);
-        
         gain.gain.setValueAtTime(0.15, t);
         gain.gain.linearRampToValueAtTime(0.001, t + 0.3);
-
         osc.connect(gain);
         gain.connect(ctx.destination);
-        
         osc.start(t);
         osc.stop(t + 0.35);
-
-        osc.onended = () => {
-            osc.disconnect();
-            gain.disconnect();
-        };
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     } catch(e) {}
   }
 
   playWin() {
     const now = 0;
-    this.playTone(523.25, 'triangle', 0.1, now, 0.2);       
-    this.playTone(659.25, 'triangle', 0.1, now + 0.1, 0.2); 
-    this.playTone(783.99, 'triangle', 0.1, now + 0.2, 0.2); 
-    this.playTone(1046.50, 'square', 0.6, now + 0.3, 0.2);  
-    this.playTone(523.25, 'sine', 0.4, now + 0.3, 0.2);     
+    this.playTone(523.25, 'triangle', 0.1, now, 0.2);
+    this.playTone(659.25, 'triangle', 0.1, now + 0.1, 0.2);
+    this.playTone(783.99, 'triangle', 0.1, now + 0.2, 0.2);
+    this.playTone(1046.50, 'square', 0.6, now + 0.3, 0.2);
+    this.playTone(523.25, 'sine', 0.4, now + 0.3, 0.2);
   }
 
   playLevelStart() {
@@ -224,8 +194,16 @@ class AudioService {
     this.playTone(880, 'sine', 0.2, now + 0.1, 0.1);
   }
 
+  playExpansion() {
+    const now = 0;
+    this.playTone(1174.66, 'square', 0.08, now, 0.1);
+    this.playTone(1046.50, 'square', 0.08, now + 0.08, 0.1);
+    this.playTone(783.99, 'square', 0.10, now + 0.16, 0.1);
+    this.playTone(587.33, 'square', 0.12, now + 0.24, 0.12);
+    this.playTone(392.00, 'square', 0.15, now + 0.34, 0.14);
+  }
+
   playStar() {
-    // Bright, shimmering chime for each star earned
     const now = 0;
     this.playTone(1318.51, 'sine', 0.25, now, 0.15);
     this.playTone(1567.98, 'sine', 0.35, now + 0.08, 0.12);
@@ -233,7 +211,6 @@ class AudioService {
   }
 
   playHint() {
-    // Ascending sparkle chime for hint usage confirmation
     const now = 0;
     this.playTone(1046.50, 'sine', 0.1, now, 0.12);
     this.playTone(1318.51, 'sine', 0.12, now + 0.06, 0.1);
@@ -243,9 +220,7 @@ class AudioService {
 
   toggleMute() {
     this.isMuted = !this.isMuted;
-    if (this.isMuted) {
-      this.stopNodes(); 
-    }
+    if (this.isMuted) { this.stopNodes(); }
   }
 }
 

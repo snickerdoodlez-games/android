@@ -1,22 +1,51 @@
+/** A single category row parsed from CSV data. */
 export interface CSVRow {
+  /** Unique identifier for this category row. */
   id: string;
+  /** Display name of the category. */
   name: string;
+  /** Word tiles that belong to this category. */
   words: string[];
-  catDict?: string; // Category description from new CSV format
-  definitions?: string[]; // Definitions for each word (same index as words)
+  /** Category description (new CSV format with CATDICT column). */
+  catDict?: string;
+  /** Definitions for each word, index-aligned with `words`. */
+  definitions?: string[];
+  /** Difficulty rating: 1 = easy, 3 = medium, 5 = hard. */
   difficulty?: number;
+  /** Top-level grouping (e.g., "Nature", "Technology"). */
   broadCategory?: string;
 }
 
+/** All possible visual/interaction states a tile can be in. */
+export type TileStatus =
+  | 'neutral'
+  | 'selected'
+  | 'solved'
+  | 'wrong'
+  | 'correct-preview'
+  | 'placeholder'
+  | 'hint'
+  | 'exiting'
+  | 'flipping-out'
+  | 'flipping-in'
+  | 'placeholder-colored'
+  | 'locked'
+  | 'swap-target'
+  | 'swapping'
+  | 'fading-out-bg';
+
+/** A single game tile displayed on the board. */
 export interface TileData {
   id: string;
   word: string;
   categoryId: string;
   categoryName: string;
-  definition?: string; // Word definition shown on long-click
-  status: 'neutral' | 'selected' | 'solved' | 'wrong' | 'correct-preview' | 'placeholder' | 'hint' | 'exiting' | 'flipping-out' | 'flipping-in' | 'placeholder-colored' | 'locked' | 'swap-target' | 'swapping' | 'fading-out-bg';
+  /** Word definition shown on long-press overlay. */
+  definition?: string;
+  status: TileStatus;
   color?: string;
   isEmoji?: boolean;
+  /** @deprecated Redundant — check `status === 'solved'` instead. */
   isSolved?: boolean;
   isHidden?: boolean;
 }
@@ -43,6 +72,7 @@ export enum GameMode {
   LEVEL_MIND_MATCH = 'LEVEL_MIND_MATCH',
   LEVEL_SYNONYMS = 'LEVEL_SYNONYMS',
   LEVEL_EXPANSION = 'LEVEL_EXPANSION',
+  LEVEL_EXPANSION_TEST = 'LEVEL_EXPANSION_TEST',
   LEVEL_CASCADE = 'LEVEL_CASCADE',
   HIDDEN = 'HIDDEN',
   LEVEL_FILTER = 'LEVEL_FILTER'
@@ -53,11 +83,12 @@ export const FOOTER_HEIGHT = 70;
 
 export interface Theme {
   name: string;
-  gradient: string; 
-  solvedColors: string[];
+  gradient: string;
+  /** Tailwind CSS class strings for solved-row background colors. */
+  solvedColors: readonly string[];
 }
 
-export const NEON_PALETTE: Record<string, string> = {
+export const NEON_PALETTE = {
   'bg-neon-red': '#FF073A',
   'bg-neon-orange': '#FF5F1F',
   'bg-neon-yellow': '#F9FF00',
@@ -68,30 +99,30 @@ export const NEON_PALETTE: Record<string, string> = {
   'bg-neon-sky-blue': '#00BFFF',
   'bg-neon-blue': '#0066FF',
   'bg-neon-violet': '#B026FF',
+  'bg-neon-deep-purple': '#A020F0',
   'bg-neon-purple': '#D400FF',
   'bg-neon-magenta': '#FF00FF',
   'bg-neon-pink': '#FF1FBF',
   'bg-neon-rose': '#FF0055',
   'bg-zinc-800': '#27272a',
   'bg-black': '#000000',
-};
+} as const;
 
-export const SOLVED_COLORS = [
+export const SOLVED_COLORS: readonly string[] = [
   'bg-neon-red border-white',
   'bg-neon-orange border-white',
   'bg-neon-yellow border-white',
   'bg-neon-lime border-white',
-  'bg-[#00FFFF] border-white',
-  'bg-[#FF00FF] border-white',
-  // SEVENTH ROW (Index 6): Deep Purple
-  'bg-[#A020F0] border-white',
+  'bg-neon-cyan border-white',
+  'bg-neon-magenta border-white',
+  'bg-neon-deep-purple border-white',
   'bg-neon-sky-blue border-white',
   'bg-neon-blue border-white',
   'bg-neon-violet border-white',
   'bg-neon-purple border-white',
   'bg-neon-magenta border-white',
   'bg-neon-pink border-white',
-  'bg-neon-rose border-white'
+  'bg-neon-rose border-white',
 ];
 
 export const THEMES: Theme[] = [
@@ -102,39 +133,43 @@ export const THEMES: Theme[] = [
   }
 ];
 
-export const BROAD_CATEGORIES = [
-  "Nature", "Animals", "Astronomy", "Food", "History", 
-  "Geography", "Religion", "Technology", "Science", "Music", 
-  "Literature", "Movies", "Television", "Economics", "Politics", 
-  "Lifestyle", "Gaming", "Cars", "Sports", "Art", "Mythology"
+export const BROAD_CATEGORIES: readonly string[] = [
+  'Nature', 'Animals', 'Astronomy', 'Food', 'History',
+  'Geography', 'Religion', 'Technology', 'Science', 'Music',
+  'Literature', 'Movies', 'Television', 'Economics', 'Politics',
+  'Lifestyle', 'Gaming', 'Cars', 'Sports', 'Art', 'Mythology',
 ];
 
-export const RANKS = [
+export const RANKS: readonly { readonly name: string; readonly min: number }[] = [
   { name: 'NOVICE', min: 0 },
-  { name: 'SEMI-PRO', min: 10000 },
-  { name: 'PRO', min: 25000 },
-  { name: 'VETERAN', min: 50000 },
-  { name: 'ELITE', min: 100000 },
-  { name: 'MASTER', min: 250000 },
-  { name: 'GRANDMASTER', min: 500000 },
-  { name: 'LEGEND', min: 1000000 }
+  { name: 'SEMI-PRO', min: 10_000 },
+  { name: 'PRO', min: 25_000 },
+  { name: 'VETERAN', min: 50_000 },
+  { name: 'ELITE', min: 100_000 },
+  { name: 'MASTER', min: 250_000 },
+  { name: 'GRANDMASTER', min: 500_000 },
+  { name: 'LEGEND', min: 1_000_000 },
 ];
 
-const C = GameMode.CLASSIC;
-const E = GameMode.LEVEL_EMOJI;
-const M = GameMode.LEVEL_MIND_MATCH;
-const S = GameMode.LEVEL_SYNONYMS;
-const X = GameMode.LEVEL_EXPANSION;
-
-export const DETERMINISTIC_LEVEL_SEQUENCE: GameMode[] = [
-  C, E, M, S, X, C, E, M, 
-  S, X, C, E, M, S, X, 
-  C, E, M, S, X, C, E, 
-  M, S, X, C, E, M, S, X, 
-  C, E, M, S, X, C, 
-  E, M, S, X, C, E, M, S, 
-  X, C, E, M, S, X, 
-  C, E, M, S, X, C, E, M, 
-  S, X, C, E, M, S, X, 
-  C, E, M, S, X, C, E
+/**
+ * The repeating pattern of game modes used to generate the deterministic level sequence.
+ * Each level in the sequence cycles through this pattern in order.
+ */
+const BASE_CYCLE: GameMode[] = [
+  GameMode.CLASSIC,
+  GameMode.LEVEL_EMOJI,
+  GameMode.LEVEL_MIND_MATCH,
+  GameMode.LEVEL_SYNONYMS,
+  GameMode.LEVEL_EXPANSION,
 ];
+
+const TOTAL_LEVELS = 72;
+
+/**
+ * Deterministic sequence of game modes for all levels.
+ * Generated by repeating {@link BASE_CYCLE} until reaching {@link TOTAL_LEVELS}.
+ */
+export const DETERMINISTIC_LEVEL_SEQUENCE: GameMode[] = Array.from(
+  { length: TOTAL_LEVELS },
+  (_, i) => BASE_CYCLE[i % BASE_CYCLE.length],
+);

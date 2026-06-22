@@ -15,6 +15,8 @@ export interface SettingsMenuProps {
   onSelectMode?: (mode: GameMode) => void;
   hintsEnabled: boolean;
   setHintsEnabled: (val: boolean) => void;
+  isAutoPlaying: boolean;
+  toggleAutoPlay: () => void;
   onResetProgress: () => void;
 
   categories?: { name: string, isSolved: boolean }[];
@@ -31,9 +33,9 @@ const MODE_LABELS: Partial<Record<GameMode, string>> = {
   [GameMode.LEVEL_MIND_MATCH]: "Mind",
   [GameMode.LEVEL_SYNONYMS]: "Synonyms",
   [GameMode.LEVEL_EMOJI]: "Emoji",
-  [GameMode.LEVEL_EXPANSION]: "Expansion"
+  [GameMode.LEVEL_EXPANSION]: "Expansion",
+  [GameMode.LEVEL_EXPANSION_TEST]: "Exp. Test"
 };
-
 const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
   easy: 'Easy',
   medium: 'Medium',
@@ -49,6 +51,7 @@ const DIFFICULTY_COLORS: Record<DifficultyLevel, string> = {
 const SettingsMenu: React.FC<SettingsMenuProps> = ({ 
   isOpen, onClose, onMainMenu, isMusicOn, toggleMusic, 
   enabledModes, toggleMode, onSelectMode, hintsEnabled, setHintsEnabled,
+  isAutoPlaying, toggleAutoPlay,
   onResetProgress, categories = [],
 
   privacyOptionsRequired,
@@ -87,7 +90,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
             <button onClick={onMainMenu} className="col-span-2 py-2.5 min-h-[48px] bg-neon-red border-2 border-white text-white font-black font-raleway text-2xl uppercase rounded-medium hover:bg-red-500 transition-all shadow-[0_0_15px_rgba(255,7,58,0.4)]" aria-label="Exit to main menu">EXIT TO MAIN MENU</button>
             <button onClick={toggleMusic} className={`col-span-1 py-2.5 min-h-[48px] rounded-medium border-2 transition-all font-bold font-raleway text-lg uppercase ${isMusicOn ? 'bg-zinc-900 border-white text-white' : 'bg-black border-zinc-800 text-zinc-600'}`} aria-label={`Sound ${isMusicOn ? 'on' : 'off'}`}>SOUND: {isMusicOn ? 'ON' : 'OFF'}</button>
             <button onClick={toggleTheme} className={`col-span-1 py-2.5 min-h-[48px] rounded-medium border-2 transition-all font-bold font-raleway text-lg uppercase ${theme === 'light' ? 'bg-zinc-900 border-neon-yellow text-neon-yellow shadow-[0_0_10px_#F9FF00]' : 'bg-black border-zinc-800 text-zinc-600'}`} aria-label={`Theme: ${theme}`}>THEME: {theme === 'dark' ? 'DARK' : 'LIGHT'}</button>
-            <div className="col-span-2"></div>
+            <button onClick={toggleAutoPlay} className={`col-span-2 py-2.5 min-h-[48px] rounded-medium border-2 transition-all font-bold font-raleway text-lg uppercase ${isAutoPlaying ? 'bg-neon-green border-white text-black shadow-[0_0_10px_rgba(0,240,0,0.5)]' : 'bg-black border-zinc-800 text-zinc-600'}`} aria-label={`Auto Play ${isAutoPlaying ? 'on' : 'off'}`}>AUTO PLAY: {isAutoPlaying ? 'ON' : 'OFF'}</button>
         </div>
 
         {categories.length > 0 && (

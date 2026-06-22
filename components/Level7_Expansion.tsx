@@ -135,55 +135,79 @@ const Level7_Expansion: React.FC<any> = ({
       
       setGridData(prev => {
         const next = prev.map(row => [...row]);
-        const nonSolvedIndices: [number, number][] = [];
-        const nonSolvedTiles: TileData[] = [];
+        // Phase 1: Convert solved tiles to flipping-out to trigger
+        // the card-flip CSS animation, revealing they're now unsolved.
         for (let r = 0; r < target.rows; r++) {
           for (let c = 0; c < target.cols; c++) {
             const t = next[r][c];
-            if (!t || t.status !== 'solved') { nonSolvedIndices.push([r, c]); if (t) nonSolvedTiles.push(t); }
-          }
-        }
-        const scrambled = shuffleArray(nonSolvedTiles);
-        nonSolvedIndices.forEach(([r, c], i) => { if (scrambled[i]) next[r][c] = scrambled[i]; });
-
-        // Prevent auto-solved rows: after expansion, no row should
-        // accidentally have all its non-solved tiles matching the same
-        // category. If a row would auto-solve, swap its last non-solved
-        // tile with a non-solved tile from another row.
-        for (let r = 0; r < target.rows; r++) {
-          const rowNonSolved: { c: number; tile: TileData }[] = [];
-          for (let c = 0; c < target.cols; c++) {
-            const t = next[r][c];
-            if (t && t.status !== 'solved') rowNonSolved.push({ c, tile: t });
-          }
-          if (rowNonSolved.length < 2) continue;
-          const firstCat = rowNonSolved[0].tile.categoryId;
-          if (rowNonSolved.every(item => item.tile.categoryId === firstCat)) {
-          let swapped = false;
-          const lastIdx = rowNonSolved.length - 1;
-          const swapC = rowNonSolved[lastIdx].c;
-          for (let sr = 0; sr < target.rows && !swapped; sr++) {
-            if (sr === r) continue;
-            for (let sc = 0; sc < target.cols && !swapped; sc++) {
-              const st = next[sr][sc];
-              if (st && st.status !== 'solved' && st.categoryId !== firstCat) {
-                next[r][swapC] = st;
-                next[sr][sc] = rowNonSolved[lastIdx].tile;
-                swapped = true;
-              }
+            if (t && t.status === 'solved') {
+              next[r][c] = { ...t, status: 'flipping-out' };
             }
           }
         }
-        }
         return next;
       });
-      
-      setActiveRowIndices(Array.from({ length: target.rows }, (_, i) => i));
-      setActiveColIndices(Array.from({ length: target.cols }, (_, i) => i));
-      setRound(nextRound);
-      setIsPoppingIn(true);
-      setTimeout(() => setIsPoppingIn(false), 450);
-      lastActivityRef.current = Date.now();
+
+      // Phase 2: After flip animation (450ms), replace tiles with
+      // neutral copies, scramble everything, and expand the grid.
+      const TILE_FLIP_DURATION_MS = 450;
+      setTimeout(() => {
+        setGridData(prev => {
+          const next = prev.map(row => [...row]);
+          for (let r = 0; r < target.rows; r++) {
+            for (let c = 0; c < target.cols; c++) {
+              const t = next[r][c];
+              if (t) {
+                next[r][c] = { ...t, status: 'neutral' as const, isSolved: false, color: undefined };
+              }
+            }
+          }
+          const allIndices: [number, number][] = [];
+          const allTiles: TileData[] = [];
+          for (let r = 0; r < target.rows; r++) {
+            for (let c = 0; c < target.cols; c++) {
+              const t = next[r][c];
+              if (t) { allIndices.push([r, c]); allTiles.push(t); }
+            }
+          }
+          const scrambled = shuffleArray(allTiles);
+          allIndices.forEach(([r, c], i) => { if (scrambled[i]) next[r][c] = scrambled[i]; });
+
+          for (let r = 0; r < target.rows; r++) {
+            const rowTiles: { c: number; tile: TileData }[] = [];
+            for (let c = 0; c < target.cols; c++) {
+              const t = next[r][c];
+              if (t) rowTiles.push({ c, tile: t });
+            }
+            if (rowTiles.length < 2) continue;
+            const firstCat = rowTiles[0].tile.categoryId;
+            if (rowTiles.every(item => item.tile.categoryId === firstCat)) {
+              let swapped = false;
+              const lastIdx = rowTiles.length - 1;
+              const swapC = rowTiles[lastIdx].c;
+              for (let sr = 0; sr < target.rows && !swapped; sr++) {
+                if (sr === r) continue;
+                for (let sc = 0; sc < target.cols && !swapped; sc++) {
+                  const st = next[sr][sc];
+                  if (st && st.categoryId !== firstCat) {
+                    next[r][swapC] = st;
+                    next[sr][sc] = rowTiles[lastIdx].tile;
+                    swapped = true;
+                  }
+                }
+              }
+            }
+          }
+          return next;
+        });
+
+        setActiveRowIndices(Array.from({ length: target.rows }, (_, i) => i));
+        setActiveColIndices(Array.from({ length: target.cols }, (_, i) => i));
+        setRound(nextRound);
+        setIsPoppingIn(true);
+        setTimeout(() => setIsPoppingIn(false), 450);
+        lastActivityRef.current = Date.now();
+      }, TILE_FLIP_DURATION_MS);
     }, 450);
   }, []);
 

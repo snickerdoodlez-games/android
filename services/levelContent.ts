@@ -3,8 +3,39 @@ import { getConsolidatedData, getGlobalData, getPoolData } from './csvData';
 import { getSynonymData } from './synonymData';
 import { getEmojiData } from './emojiData';
 import { getThemedDataMap } from './csvThemeDataLoader';
+import { getExpansionData } from './csvExpansionDataLoader';
 import { shuffleArray, checkVisualFit } from './csvUtils';
 import { getStats } from './storage';
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const WORDS_PER_ROW = 4;
+const EMOJI_COL_COUNT = 3;
+const MM_TILES_PER_ROUND = 4;
+const DEFAULT_ROW_COUNT = 5;
+const MEDIUM_ROW_COUNT = 6;
+const HARD_ROW_COUNT = 7;
+const STAR_THRESHOLD_MEDIUM = 20;
+const STAR_THRESHOLD_HARD = 50;
+const MAX_VALIDATION_ATTEMPTS = 10;
+const FILTERED_POOL_MIN_SIZE = 8;
+const FALLBACK_POOL_MIN_SIZE = 5;
+const GLOBAL_DATA_INTERVAL = 20;
+const EXPANSION_STAGES: readonly { rows: number; cols: number }[] = [
+  { rows: 3, cols: 2 },
+  { rows: 5, cols: 3 },
+  { rows: 7, cols: 4 },
+];
+const MAX_CACHE_SIZE = 5;
+
+const difficultyValue = (label?: string): number => {
+  if (label === 'easy') return 1;
+  if (label === 'medium') return 3;
+  if (label === 'hard') return 5;
+  return 0; // "auto"
+};
+
+// ─── Logging ─────────────────────────────────────────────────────────────────
 
 export interface PrecheckLogEntry {
   timestamp: string;
@@ -33,15 +64,39 @@ const logInvalidBoard = (entry: PrecheckLogEntry) => {
   localStorage.setItem('LevelPrecheckLog.txt', existing + logLine);
 };
 
+/** Log a successful themed level selection to the precheck log. */
+const logThemedSuccess = (
+  levelIndex: number,
+  mode: GameMode,
+  attempt: number,
+  data: CSVRow[],
+  themeName: string,
+) => {
+  const timestamp = new Date().toLocaleString();
+  const reason = `Level ${levelIndex}: Validated successfully (attempt ${attempt}).`;
+  const logLine = `[${timestamp}] Level: ${levelIndex} | Mode: ${mode} | Reason: ${reason} | Theme: ${themeName} | Cats: ${data.map(c => c.name).join(', ')} | Conflicts: \n`;
+  const existing = localStorage.getItem('LevelPrecheckLog.txt') || '';
+  localStorage.setItem('LevelPrecheckLog.txt', existing + logLine);
+};
+
+// ─── Validation ──────────────────────────────────────────────────────────────
+
+/**
+ * Select `rowCount` categories with `colCount` distinct-tile words each.
+ * Shuffles the pool, deduplicates category names / words, and shuffles word
+ * order within each category so tiles don't cluster on the grid.
+ */
 export function validateStandardLevel(
-  pool: CSVRow[], 
-  rowCount: number, 
+  pool: CSVRow[],
+  rowCount: number,
   colCount: number,
   levelIndex: number,
-  mode: GameMode | string = "Standard",
-  themeName?: string
+  mode: GameMode | string = 'Standard',
+  themeName?: string,
 ): PrecheckResult {
-  if (!pool || pool.length === 0) return { isValid: false, data: [], errorDetails: "Pool is empty" };
+  if (!pool || pool.length === 0) {
+    return { isValid: false, data: [], errorDetails: 'Pool is empty' };
+  }
 
   const selectedCategories: CSVRow[] = [];
   const usedWords = new Set<string>();
@@ -52,34 +107,35 @@ export function validateStandardLevel(
 
   for (const cat of shuffledPool) {
     if (selectedCategories.length === rowCount) break;
+
     const normalizedCatName = cat.name.trim().toUpperCase();
     if (usedCategoryNames.has(normalizedCatName)) continue;
     if (!isThemed && usedWords.has(normalizedCatName)) continue;
 
-    const validWords: string[] = [];
     const validIndices: number[] = [];
     for (let wi = 0; wi < cat.words.length; wi++) {
-      const word = cat.words[wi];
-      const cleanWord = word.trim().toUpperCase();
+      const cleanWord = cat.words[wi].trim().toUpperCase();
       if (usedWords.has(cleanWord)) continue;
       if (!isThemed && usedCategoryNames.has(cleanWord)) continue;
-      if (!checkVisualFit(cleanWord, colCount, isEmojiMode)) continue; 
-      validWords.push(word);
+      if (!checkVisualFit(cleanWord, colCount, isEmojiMode)) continue;
       validIndices.push(wi);
     }
 
-    if (validWords.length >= colCount) {
+    if (validIndices.length >= colCount) {
       const finalIndices = validIndices.slice(0, colCount);
-      const finalWords = validWords.slice(0, colCount);
+      const finalWords = finalIndices.map(i => cat.words[i]);
       finalWords.forEach(w => usedWords.add(w.trim().toUpperCase()));
       usedCategoryNames.add(normalizedCatName);
-      // Sync definitions with filtered words - preserve index alignment with words array
-      // DO NOT filter out empty strings as it breaks index alignment with finalWords
-      const alignedDefinitions = cat.definitions && cat.definitions.length > 0
-        ? finalIndices.map(i => { const d = cat.definitions![i]; return d !== undefined ? d : ''; })
-        : undefined;
-      // Shuffle words within the category so they appear in unpredictable positions
-      // This prevents same-category tiles from clustering in the rendered grid
+
+      const alignedDefinitions =
+        cat.definitions && cat.definitions.length > 0
+          ? finalIndices.map(i => {
+              const d = cat.definitions![i];
+              return d !== undefined ? d : '';
+            })
+          : undefined;
+
+      // Shuffle word order within category so tiles don't cluster
       const shuffleOrder = finalIndices.map((_, idx) => idx);
       for (let si = shuffleOrder.length - 1; si > 0; si--) {
         const sj = Math.floor(Math.random() * (si + 1));
@@ -89,27 +145,56 @@ export function validateStandardLevel(
       const shuffledDefinitions = alignedDefinitions
         ? shuffleOrder.map(i => alignedDefinitions[i])
         : undefined;
-      selectedCategories.push({ ...cat, words: shuffledWords, definitions: shuffledDefinitions });
+
+      selectedCategories.push({
+        ...cat,
+        words: shuffledWords,
+        definitions: shuffledDefinitions,
+      });
     }
   }
 
   if (selectedCategories.length < rowCount) {
     const error = `Level ${levelIndex}: Needed ${rowCount}, found ${selectedCategories.length}.`;
-    logInvalidBoard({ timestamp: new Date().toLocaleString(), levelIndex, mode, reason: error, attemptedCategories: selectedCategories.map(c => c.name), conflictingWords: [], themeName });
+    logInvalidBoard({
+      timestamp: new Date().toLocaleString(),
+      levelIndex,
+      mode,
+      reason: error,
+      attemptedCategories: selectedCategories.map(c => c.name),
+      conflictingWords: [],
+      themeName,
+    });
     return { isValid: false, data: [], errorDetails: error };
   }
+
   return { isValid: true, data: selectedCategories };
 }
 
-export const getValidatedLevelData = (targetRowCount: number, sourceData: CSVRow[], wordsPerRow: number = 4, levelIndex: number = 0, mode: GameMode | string = "Standard", themeName?: string): CSVRow[] => {
+export const getValidatedLevelData = (
+  targetRowCount: number,
+  sourceData: CSVRow[],
+  wordsPerRow: number = WORDS_PER_ROW,
+  levelIndex: number = 0,
+  mode: GameMode | string = 'Standard',
+  themeName?: string,
+): CSVRow[] => {
   const result = validateStandardLevel(sourceData, targetRowCount, wordsPerRow, levelIndex, mode, themeName);
   return result.isValid ? result.data : [];
 };
 
-export function validateExpansionLevel(pool: CSVRow[], stages: { rows: number, cols: number }[], levelIndex: number, themeName?: string): PrecheckResult {
+/** Validates that the pool can supply enough categories for expansion's final stage. */
+export function validateExpansionLevel(
+  pool: CSVRow[],
+  stages: readonly { rows: number; cols: number }[],
+  levelIndex: number,
+  themeName?: string,
+): PrecheckResult {
   const finalStage = stages[stages.length - 1];
   return validateStandardLevel(pool, finalStage.rows, finalStage.cols, levelIndex, GameMode.LEVEL_EXPANSION, themeName);
 }
+
+// ─── Cache ───────────────────────────────────────────────────────────────────
 
 export interface LevelPackage {
   mode: GameMode;
@@ -117,235 +202,318 @@ export interface LevelPackage {
   themeName?: string;
 }
 
-const EXPANSION_STAGES = [{ rows: 3, cols: 2 }, { rows: 5, cols: 3 }, { rows: 7, cols: 4 }];
-
-// Simple LRU-like cache keyed by `${levelIndex}|${enabledModes.join(',')}|${forcedMode||''}`
 const levelPackageCache = new Map<string, LevelPackage>();
-const MAX_CACHE_SIZE = 5;
 
-const getCachedLevelPackage = (key: string): LevelPackage | undefined => {
+const getAndPromoteCachedPackage = (key: string): LevelPackage | undefined => {
   const cached = levelPackageCache.get(key);
   if (cached) {
-    // Move to end (most recently used) by re-inserting
     levelPackageCache.delete(key);
     levelPackageCache.set(key, cached);
-    return cached;
   }
-  return undefined;
+  return cached;
 };
 
-const setCachedLevelPackage = (key: string, pkg: LevelPackage) => {
-  // Evict oldest if at capacity
+const setCachedLevelPackage = (key: string, pkg: LevelPackage): void => {
   if (levelPackageCache.size >= MAX_CACHE_SIZE) {
     const oldestKey = levelPackageCache.keys().next().value;
-    if (oldestKey !== undefined) levelPackageCache.delete(oldestKey);
+    if (oldestKey !== undefined) {
+      levelPackageCache.delete(oldestKey);
+    }
   }
   levelPackageCache.set(key, pkg);
 };
 
-export const clearLevelPackageCache = () => {
+export const clearLevelPackageCache = (): void => {
   levelPackageCache.clear();
 };
 
-const getTargetDifficulty = (level: number, stars: number): number => {
+// ─── Difficulty / row-count helpers ──────────────────────────────────────────
 
-  if (stars >= 50) return 5;
-  if (stars >= 20) return 3;
+/** Compute the star‑based target difficulty (1, 3, or 5). */
+const getTargetDifficulty = (level: number, stars: number): number => {
+  if (stars >= STAR_THRESHOLD_HARD) return 5;
+  if (stars >= STAR_THRESHOLD_MEDIUM) return 3;
   if (level <= 40) return 1;
   if (level <= 100) return 3;
   return 5;
 };
 
-export const getLevelMode = (levelIndex: number, enabledModes: GameMode[] = []): GameMode => {
-  const sequence = DETERMINISTIC_LEVEL_SEQUENCE;
-  let baseIndex = (levelIndex - 1) % sequence.length;
-  let mode = sequence[baseIndex];
-  if (enabledModes.length > 0 && !enabledModes.includes(mode)) {
-    for (let i = 1; i < sequence.length; i++) {
-      const nextMode = sequence[(baseIndex + i) % sequence.length];
-      if (enabledModes.includes(nextMode)) { mode = nextMode; break; }
-    }
+/**
+ * Determine how many tile rows the grid should have.
+ * Respects user-selected difficulty first; falls back to star‑based sizing.
+ */
+const computeRowCount = (stars: number, selectedDifficulty?: string): number => {
+  if (selectedDifficulty) {
+    return selectedDifficulty === 'easy'
+      ? DEFAULT_ROW_COUNT
+      : selectedDifficulty === 'medium'
+        ? MEDIUM_ROW_COUNT
+        : HARD_ROW_COUNT;
   }
-  return mode;
+  return stars >= STAR_THRESHOLD_HARD
+    ? HARD_ROW_COUNT
+    : stars >= STAR_THRESHOLD_MEDIUM
+      ? MEDIUM_ROW_COUNT
+      : DEFAULT_ROW_COUNT;
 };
 
-export const getLevelPackage = (levelIndex: number, enabledModes: GameMode[] = [], customPoolIds: string[] = [], forcedMode?: GameMode, selectedDifficulty?: string): LevelPackage => {
-  const mode = forcedMode || getLevelMode(levelIndex, enabledModes);
-  
-  // Check cache first — include selectedDifficulty in the key
-  const cacheKey = `${levelIndex}|${enabledModes.join(',')}|${forcedMode || ''}|${selectedDifficulty || 'auto'}`;
-  const cached = getCachedLevelPackage(cacheKey);
+/**
+ * Determine the effective target difficulty.
+ * Respects user-selected difficulty first; falls back to star‑based auto.
+ */
+const computeTargetDifficulty = (
+  levelIndex: number,
+  stars: number,
+  selectedDifficulty?: string,
+): number => {
+  const fromLabel = difficultyValue(selectedDifficulty);
+  return fromLabel > 0 ? fromLabel : getTargetDifficulty(levelIndex, stars);
+};
+
+// ─── Mode helpers ────────────────────────────────────────────────────────────
+
+/** Get the deterministic game mode for a given level, respecting enabled-modes filter. */
+export const getLevelMode = (levelIndex: number, enabledModes: GameMode[] = []): GameMode => {
+  const sequence = DETERMINISTIC_LEVEL_SEQUENCE;
+  const baseIndex = (levelIndex - 1) % sequence.length;
+  const mode = sequence[baseIndex];
+
+  if (enabledModes.length === 0 || enabledModes.includes(mode)) {
+    return mode;
+  }
+
+  // Walk forward through the sequence to find the next enabled mode
+  for (let i = 1; i < sequence.length; i++) {
+    const nextMode = sequence[(baseIndex + i) % sequence.length];
+    if (enabledModes.includes(nextMode)) return nextMode;
+  }
+
+  return mode; // fallback (shouldn't happen)
+};
+
+/** Fetch the raw pool and optional theme name for a given mode. */
+const resolvePoolForMode = (
+  mode: GameMode,
+  levelIndex: number,
+  attemptIndex: number,
+): { pool: CSVRow[]; themeName?: string } => {
+  switch (mode) {
+    case GameMode.LEVEL_SYNONYMS:
+      return { pool: getSynonymData() };
+
+    case GameMode.LEVEL_EMOJI:
+      return { pool: getEmojiData() };
+
+    case GameMode.LEVEL_THEME: {
+      const themesMap = getThemedDataMap();
+      const themeNames = Array.from(themesMap.keys()) as string[];
+      if (themeNames.length === 0) {
+        return { pool: getConsolidatedData() };
+      }
+
+      const startIdx = levelIndex % themeNames.length;
+      const themeIdx = (startIdx + attemptIndex) % themeNames.length;
+      const candidateName = themeNames[themeIdx];
+      const themedPool = themesMap.get(candidateName ?? '') ?? [];
+
+      if (themedPool.length > 0) {
+        return { pool: themedPool, themeName: candidateName };
+      }
+      // Empty themed pool or missing — fall back to consolidated
+      return { pool: getConsolidatedData() };
+    }
+
+    case GameMode.LEVEL_EXPANSION:
+      return { pool: getPoolData() };
+
+    case GameMode.LEVEL_EXPANSION_TEST:
+      return { pool: getExpansionData() };
+
+    default: {
+      const consolidated = getConsolidatedData();
+      // Every 20th level mixes in global data for variety
+      if (levelIndex % GLOBAL_DATA_INTERVAL === 0) {
+        return { pool: [...consolidated, ...getGlobalData()] };
+      }
+      return { pool: consolidated };
+    }
+  }
+};
+
+// ─── Pool filtering ──────────────────────────────────────────────────────────
+
+/** Filter a pool by difficulty, applying mastery-star gates. */
+const filterPoolByDifficulty = (
+  pool: CSVRow[],
+  targetDiff: number,
+  stars: number,
+  categoryStarProgress: Record<string, { rating3ThreeStarCount: number }>,
+): CSVRow[] => {
+  const hardOrMaster = (row: CSVRow): boolean => {
+    const rowDiff = row.difficulty ?? 1;
+    // Mastery override: 50+ stars unlocks hard + medium unconditionally
+    if (stars >= STAR_THRESHOLD_HARD) return rowDiff === 5 || rowDiff === 3;
+    // Medium gate
+    if (rowDiff === 3 && stars < STAR_THRESHOLD_MEDIUM) return false;
+    // Hard gate
+    if (rowDiff === 5) {
+      const progress = categoryStarProgress[row.broadCategory ?? 'General'];
+      if (!progress || progress.rating3ThreeStarCount < 2) return false;
+    }
+    return rowDiff === targetDiff;
+  };
+
+  // Try exact difficulty match first
+  const filtered = pool.filter(hardOrMaster);
+  if (filtered.length >= FILTERED_POOL_MIN_SIZE) return filtered;
+
+  // Relax to same-or-lower difficulty
+  const relaxed = pool.filter(r => (r.difficulty ?? 1) <= targetDiff);
+  if (relaxed.length >= FALLBACK_POOL_MIN_SIZE) return relaxed;
+
+  // Last resort: return full pool
+  return pool;
+};
+
+// ─── Validation routing ──────────────────────────────────────────────────────
+
+/** Run the appropriate validator for the given mode. */
+const validatePoolForMode = (
+  mode: GameMode,
+  pool: CSVRow[],
+  rowCount: number,
+  levelIndex: number,
+  targetDiff: number,
+  themeName?: string,
+): PrecheckResult => {
+  if (mode === GameMode.LEVEL_EXPANSION || mode === GameMode.LEVEL_EXPANSION_TEST) {
+    return validateExpansionLevel(pool, EXPANSION_STAGES, levelIndex, themeName);
+  }
+  if (mode === GameMode.LEVEL_EMOJI) {
+    return validateStandardLevel(pool, rowCount, EMOJI_COL_COUNT, levelIndex, GameMode.LEVEL_EMOJI, themeName);
+  }
+  if (mode === GameMode.LEVEL_MIND_MATCH) {
+    const rounds = targetDiff === 1 ? 1 : targetDiff === 3 ? 2 : 3;
+    return validateStandardLevel(pool, rounds * MM_TILES_PER_ROUND, WORDS_PER_ROW, levelIndex, GameMode.LEVEL_MIND_MATCH, themeName);
+  }
+  return validateStandardLevel(pool, rowCount, WORDS_PER_ROW, levelIndex, mode, themeName);
+};
+
+// ─── Fallback ────────────────────────────────────────────────────────────────
+
+/** Build a fallback LevelPackage when all retry attempts have failed. */
+const buildFallbackPackage = (
+  mode: GameMode,
+  levelIndex: number,
+  stats: ReturnType<typeof getStats>,
+  selectedDifficulty?: string,
+  themesMap?: Map<string, CSVRow[]>,
+): LevelPackage => {
+  const fallbackRowCount = computeRowCount(stats.totalStars, selectedDifficulty);
+
+  if (mode === GameMode.LEVEL_THEME && themesMap) {
+    const fallbackThemeNames = Array.from(themesMap.keys()) as string[];
+    const themeName = fallbackThemeNames[levelIndex % fallbackThemeNames.length];
+    const themedData = themesMap.get(themeName);
+
+    if (themedData && themedData.length > 0) {
+      const themedResult = validateStandardLevel(
+        themedData,
+        fallbackRowCount,
+        WORDS_PER_ROW,
+        levelIndex,
+        GameMode.LEVEL_THEME,
+        themeName,
+      );
+      if (themedResult.isValid) {
+        return { mode, data: themedResult.data, themeName };
+      }
+    }
+    // Themed pool insufficient — use consolidated without a theme name
+    const consResult = validateStandardLevel(
+      getConsolidatedData(),
+      fallbackRowCount,
+      WORDS_PER_ROW,
+      levelIndex,
+      mode,
+    );
+    return {
+      mode,
+      data: consResult.isValid
+        ? consResult.data
+        : getConsolidatedData().slice(0, fallbackRowCount),
+    };
+  }
+
+  if (mode === GameMode.LEVEL_SYNONYMS) {
+    const synonymPool = getSynonymData();
+    const data =
+      synonymPool.length > 0
+        ? synonymPool.slice(0, fallbackRowCount)
+        : getConsolidatedData().slice(0, fallbackRowCount);
+    return { mode, data };
+  }
+
+  // Generic fallback: slice consolidated data
+  return {
+    mode,
+    data: getConsolidatedData().slice(0, fallbackRowCount),
+  };
+};
+
+// ─── Main entry point ────────────────────────────────────────────────────────
+
+export const getLevelPackage = (
+  levelIndex: number,
+  enabledModes: GameMode[] = [],
+  customPoolIds: string[] = [],
+  forcedMode?: GameMode,
+  selectedDifficulty?: string,
+): LevelPackage => {
+  const mode = forcedMode ?? getLevelMode(levelIndex, enabledModes);
+
+  // Check cache
+  const cacheKey = `${levelIndex}|${enabledModes.join(',')}|${forcedMode ?? ''}|${selectedDifficulty ?? 'auto'}`;
+  const cached = getAndPromoteCachedPackage(cacheKey);
   if (cached) return cached;
 
   const stats = getStats();
-  // Use user-selected difficulty if provided, otherwise use star-based auto-difficulty
-  const targetDiff = selectedDifficulty
-    ? (selectedDifficulty === 'easy' ? 1 : selectedDifficulty === 'medium' ? 3 : 5)
-    : getTargetDifficulty(levelIndex, stats.totalStars);
-  
-  let attempt = 0;
-  const MAX_ATTEMPTS = 10;
+  const targetDiff = computeTargetDifficulty(levelIndex, stats.totalStars, selectedDifficulty);
+  const rowCount = computeRowCount(stats.totalStars, selectedDifficulty);
 
-  // Determine grid size: user-selected difficulty takes priority over star-based auto
-  // Computed once up-front so it's available for themed retry relaxation logic
-  let rowCount: number;
-  if (selectedDifficulty) {
-    rowCount = selectedDifficulty === 'easy' ? 5 : selectedDifficulty === 'medium' ? 6 : 7;
-  } else {
-    rowCount = stats.totalStars >= 50 ? 7 : (stats.totalStars >= 20 ? 6 : 5);
-  }
+  for (let attempt = 1; attempt <= MAX_VALIDATION_ATTEMPTS; attempt++) {
+    // Resolve pool for the current mode (retries cycle themed themes)
+    const { pool, themeName } = resolvePoolForMode(mode, levelIndex, attempt - 1);
 
-  while (attempt < MAX_ATTEMPTS) {
+    // Filter by difficulty (skipped for themed — row count already gates)
+    const finalPool =
+      mode === GameMode.LEVEL_THEME
+        ? pool
+        : filterPoolByDifficulty(pool, targetDiff, stats.totalStars, stats.categoryStarProgress);
 
-    attempt++;
-    let pool: CSVRow[] = [];
-    let themeName: string | undefined;
-    
-    // Re-fetch themed data map on each retry — theme data loads asynchronously
-    // and may not be available on the first attempt.
-    const themesMap = getThemedDataMap();
-    const themeNames = Array.from(themesMap.keys()) as string[];
-    
-    switch (mode) {
-      case GameMode.LEVEL_SYNONYMS: pool = getSynonymData(); break;
-      case GameMode.LEVEL_EMOJI: pool = getEmojiData(); break;
-       case GameMode.LEVEL_THEME:
-         // Try deterministic themes in order, skipping any that fail validation.
-         // Start at the deterministic index and advance on each retry.
-         {
-           const startIdx = levelIndex % themeNames.length;
-           const triedCount = attempt - 1;
-           const themeIdx = (startIdx + triedCount) % themeNames.length;
-           const candidateName = themeNames[themeIdx];
-           const themedPool = themesMap.get(candidateName || '');
-           if (themedPool && themedPool.length > 0) {
-             pool = themedPool;
-             themeName = candidateName;
-           } else if (themedPool && themedPool.length === 0) {
-             // Empty themed pool — skip to consolidated data
-             pool = getConsolidatedData();
-             themeName = undefined;
-           } else {
-             // No themed data for this name — try next or fallback
-             pool = getConsolidatedData();
-             themeName = undefined;
-           }
-           // If we've tried all themes and none work, the loop will naturally
-           // exhaust; the fallback code after the loop handles the consolidated case.
-         }
-         break;
-      case GameMode.LEVEL_EXPANSION:
-        pool = getPoolData();
-        break;
-      default:
-        pool = getConsolidatedData();
-        if (levelIndex % 20 === 0) pool = [...pool, ...getGlobalData()];
-        break;
-    }
-
-    let finalPool: CSVRow[];
-    
-    if (mode === GameMode.LEVEL_THEME) {
-      // THEME mode: use the full pool — row count already reflects difficulty
-      // (easy = 5, medium = 6, hard = 7). Filtering by difficulty is redundant
-      // and causes theme data shortages since themes have limited categories.
-      finalPool = pool;
-    } else {
-      const filteredPool = pool.filter(row => {
-          const rowDiff = row.difficulty || 1;
-          // MASTERY OVERRIDE: If 50+ stars, ignore the win-count gate
-          if (stats.totalStars >= 50) return rowDiff === 5 || rowDiff === 3;
-          
-          if (rowDiff === 3 && stats.totalStars < 20) return false;
-          if (rowDiff === 5) {
-              const progress = stats.categoryStarProgress[row.broadCategory || "General"];
-              if (!progress || progress.rating3ThreeStarCount < 2) return false;
-          }
-          return rowDiff === targetDiff;
-      });
-      
-      finalPool = filteredPool.length >= 8 ? filteredPool : pool.filter(r => (r.difficulty || 1) <= targetDiff);
-      if (finalPool.length < 5) finalPool = pool;
-    }
-
-    let validationResult;
-
-    if (mode === GameMode.LEVEL_EXPANSION) {
-      validationResult = validateExpansionLevel(finalPool, EXPANSION_STAGES, levelIndex, themeName);
-    } else if (mode === GameMode.LEVEL_EMOJI) {
-      validationResult = validateStandardLevel(finalPool, rowCount, 3, levelIndex, GameMode.LEVEL_EMOJI, themeName);
-    } else if (mode === GameMode.LEVEL_MIND_MATCH) {
-      let mmRounds = targetDiff === 1 ? 1 : (targetDiff === 3 ? 2 : 3);
-      validationResult = validateStandardLevel(finalPool, mmRounds * 4, 4, levelIndex, GameMode.LEVEL_MIND_MATCH, themeName);
-    } else {
-      validationResult = validateStandardLevel(finalPool, rowCount, 4, levelIndex, mode, themeName);
-    }
+    const validationResult = validatePoolForMode(mode, finalPool, rowCount, levelIndex, targetDiff, themeName);
 
     if (validationResult.isValid) {
-      // Only set themeName if the pool data actually came from themed source (not fallback consolidated)
-      const effectiveThemeName = (mode === GameMode.LEVEL_THEME && pool.length > 0 && themesMap.has(themeName || ''))
-        ? themeName
-        : undefined;
-      // Log success for themed levels so the precheck log shows which theme was actually selected
+      // Only set themeName if the data truly came from the themed source
+      const themesMap = getThemedDataMap();
+      const effectiveThemeName =
+        mode === GameMode.LEVEL_THEME && pool.length > 0 && themesMap.has(themeName ?? '')
+          ? themeName
+          : undefined;
+
       if (mode === GameMode.LEVEL_THEME && effectiveThemeName) {
-        const successEntry: PrecheckLogEntry = {
-          timestamp: new Date().toLocaleString(),
-          levelIndex,
-          mode,
-          reason: `Level ${levelIndex}: Validated successfully (attempt ${attempt}).`,
-          attemptedCategories: validationResult.data.map(c => c.name),
-          conflictingWords: [],
-          themeName: effectiveThemeName,
-        };
-        const logLine = `[${successEntry.timestamp}] Level: ${successEntry.levelIndex} | Mode: ${successEntry.mode} | Reason: ${successEntry.reason} | Theme: ${effectiveThemeName} | Cats: ${successEntry.attemptedCategories.join(', ')} | Conflicts: \n`;
-        const existing = localStorage.getItem('LevelPrecheckLog.txt') || '';
-        localStorage.setItem('LevelPrecheckLog.txt', existing + logLine);
+        logThemedSuccess(levelIndex, mode, attempt, validationResult.data, effectiveThemeName);
       }
+
       const pkg: LevelPackage = { mode, data: validationResult.data, themeName: effectiveThemeName };
       setCachedLevelPackage(cacheKey, pkg);
       return pkg;
     }
   }
 
-  // Fallback: validate the themed pool properly instead of blindly slicing.
-  // Blind slicing can include categories with fewer than colCount valid words,
-  // producing an incomplete grid that is unsolvable.
-  let fallbackRowCount = selectedDifficulty
-    ? (selectedDifficulty === 'easy' ? 5 : selectedDifficulty === 'medium' ? 6 : 7)
-    : (stats.totalStars >= 50 ? 7 : (stats.totalStars >= 20 ? 6 : 5));
-  
-   let fallbackData: CSVRow[];
-   let fallbackThemeName: string | undefined;
-   if (mode === GameMode.LEVEL_THEME) {
-     const fallbackThemesMap = getThemedDataMap();
-     const fallbackThemeNames = Array.from(fallbackThemesMap.keys()) as string[];
-     fallbackThemeName = fallbackThemeNames[levelIndex % fallbackThemeNames.length];
-     const themedData = fallbackThemesMap.get(fallbackThemeName);
-     if (themedData && themedData.length > 0) {
-       // Run validation with the full themed pool to pick only valid categories
-       const fallbackValidation = validateStandardLevel(themedData, fallbackRowCount, 4, levelIndex, GameMode.LEVEL_THEME, fallbackThemeName);
-       if (fallbackValidation.isValid) {
-         fallbackData = fallbackValidation.data;
-       } else {
-         // Themed pool still insufficient — fall back to consolidated data
-         const consValidation = validateStandardLevel(getConsolidatedData(), fallbackRowCount, 4, levelIndex, mode);
-         fallbackData = consValidation.isValid ? consValidation.data : getConsolidatedData().slice(0, fallbackRowCount);
-         fallbackThemeName = undefined;
-       }
-     } else {
-       // No themed data available — use consolidated data and clear themeName to avoid mislabeling
-       const consValidation = validateStandardLevel(getConsolidatedData(), fallbackRowCount, 4, levelIndex, mode);
-       fallbackData = consValidation.isValid ? consValidation.data : getConsolidatedData().slice(0, fallbackRowCount);
-       fallbackThemeName = undefined;
-     }
-   } else if (mode === GameMode.LEVEL_SYNONYMS) {
-    const synonymPool = getSynonymData();
-    fallbackData = synonymPool.length > 0 ? synonymPool.slice(0, fallbackRowCount) : getConsolidatedData().slice(0, fallbackRowCount);
-  } else {
-    fallbackData = getConsolidatedData().slice(0, fallbackRowCount);
-  }
-  const fallback: LevelPackage = { mode, data: fallbackData, themeName: fallbackThemeName };
+  // All attempts exhausted — build a graceful fallback
+  const fallbackThemesMap = mode === GameMode.LEVEL_THEME ? getThemedDataMap() : undefined;
+  const fallback = buildFallbackPackage(mode, levelIndex, stats, selectedDifficulty, fallbackThemesMap);
   setCachedLevelPackage(cacheKey, fallback);
   return fallback;
-
 };

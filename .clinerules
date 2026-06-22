@@ -1,3 +1,4 @@
+```text
 # Word Pairing: Category Match — .clinerules
 
 ## Project Overview
@@ -35,11 +36,10 @@
 | `npx cap copy android` | Copy web assets to Android |
 | `npx cap open android` | Open Android Studio |
 
----
+--
+
 
 ## Project Structure
-
-```
 c:/Users/DD/New folder/gitttt/
 ├── App.tsx                    # Root React component + game state machine
 ├── index.tsx                  # Entry point
@@ -121,6 +121,7 @@ c:/Users/DD/New folder/gitttt/
 ├── mcp-server/                # MCP server
 ├── public/                    # Public static assets
 └── src/                       # Source styles
+
 ```
 
 ---
@@ -128,11 +129,14 @@ c:/Users/DD/New folder/gitttt/
 ## Code Conventions
 
 ### Imports
+
 ```
-- React/hooks first
-- Types next
-- Services and utilities
-- Components (static first, lazy-loaded last)
+
+* React/hooks first
+* Types next
+* Services and utilities
+* Components (static first, lazy-loaded last)
+
 ```
 
 ### Naming
@@ -148,13 +152,17 @@ c:/Users/DD/New folder/gitttt/
 - Use `bg-neon-*`, `shadow-[0_0_15px_#COLOR,...]` patterns for glowing effects.
 - **Always use the existing neon color scheme.** Never introduce new color systems.
 - Never change the font (Oswald) without explicit instruction.
+- **Strict Visual Hard Borders:** Do not use soft, blurred, or diffused shadows/borders on container boxes, panels, or custom layouts. Always prioritize crisp outline strokes, solid inline fills, and high-contrast bounding configurations to align cleanly with the retro arcade aesthetic.
 
 ### CSV Data Format
+
 ```
+
 id,Category Name,"Description",Word1,"Definition1",Word2,"Definition2",...,Difficulty,BroadCategory
+
 ```
 - Each row: id | name | description | (word + definition) pairs | difficulty | broadCategory
-- Words: alternating word-definition pairs after the description
+- Words: alternating word-definition pairs after the description; words MUST NOT exceed a **13 character maximum limit per line	**.
 - Difficulty: numeric (1=easy, 3=medium, 5=hard)
 - BroadCategory: one of Nature, Animals, Astronomy, Food, History, Geography, Religion, Technology, Science, Music, Literature, Movies, Television, Economics, Politics, Lifestyle, Gaming, Cars, Sports, Art, Mythology
 
@@ -236,6 +244,20 @@ All sound effects are synthesized procedurally using the Web Audio API (`audioSe
 - The neon color scheme on black background generally provides strong contrast.
 - Avoid pairing low-contrast colors (e.g., light gray on white, dark gray on black) for text readability.
 - Text on `bg-zinc-900` or `bg-black` backgrounds should use white or bright neon colors for sufficient contrast.
+
+---
+
+## Agent Reasoning & Thinking Protocols
+
+### Multi-Step Thinking Loop
+Before invoking any file write, command execution, or asset modification, you must engage in an intentional analysis phase. Use the `sequentialthinking` tool when navigating complex architectural transformations or tracking state transitions across multiple files.
+1. **Structural Auditing:** Analyze file systems, references, and dependencies completely before proposing mutations.
+2. **Predictive Impact Mapping:** Formulate exactly how a change ripples from the global state machine down into isolated views or shared layout components.
+
+### Safe Dependency & API Architecture
+- **Root Cause Engineering:** Never introduce short-term workarounds (such as masking a type compilation failure using `any`). Trace errors back to their true type, utility signature, or configuration payload.
+- **Environment Context Guard:** If a script fails, or when troubleshooting external modules like `@capacitor-community/admob` or Gradle structures, always look to fetch real-time up-to-date documentation using context retrieval endpoints to circumvent static data limits.
+- **Close-Loop Verification:** Always confirm your implementations by running standard validation and build tracks (`npm run build`). Do not declare any task finalized while compilation failures, strict linter checks, or script breaks remain outstanding.
 
 ---
 
@@ -341,3 +363,5 @@ The following MCP tools are available to assist with this project:
 3. Export the singleton `audio` instance and call the method where the sound should trigger
 4. All sounds are procedurally synthesized — no audio files needed
 5. The `isMuted` flag is respected automatically via `playTone()` early return
+
+```

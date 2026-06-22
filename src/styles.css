@@ -210,7 +210,19 @@ img, svg { image-rendering: -webkit-optimize-contrast; image-rendering: crisp-ed
 }
 .expansion-tile-shrink { animation: expansionShrink 0.4s ease-in-out forwards; }
 
-/* Tiles pop in after expansion */
+/* Card-flip animation: solved tiles flip over to reveal they're now unsolved */
+@keyframes expansionUnsolveFlip {
+  0% { transform: rotateY(0deg); }
+  40% { transform: rotateY(90deg); background-color: #333333; box-shadow: none; }
+  60% { transform: rotateY(90deg); background-color: #333333; box-shadow: none; }
+  100% { transform: rotateY(0deg); background-color: var(--color-zinc-900); }
+}
+.expansion-tile-unsolve {
+  animation: expansionUnsolveFlip 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  backface-visibility: hidden;
+}
+
+/* Tiles pop in after expansion (with vibrant color reset) */
 @keyframes expansionPopIn {
   0% { transform: scale(0.7); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
@@ -218,7 +230,18 @@ img, svg { image-rendering: -webkit-optimize-contrast; image-rendering: crisp-ed
 .expansion-tile-pop-in { animation: expansionPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 
 /* ===========================
-    7. LEVEL COMPLETE SQUISH - tiles contract to make room for stars/button
+    6b. FALLING TILE ANIMATION (Expansion Test)
+    Tiles fall out of their solved row positions after expansion
+    =========================== */
+@keyframes tileFallOut {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  30% { transform: translateY(10%) rotate(5deg); opacity: 0.8; }
+  100% { transform: translateY(200%) rotate(25deg); opacity: 0; }
+}
+.animate-tile-fall-out { animation: tileFallOut 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards; pointer-events: none; }
+
+/* ===========================
+     7. LEVEL COMPLETE SQUISH - tiles contract to make room for stars/button
     =========================== */
 @keyframes levelCompleteSquish {
   0% { transform: scale(1); }

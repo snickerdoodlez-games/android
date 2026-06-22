@@ -52,6 +52,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   const isCorrectPreview = data.status === 'correct-preview';
   const isLocked = data.status === 'locked';
   const isHint = data.status === 'hint';
+  const isFlippingOut = data.status === 'flipping-out';
 
   const statusClasses = getTileStatusClasses(data.status, (isCascade || isSolved) ? (data.color || targetColor) : undefined);
   const textClasses = getTypographicClasses(data.word, data.isEmoji, isSolved, isCascade, isNarrow, rowCount);
@@ -199,6 +200,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   const animClasses: string[] = [];
   if (isHint) animClasses.push('tile-hint');
   if (isSolved) animClasses.push('tile-flip-lock');
+  if (isFlippingOut) animClasses.push('expansion-tile-unsolve');
   if (gridEntryDelay !== undefined && gridEntryDelay >= 0) animClasses.push('tile-grid-entry');
   const extraClasses = animClasses.join(' ');
 

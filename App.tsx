@@ -61,6 +61,9 @@ const Level5_Group = lazy(() => import('./components/Level5_Group'));
 const Level7_Expansion = lazy(() => import('./components/Level7_Expansion'));
 const Level7_Expansion_Easy = lazy(() => import('./components/Level7_Expansion_Easy'));
 const Level7_Expansion_Medium = lazy(() => import('./components/Level7_Expansion_Medium'));
+const LevelExpansionTest = lazy(() => import('./components/LevelExpansionTest'));
+const LevelExpansionTest_Easy = lazy(() => import('./components/LevelExpansionTest_Easy'));
+const LevelExpansionTest_Medium = lazy(() => import('./components/LevelExpansionTest_Medium'));
 const Level8_Cascade = lazy(() => import('./components/Level8_Cascade'));
 const BANNER_AD_ID = 'ca-app-pub-4096368901415767/2019330695';
 const INTERSTITIAL_AD_ID = 'ca-app-pub-4096368901415767/1153913539';
@@ -508,6 +511,15 @@ export const App: React.FC = () => {
                 return <Level7_Expansion key={`exp-hard-${levelIndex}-${diffTier}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
               }
             
+            case GameMode.LEVEL_EXPANSION_TEST:
+              if (expTier === 'easy') {
+                return <LevelExpansionTest_Easy key={`exptest-easy-${levelIndex}-${diffTier}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
+              } else if (expTier === 'medium') {
+                return <LevelExpansionTest_Medium key={`exptest-med-${levelIndex}-${diffTier}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
+              } else {
+                return <LevelExpansionTest key={`exptest-hard-${levelIndex}-${diffTier}`} csvData={data} levelIndex={levelIndex} onComplete={handleLevelComplete} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
+              }
+            
             case GameMode.CLASSIC:
             case GameMode.LEVEL_SYNONYMS:
               return <Level1_Standard key={`std-${diffTier}-${levelIndex}`} csvData={data} mode={mode} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} themeName={themeName} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
@@ -684,7 +696,8 @@ export const App: React.FC = () => {
           enabledModes={enabledModes} 
           toggleMode={(m) => { let next = enabledModes.includes(m) ? (enabledModes.length > 1 ? enabledModes.filter(x => x !== m) : enabledModes) : [...enabledModes, m]; setEnabledModes(next); saveEnabledModes(next); }} 
           onSelectMode={(m) => { setForcedMode(m); setMode(m); setShowSettings(false); }} 
-          hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} 
+          hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled}
+          isAutoPlaying={isAutoPlaying} toggleAutoPlay={() => { setIsAutoPlaying(prev => { const next = !prev; saveAutoPlay(next); return next; }); }}
           onResetProgress={() => { localStorage.clear(); window.location.reload(); }} 
           categories={activeCategories} privacyOptionsRequired={privacyOptionsRequired} 
           onShowPrivacyOptions={async () => { if (Capacitor.isNativePlatform()) await AdMob.showPrivacyOptionsForm().catch(() => {}); }}
