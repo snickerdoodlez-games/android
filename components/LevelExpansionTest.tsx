@@ -48,6 +48,7 @@ const LevelExpansionTest: React.FC<any> = ({
   const activeColIndicesRef = useRef(activeColIndices);
   const onCompleteRef = useRef(onComplete);
   const csvDataRef = useRef<any[]>([]);
+  const handleTileClickRef = useRef<typeof handleTileClick>(null!);
   
   isCompleteRef.current = isComplete;
   isSwappingRef.current = isSwapping;
@@ -178,8 +179,8 @@ const LevelExpansionTest: React.FC<any> = ({
                 for (let wi = 0; wi < fullCat.words.length; wi++) {
                   if (!catUsedWords.has(fullCat.words[wi].toUpperCase().trim())) unused.push(wi);
                 }
-                if (unused.length === 0) continue;
-                const wi = unused[Math.floor(Math.random() * unused.length)];
+                if (catUsedWords.size >= 7) continue;
+                const wi = unused.length > 0 ? unused[Math.floor(Math.random() * unused.length)] : Math.floor(Math.random() * fullCat.words.length);
                 const w = fullCat.words[wi];
                 const wd = fullCat.definitions?.[wi];
                 const def = (wd && wd.trim().length > 0) ? wd : (fullCat.catDict || '');
@@ -273,7 +274,7 @@ const LevelExpansionTest: React.FC<any> = ({
           }, r * FLIP_ROW_DELAY);
         }
         
-        const totalFlipDuration = (target.rows - 1) * FLIP_ROW_DELAY + 800;
+        const totalFlipDuration = (target.rows - 1) * FLIP_ROW_DELAY + 350;
         
         setTimeout(() => {
           // Flip animation complete — converted flipped tiles to neutral.
@@ -329,26 +330,26 @@ const LevelExpansionTest: React.FC<any> = ({
             }
             const scrambled = shuffleArray(allTiles);
             allIndices.forEach(([rr, cc], i) => { if (scrambled[i]) next[rr][cc] = scrambled[i]; });
-            // Break up accidentally-solved rows
+            // Prevent auto-solved rows: only check non-solved tiles
             for (let rr = 0; rr < target.rows; rr++) {
-              const rowTiles: { c: number; tile: TileData }[] = [];
+              const rowNonSolved: { c: number; tile: TileData }[] = [];
               for (let cc = 0; cc < target.cols; cc++) {
                 const t = next[rr][cc];
-                if (t) rowTiles.push({ c: cc, tile: t });
+                if (t && t.status !== 'solved') rowNonSolved.push({ c: cc, tile: t });
               }
-              if (rowTiles.length < 2) continue;
-              const firstCat = rowTiles[0].tile.categoryId;
-              if (rowTiles.every(item => item.tile.categoryId === firstCat)) {
+              if (rowNonSolved.length < 2) continue;
+              const firstCat = rowNonSolved[0].tile.categoryId;
+              if (rowNonSolved.every(item => item.tile.categoryId === firstCat)) {
                 let swapped = false;
-                const lastIdx = rowTiles.length - 1;
-                const swapC = rowTiles[lastIdx].c;
+                const lastIdx = rowNonSolved.length - 1;
+                const swapC = rowNonSolved[lastIdx].c;
                 for (let sr = 0; sr < target.rows && !swapped; sr++) {
                   if (sr === rr) continue;
                   for (let sc = 0; sc < target.cols && !swapped; sc++) {
                     const st = next[sr][sc];
                     if (st && st.status !== 'solved' && st.categoryId !== firstCat) {
                       next[rr][swapC] = st;
-                      next[sr][sc] = rowTiles[lastIdx].tile;
+                      next[sr][sc] = rowNonSolved[lastIdx].tile;
                       swapped = true;
                     }
                   }
@@ -401,27 +402,37 @@ const LevelExpansionTest: React.FC<any> = ({
       }, 50);
     }
   }, [checkMatches, selectedPos]);
+  
+  useEffect(() => { handleTileClickRef.current = handleTileClick; }, [handleTileClick]);
 
   useEffect(() => {
-    if (!isAutoPlaying || isComplete || isSwapping || isExpanding || isReviewing) return;
-    const timer = setTimeout(() => {
-      for (let rIdx of activeRowIndices) {
-        const row = activeColIndices.map(cIdx => gridData[rIdx][cIdx]!);
-        if (row.some(t => !t) || row.every(t => t.status === 'solved')) continue;
+    if (!isAutoPlaying || isComplete || isReviewing) return;
+    let isCancelled = false;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    const autoTick = () => {
+      if (isCancelled || isSwappingRef.current || isExpandingRef.current || isCompleteRef.current || isReviewingRef.current) return;
+      const currentGrid = gridDataRef.current;
+      const activeRows = activeRowIndicesRef.current;
+      const activeCols = activeColIndicesRef.current;
+      for (let rIdx of activeRows) {
+        const row = activeCols.map(cIdx => currentGrid[rIdx]?.[cIdx]);
+        if (row.some(t => !t) || row.every(t => t?.status === 'solved')) continue;
         const cats = csvDataRef.current;
         const targetCatId = cats[rIdx]?.id;
-        if (row.every(t => t.categoryId === targetCatId)) { checkMatches(gridData); return; }
-        const wrongIdxInRow = row.findIndex(t => t.categoryId !== targetCatId);
+        if (row.every(t => t?.categoryId === targetCatId)) { checkMatches(currentGrid); timerId = setTimeout(autoTick, 200); return; }
+        const wrongIdxInRow = row.findIndex(t => t?.categoryId !== targetCatId);
         if (wrongIdxInRow !== -1) {
-          const wrongPos = { r: rIdx, c: activeColIndices[wrongIdxInRow] };
+          const wrongPos = { r: rIdx, c: activeCols[wrongIdxInRow] };
           let correctPos: { r: number, c: number } | null = null;
-          for (let rr of activeRowIndices) { for (let cc of activeColIndices) { const t = gridData[rr][cc]; if (t && t.status !== 'solved' && t.categoryId === targetCatId && (rr !== rIdx)) { correctPos = { r: rr, c: cc }; break; } } if (correctPos) break; }
-          if (correctPos) { if (!selectedPos) handleTileClick(wrongPos.r, wrongPos.c); else handleTileClick(correctPos.r, correctPos.c); return; }
+          for (let rr of activeRows) { for (let cc of activeCols) { const t = currentGrid[rr]?.[cc]; if (t && t.status !== 'solved' && t.categoryId === targetCatId && (rr !== rIdx)) { correctPos = { r: rr, c: cc }; break; } } if (correctPos) break; }
+          if (correctPos) { if (!isSwappingRef.current) { handleTileClickRef.current(wrongPos.r, wrongPos.c); timerId = setTimeout(autoTick, 250); } return; }
         }
       }
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [isAutoPlaying, isComplete, isSwapping, isExpanding, isReviewing, gridData, selectedPos, handleTileClick, activeRowIndices, activeColIndices, checkMatches]);
+      timerId = setTimeout(autoTick, 200);
+    };
+    timerId = setTimeout(autoTick, 200);
+    return () => { isCancelled = true; if (timerId) clearTimeout(timerId); };
+  }, [isAutoPlaying, isComplete, isReviewing]);
 
   const performHint = useCallback(() => {
     if (isCompleteRef.current || isReviewingRef.current || isSwappingRef.current || isExpandingRef.current) return;
@@ -585,7 +596,7 @@ const LevelExpansionTest: React.FC<any> = ({
   if (isInitializing) return null;
 
   return (
-    <LevelLayout modeName="EXPANSION TEST" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)} stars={stars} hintCount={hintCount} onHintClick={onHintClick} hintsDisabledForLevel={hintsDisabledForLevel}>
+     <LevelLayout modeName="EXPANSION" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)} stars={stars} hintCount={hintCount} onHintClick={onHintClick} hintsDisabledForLevel={hintsDisabledForLevel}>
       <div className="flex-1 flex flex-col gap-0 h-full w-full overflow-visible relative">
          {activeRowIndices.map(rIdx => {
              const rowTiles = activeColIndices.map(cIdx => gridData[rIdx][cIdx]);
@@ -596,13 +607,13 @@ const LevelExpansionTest: React.FC<any> = ({
                   {solved && <SolvedRowBackground seed={firstTile?.categoryId || rIdx} />}
                   {solved && (
                     <div className="absolute top-0 left-6 z-[100] transform -translate-y-full">
-                      <div className="px-3 py-1 text-[10px] font-black uppercase bg-black border-2 border-white text-white rounded-t-lg shadow-[0_-4px_12px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                      <div className="px-5 py-2 text-[clamp(0.75rem,3vw,0.9375rem)] font-black uppercase bg-black border-2 border-white text-white rounded-t-lg shadow-[0_-4px_12px_rgba(0,0,0,0.8)] whitespace-nowrap">
                         <CategoryTabLabel name={firstTile?.categoryName || ''} catDict={csvDataRef.current?.find((r: any) => r.id === firstTile?.categoryId)?.catDict || ''} />
                       </div>
                     </div>
                   )}
                   <div className={`grid gap-0.5 w-full h-full relative z-10 transition-all duration-300 ${solved ? 'p-[10px]' : 'p-0.5'}`} style={{ gridTemplateColumns: `repeat(${activeColIndices.length}, 1fr)` }}>
-                    {rowTiles.map((t, cIdx) => (t && <Tile key={t.id} data={t} onClick={() => handleTileClick(rIdx, cIdx)} isNarrow={activeColIndices.length > 4} gridEntryDelay={0.05 + rIdx * 0.1} />))}
+                    {rowTiles.map((t, cIdx) => (t && <Tile key={t.id} data={t} onClick={() => handleTileClick(rIdx, cIdx)} isNarrow={activeColIndices.length > 4} isExpansion gridEntryDelay={0.05 + rIdx * 0.1} />))}
                   </div>
                </div>
              );

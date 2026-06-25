@@ -172,7 +172,9 @@ id,Category Name,"Description",Word1,"Definition1",Word2,"Definition2",...,Diffi
 - `LEVEL_MIND_MATCH` - Timed matching rounds (20 tiles, 4 per match, 3 rounds, 3 errors). Uses `csvPoolData*.ts` for game data
 - `LEVEL_SYNONYMS` - Group by meaning. Uses `CSV_SYNONYMS_*.ts` for game data
 - `LEVEL_THEMED` - Themed categories. Uses `csvThemeData*.ts` for game data
-- `LEVEL_EXPANSION` / `LEVEL_CASCADE` - Uses `csvPoolData*.ts` for game data
+- `LEVEL_EXPANSION` - Progressive grid expansion across 3 stages. Uses `csvPoolData*.ts` for game data. Difficulty auto-selects by star count: <20 stars = Easy (2→3→5 rows), 20-49 stars = Medium (2→4→6 rows), 50+ stars = Hard (3→5→7 rows). ExpandGrid mechanic: solved tiles stay LOCKED in position, ~50% randomly flip (card-flip animation) to unsolved, only neutral tiles scramble.
+- `LEVEL_EXPANSION_TEST` - Expansion variant using `csvExpansionData.csv` for game data. Same 3-stage mechanics as LEVEL_EXPANSION.
+- `LEVEL_CASCADE` - Uses `csvPoolData*.ts` for game data
 - `LEVEL_FILTER` - Filter mode. Uses `csvPoolData*.ts` for game data
 - `LEVEL_GROUP` - Group mode. Uses `csvPoolData*.ts` for game data
 - `LEVEL_HIDDEN` - Tiles start hidden, revealed when row solved. Uses `csvPoolData*.ts` for game data
@@ -287,6 +289,8 @@ Before invoking any file write, command execution, or asset modification, you mu
     These mappings must never be altered. Each game mode has a dedicated data source.
 12. **When a game tile or category tab is long pressed the definition of the word in the game tile appears.** (Implemented via `CategoryTabLabel.tsx` portal overlay and Tile long-press handler.)
 13. **Hints can only be used twice per level. Player starts the game with 2 hints. Rewarded hints net 2 new hints.** (Managed by `hintService.ts` with localStorage persistence. Hint counts are per-level; remaining hints carry forward. Stars earned also trigger milestone hint rewards every 30 stars.)
+14. **Expansion level mechanic (Level7_Expansion*.tsx):** When all rows are solved in a stage, the grid expands to the next stage. Solved tiles stay LOCKED in their positions — ~50% randomly flip via card-flip CSS animation (`expansionUnsolveFlip`) to unsolved neutral tiles. Only neutral (unsolved) tiles get scrambled, leaving previously solved rows partially intact while adding new tiles in expanded rows/columns.
+15. **Expansion solved tiles display neon colors** via `data.color` from `SOLVED_COLORS` array. The `solved-tile-expansion` CSS class applies a 5-color cycling animation. Solved tiles locked from previous expansion stages retain their neon colors.
 
 ---
 

@@ -222,7 +222,7 @@ export function shouldThrottleForBattery(
 
 /**
  * Register for power management state changes using the Web Battery API.
- * Polls every 30 seconds (low frequency to save battery).
+ * Polls every 120 seconds (low frequency to save battery).
  * Returns a function to clean up the listener.
  */
 export function monitorPowerState(callback: PowerStateCallback): () => void {
@@ -241,8 +241,8 @@ export function monitorPowerState(callback: PowerStateCallback): () => void {
   // Initial check
   poll();
 
-  // Poll every 30 seconds for power state changes (low frequency to save battery)
-  const interval = setInterval(poll, 30000);
+  // Poll every 120 seconds for power state changes (low frequency to save battery)
+  const interval = setInterval(poll, 120000);
 
   return () => {
     cancelled = true;

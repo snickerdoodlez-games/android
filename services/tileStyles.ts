@@ -27,23 +27,6 @@ export const ARCADE_OUTLINE = {
   fontWeight: 700, 
 };
 
-export const CASCADE_OUTLINE = {
-  textShadow: `
-    1px 1px 0px #000, 
-    -1px -1px 0px #000, 
-    1px -1px 0px #000, 
-    -1px 1px 0px #000, 
-    2px 0 0px #000, 
-    -2px 0 0px #000, 
-    0 2px 0px #000, 
-    0 -2px 0px #000, 
-    3px 3px 2px rgba(0,0,0,1),
-    0 0 18px rgba(0,0,0,0.95)
-  `,
-  paintOrder: 'stroke fill' as const,
-  fontWeight: 700,
-};
-
 export const EMOJI_OUTLINE = {
   textShadow: `
     2px 2px 0px #000, 
@@ -180,7 +163,7 @@ export const getTileStatusClasses = (status: string, color?: string) => {
   return base + "bg-black border-zinc-700";
 };
 
-export const getTypographicClasses = (word: string, isEmoji?: boolean, isSolved?: boolean, isCascade?: boolean, isNarrow?: boolean, rowCount: number = 0) => {
+export const getTypographicClasses = (word: string, isEmoji?: boolean, isSolved?: boolean, _isCascade?: boolean, isNarrow?: boolean, rowCount: number = 0) => {
   if (isEmoji) {
     // Dynamic Font Scaling: If 7+ rows are active, reduce emoji size for fit
     const isCompact = rowCount >= 7;
@@ -200,7 +183,7 @@ export const getTypographicClasses = (word: string, isEmoji?: boolean, isSolved?
   
   let size = "text-base"; 
   
-  if (isCascade || isNarrow) {
+  if (isNarrow) {
     // Responsive font sizing with clamp(): minimum guarantees readability on small screens,
     // viewport-relative middle scales smoothly with screen width, max allows bigger text on large screens
     if (lineCount >= 3 || maxWordLen > 8) size = "text-[clamp(0.625rem,2.5vw,1.5rem)]";

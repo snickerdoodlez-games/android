@@ -137,7 +137,7 @@ solvedWordsRef.current.push(`${tile.word}|${tile.categoryName}`);
                     if (nextRound >= ROUNDS_TO_PLAY) {
                         setTimeout(() => {
                             setIsLevelComplete(true);
-                            onComplete({ mode: 'HIDDEN', mistakes: totalMistakes, hintsUsedCount: hintTriggerCount, moves, timeMs: Date.now() - startTimeRef.current, solvedWords: solvedWordsRef.current });
+                        onComplete({ mode: 'FILTER', mistakes: totalMistakes, hintsUsedCount: hintTriggerCount, moves, timeMs: Date.now() - startTimeRef.current, solvedWords: solvedWordsRef.current });
                         }, 1000);
                     } else {
                         setTimeout(() => { setFeedbackMsg(null); initRound(); }, 1200);
@@ -176,7 +176,7 @@ solvedWordsRef.current.push(`${tile.word}|${tile.categoryName}`);
   if (initError) return null;
 
   return (
-    <LevelLayout modeName="HIDDEN" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([{ name: targetCategory?.name || "Loading", isSolved: foundCount === 6 }])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)} stars={stars} hintCount={hintCount} onHintClick={onHintClick} hintsDisabledForLevel={hintsDisabledForLevel}
+    <LevelLayout modeName="FILTER" levelIndex={levelIndex} onOpenSettings={() => onOpenSettings?.([{ name: targetCategory?.name || "Loading", isSolved: foundCount === 6 }])} isReviewing={isReviewing} onNext={onNext} hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled(!hintsEnabled)} stars={stars} hintCount={hintCount} onHintClick={onHintClick} hintsDisabledForLevel={hintsDisabledForLevel}
       headerExtras={(
         <div className="flex items-center gap-3">
             <div className="flex flex-col items-end">

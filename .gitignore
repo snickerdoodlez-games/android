@@ -26,3 +26,4 @@ wordpairing-release.keystore
 gradle.properties
 *.jks
 *.keystore
+distribution/

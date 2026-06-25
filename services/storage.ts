@@ -85,6 +85,18 @@ export const saveAutoPlay = (enabled: boolean) => {
   localStorage.setItem(STORAGE_KEYS.AUTO_PLAY, enabled ? 'true' : 'false');
 };
 
+export const getExpansionLoop = (): boolean => {
+  try {
+    return localStorage.getItem('wpm_expansion_loop') === 'true';
+  } catch {
+    return false;
+  }
+};
+
+export const saveExpansionLoop = (enabled: boolean) => {
+  localStorage.setItem('wpm_expansion_loop', enabled ? 'true' : 'false');
+};
+
 export interface CategoryMastery {
   rating3ThreeStarCount: number;
 }
@@ -137,14 +149,15 @@ export const getStats = (): GameStats => {
       return DEFAULT_STATS;
     }
     const parsed = JSON.parse(stored);
-    cachedStats = { 
+    const result: GameStats = { 
       ...DEFAULT_STATS, 
       ...parsed,
       solvedWords: Array.isArray(parsed.solvedWords) ? parsed.solvedWords : [],
       solvedBroadCategories: Array.isArray(parsed.solvedBroadCategories) ? parsed.solvedBroadCategories : [],
       categoryStarProgress: parsed.categoryStarProgress || {}
     };
-    return cachedStats;
+    cachedStats = result;
+    return result;
   } catch {
     cachedStats = DEFAULT_STATS;
     return DEFAULT_STATS;

@@ -1,0 +1,36 @@
+Enter the neon-lit world of Word Pairing: Category Match — a sleek, dark-mode word association puzzle that challenges your mind across six unique game modes.
+
+🧩 GAME MODES
+• CLASSIC — Group 4 related word tiles into their shared category. Simple to learn, hard to master.
+• THEMED — Dive into curated categories spanning Nature, Animals, Food, History, Technology, Science, Music, Movies, Sports, and more.
+• EMOJI — Words become emojis! Decode visual clues to find the connecting theme.
+• MIND MATCH — Race against the clock in timed matching rounds. 20 tiles, 4 per match, 3 rounds — speed and accuracy are everything.
+• SYNONYMS — Group words by meaning. Expand your vocabulary while you play.
+• EXPANSION — The grid grows as you solve! Each cleared stage expands the board, with solved tiles locking in place and the challenge scaling up.
+
+🎮 FEATURES
+• Dynamic grid layouts that expand, reveal hidden tiles, or filter as you play
+• Neon arcade aesthetic with crisp glowing borders, vibrant colors, and smooth animations
+• Haptic tile interactions: select, swap, solve, and watch words flip and fade with satisfying feedback
+• Hint system: Start with 2 free hints, earn more by watching rewarded ads or hitting star milestones
+• Procedural sound effects synthesized in real-time — correct matches chime, errors buzz, victories fanfare
+• Long-press any tile to see its definition — learn as you play
+• Player stats, star rankings, and a Hall of Fame track your progress from NOVICE to LEGEND
+• Offline play supported — no internet required to solve puzzles
+
+🌟 STAR RANKS
+Earn stars for speed and accuracy. Climb the ranks: NOVICE → SEMI-PRO → PRO → VETERAN → ELITE → MASTER → GRANDMASTER → LEGEND
+
+🏆 CHALLENGES
+• 21 broad categories ensure endless variety
+• Difficulty scales naturally — easy, medium, and hard levels unlock as your star count grows
+• Expansions reveal new rows and columns while locking solved tiles in place
+• Hidden tiles mode keeps you guessing until each row is cracked
+
+🎨 DESIGN
+Dark mode by default with a custom neon color palette. Crisp outline strokes, high-contrast text, and glowing tile effects create a premium retro arcade feel. Optimized for phones and tablets with adaptive touch targets (minimum 48dp) and screen reader support.
+
+🚀 BUILT FOR ANDROID
+Native Android performance via Capacitor. Smooth 60fps animations powered by Framer Motion. Responsive layouts adapt to any screen size.
+
+Word Pairing: Category Match is free to play with optional rewarded ads for extra hints. No forced interstitials mid-game — your flow stays uninterrupted.

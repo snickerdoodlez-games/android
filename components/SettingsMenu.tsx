@@ -15,9 +15,8 @@ export interface SettingsMenuProps {
   onSelectMode?: (mode: GameMode) => void;
   hintsEnabled: boolean;
   setHintsEnabled: (val: boolean) => void;
-  isAutoPlaying: boolean;
-  toggleAutoPlay: () => void;
   onResetProgress: () => void;
+  onStats?: () => void;
 
   categories?: { name: string, isSolved: boolean }[];
   privacyOptionsRequired?: boolean;
@@ -25,17 +24,9 @@ export interface SettingsMenuProps {
   selectedDifficulty?: DifficultyLevel | undefined;
   unlockedDifficulties?: DifficultyLevel[];
   onDifficultyChange?: (diff: DifficultyLevel) => void;
+  onSelectExpansionTest?: () => void;
 }
 
-const MODE_LABELS: Partial<Record<GameMode, string>> = {
-  [GameMode.CLASSIC]: "Classic",
-  [GameMode.LEVEL_THEME]: "Theme",
-  [GameMode.LEVEL_MIND_MATCH]: "Mind",
-  [GameMode.LEVEL_SYNONYMS]: "Synonyms",
-  [GameMode.LEVEL_EMOJI]: "Emoji",
-  [GameMode.LEVEL_EXPANSION]: "Expansion",
-  [GameMode.LEVEL_EXPANSION_TEST]: "Exp. Test"
-};
 const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
   easy: 'Easy',
   medium: 'Medium',
@@ -51,14 +42,14 @@ const DIFFICULTY_COLORS: Record<DifficultyLevel, string> = {
 const SettingsMenu: React.FC<SettingsMenuProps> = ({ 
   isOpen, onClose, onMainMenu, isMusicOn, toggleMusic, 
   enabledModes, toggleMode, onSelectMode, hintsEnabled, setHintsEnabled,
-  isAutoPlaying, toggleAutoPlay,
-  onResetProgress, categories = [],
+  onResetProgress, onStats, categories = [],
 
   privacyOptionsRequired,
   onShowPrivacyOptions,
   selectedDifficulty,
   unlockedDifficulties = [],
   onDifficultyChange,
+  onSelectExpansionTest,
 }) => {
   const { theme, toggleTheme } = useTheme();
 
@@ -90,7 +81,6 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
             <button onClick={onMainMenu} className="col-span-2 py-2.5 min-h-[48px] bg-neon-red border-2 border-white text-white font-black font-raleway text-2xl uppercase rounded-medium hover:bg-red-500 transition-all shadow-[0_0_15px_rgba(255,7,58,0.4)]" aria-label="Exit to main menu">EXIT TO MAIN MENU</button>
             <button onClick={toggleMusic} className={`col-span-1 py-2.5 min-h-[48px] rounded-medium border-2 transition-all font-bold font-raleway text-lg uppercase ${isMusicOn ? 'bg-zinc-900 border-white text-white' : 'bg-black border-zinc-800 text-zinc-600'}`} aria-label={`Sound ${isMusicOn ? 'on' : 'off'}`}>SOUND: {isMusicOn ? 'ON' : 'OFF'}</button>
             <button onClick={toggleTheme} className={`col-span-1 py-2.5 min-h-[48px] rounded-medium border-2 transition-all font-bold font-raleway text-lg uppercase ${theme === 'light' ? 'bg-zinc-900 border-neon-yellow text-neon-yellow shadow-[0_0_10px_#F9FF00]' : 'bg-black border-zinc-800 text-zinc-600'}`} aria-label={`Theme: ${theme}`}>THEME: {theme === 'dark' ? 'DARK' : 'LIGHT'}</button>
-            <button onClick={toggleAutoPlay} className={`col-span-2 py-2.5 min-h-[48px] rounded-medium border-2 transition-all font-bold font-raleway text-lg uppercase ${isAutoPlaying ? 'bg-neon-green border-white text-black shadow-[0_0_10px_rgba(0,240,0,0.5)]' : 'bg-black border-zinc-800 text-zinc-600'}`} aria-label={`Auto Play ${isAutoPlaying ? 'on' : 'off'}`}>AUTO PLAY: {isAutoPlaying ? 'ON' : 'OFF'}</button>
         </div>
 
         {categories.length > 0 && (
@@ -137,34 +127,17 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
           </div>
         )}
 
-        <div className="flex flex-col gap-1 shrink-0 overflow-y-auto no-scrollbar">
-          <h3 className="text-neon-yellow font-oswald text-xs uppercase tracking-[0.2em] font-black border-b border-zinc-800 pb-0.5 drop-shadow-[0_0_2px_rgba(249,255,0,0.5)] sticky top-0 bg-zinc-950 z-10">GAME MODES</h3>
-          <div className="grid grid-cols-3 gap-1.5 pt-1">
-            {(Object.keys(MODE_LABELS) as GameMode[]).map((m) => {
-              const isEnabled = enabledModes.includes(m);
-              return (
-                <button 
-                  key={m} 
-                  onClick={() => {
-                    if (isEnabled) {
-                      // If already enabled, selecting it should switch the game mode
-                      onSelectMode?.(m);
-                    } else {
-                      // If disabled, enable it and then switch to it
-                      toggleMode(m); // First, enable it in the general pool
-                      onSelectMode?.(m); // Then, select it for immediate play
-                    }
-                  }} 
-                  className={`flex items-center justify-center p-1 min-w-[48px] min-h-[48px] rounded-medium border-2 transition-all h-12 ${isEnabled ? 'bg-zinc-900 border-neon-aqua text-white shadow-[0_0_8px_rgba(0,229,255,0.2)]' : 'bg-black border-zinc-800 text-zinc-600'}`}
-                >
-                  <span className="font-bold font-raleway text-xs uppercase leading-none text-center">{MODE_LABELS[m]}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {onStats && (
+          <button 
+            onClick={() => { onStats(); }}
+            className="w-full py-2.5 min-h-[48px] bg-zinc-900 border-2 border-neon-blue text-white font-black font-raleway text-lg uppercase rounded-medium hover:bg-zinc-800 transition-all shadow-[0_0_15px_rgba(0,229,255,0.3)]"
+            aria-label="View player statistics"
+          >
+            STATS
+          </button>
+        )}
 
-        <div className="mt-auto flex flex-col gap-2 pt-2 border-t border-zinc-800 shrink-0">
+        <div className="mt-auto flex flex-col gap-2 pt-2 shrink-0">
             {privacyOptionsRequired && (
               <button onClick={handleConsent} className="py-2 min-h-[48px] bg-zinc-900 border border-zinc-600 text-zinc-400 rounded-medium font-bold text-lg font-raleway uppercase hover:text-white hover:border-white transition-all" aria-label="Open privacy consent options">CONSENT</button>
             )}

@@ -308,7 +308,7 @@ export default function Level_Themed({
         {solved && <SolvedRowBackground seed={row[0].categoryId} />}
         {solved && (
           <div className="absolute top-0 left-6 z-[100] transform -translate-y-full">
-            <div className="px-3 py-1 text-[clamp(0.625rem,2.5vw,0.875rem)] font-black uppercase bg-black border-2 border-white text-white rounded-t-lg shadow-[0_-4px_12px_rgba(0,0,0,0.8)] whitespace-nowrap">
+            <div className="px-5 py-2 text-[clamp(0.75rem,3vw,0.9375rem)] font-black uppercase bg-black border-2 border-white text-white rounded-t-lg shadow-[0_-4px_12px_rgba(0,0,0,0.8)] whitespace-nowrap">
               <CategoryTabLabel name={row[0].categoryName} catDict={catDict} />
             </div>
           </div>
@@ -322,7 +322,7 @@ export default function Level_Themed({
 
   return (
     <LevelLayout 
-      modeName={themeName || "THEMED"} levelIndex={levelIndex} 
+      modeName={themeName || "WORD PAIRING"} levelIndex={levelIndex} 
       onOpenSettings={() => onOpenSettings?.([])} isReviewing={isReviewing} onNext={onNext} 
       hintsEnabled={hintsEnabled} onToggleHints={() => setHintsEnabled?.(!hintsEnabled)} 
       stars={stars} hintCount={hintCount} onHintClick={onHintClick} hintsDisabledForLevel={hintsDisabledForLevel}

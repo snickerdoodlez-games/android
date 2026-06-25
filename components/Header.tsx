@@ -84,14 +84,11 @@ const Header: React.FC<HeaderProps> = ({
   const MODE_NAME_COLORS: Record<string, string> = {
     'WORD PAIRING': '#00FFFF',
     'SYNONYMS': '#39FF14',
-    'THEMED': '#FF00FF',
     'EMOJI': '#F9FF00',
     'MIND MATCH': '#FF5F1F',
     'EXPANSION': '#FF073A',
     'FILTER': '#0066FF',
-    'CASCADE': '#B026FF',
     'GROUP': '#FF1FBF',
-    'HIDDEN': '#D400FF',
   };
   const currentColor = MODE_NAME_COLORS[modeName] || '#00FFFF';
 
@@ -108,11 +105,11 @@ const Header: React.FC<HeaderProps> = ({
         timers.push(setTimeout(() => {
           setVisibleStars(s);
           // Delay sound by the CSS starPop animation-delay for each star:
-          //   Star 1: 0.2s → 200ms  |  Star 2: 0.4s → 400ms  |  Star 3: 0.6s → 600ms
+          //   Star 1: 0.15s → 150ms  |  Star 2: 0.30s → 300ms  |  Star 3: 0.45s → 450ms
           timers.push(setTimeout(() => {
             audio.playStar();
-          }, s * 200));
-        }, s * 400));
+          }, s * 150));
+        }, s * 250));
       }
       return () => timers.forEach(clearTimeout);
     } else {
@@ -243,7 +240,7 @@ const Header: React.FC<HeaderProps> = ({
           </button>
 
           {/* Star Display — cascading pop animation with sound, stars appear one at a time. Overlaps button slightly via negative margin and higher z-index. */}
-          <div className="flex gap-3 -mt-2 relative z-[2]">
+          <div className="flex gap-3 -mt-2 relative z-[9999]">
             {[1, 2, 3].map((s) => {
               const earned = s <= visibleStars;
               const totalEarned = s <= (stars || 0);

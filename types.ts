@@ -74,8 +74,6 @@ export enum GameMode {
   LEVEL_SYNONYMS = 'LEVEL_SYNONYMS',
   LEVEL_EXPANSION = 'LEVEL_EXPANSION',
   LEVEL_EXPANSION_TEST = 'LEVEL_EXPANSION_TEST',
-  LEVEL_CASCADE = 'LEVEL_CASCADE',
-  HIDDEN = 'HIDDEN',
   LEVEL_FILTER = 'LEVEL_FILTER'
 }
 
@@ -158,6 +156,7 @@ export const RANKS: readonly { readonly name: string; readonly min: number }[] =
  */
 const BASE_CYCLE: GameMode[] = [
   GameMode.CLASSIC,
+  GameMode.LEVEL_THEME,
   GameMode.LEVEL_EMOJI,
   GameMode.LEVEL_MIND_MATCH,
   GameMode.LEVEL_SYNONYMS,

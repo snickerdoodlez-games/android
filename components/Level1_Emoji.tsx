@@ -247,7 +247,7 @@ const Level1_Emoji: React.FC<any> = ({
                   {solved && <SolvedRowBackground seed={firstTile.categoryId} />}
                   {solved && (
                     <div className="absolute top-0 left-6 z-[100] transform -translate-y-full">
-                      <div className="px-3 py-1 text-[10px] font-black uppercase bg-black border-2 border-white text-white rounded-t-lg shadow-[0_-4px_12px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                      <div className="px-5 py-2 text-[clamp(0.75rem,3vw,0.9375rem)] font-black uppercase bg-black border-2 border-white text-white rounded-t-lg shadow-[0_-4px_12px_rgba(0,0,0,0.8)] whitespace-nowrap">
                         <CategoryTabLabel name={firstTile.categoryName} catDict={catDict} />
                       </div>
                     </div>

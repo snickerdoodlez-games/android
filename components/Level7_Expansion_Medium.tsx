@@ -40,15 +40,24 @@ const Level7_Expansion_Medium: React.FC<any> = ({
   const gridDataRef = useRef(gridData);
   const activeRowIndicesRef = useRef(activeRowIndices);
   const activeColIndicesRef = useRef(activeColIndices);
+  const isExpandingRef = useRef(false);
+  const roundRef = useRef(1);
+  const onCompleteRef = useRef(onComplete);
+  const movesRef = useRef(moves);
+  const mistakesRef = useRef(mistakes);
+  
   isCompleteRef.current = isComplete;
   isSwappingRef.current = isSwapping;
   isReviewingRef.current = isReviewing;
+  isExpandingRef.current = isExpanding;
+  roundRef.current = round;
   gridDataRef.current = gridData;
   activeRowIndicesRef.current = activeRowIndices;
   activeColIndicesRef.current = activeColIndices;
-  const [definitionTestId, setDefinitionTestId] = useState<string | null>(null);
-  const definitionTestedRef = useRef<Set<string>>(new Set());
-  const definitionTestPhaseRef = useRef<boolean>(true);
+  onCompleteRef.current = onComplete;
+  movesRef.current = moves;
+  mistakesRef.current = mistakes;
+  const handleTileClickRef = useRef<typeof handleTileClick>(null!);
 
   const getSolvedRowCount = useCallback(() => {
     let count = 0;
@@ -84,94 +93,77 @@ const Level7_Expansion_Medium: React.FC<any> = ({
   }, [csvData]);
 
   const checkMatches = useCallback((currentGrid: (TileData | null)[][], wasSwap: boolean = false) => {
+    if (isExpandingRef.current) return;
     let changedInRound = false, newlySolvedCount = 0;
     const updatedGrid = currentGrid.map(row => [...row]);
-    activeRowIndices.forEach(rIdx => {
-      const rowTiles = activeColIndices.map(cIdx => updatedGrid[rIdx][cIdx]!);
+    const activeRows = activeRowIndicesRef.current;
+    const activeCols = activeColIndicesRef.current;
+    activeRows.forEach(rIdx => {
+      const rowTiles = activeCols.map(cIdx => updatedGrid[rIdx][cIdx]!);
       if (rowTiles.every(t => t.status === 'solved')) { newlySolvedCount++; return; }
       const firstTile = rowTiles[0];
       if (firstTile && rowTiles.every(t => t.categoryId === firstTile.categoryId)) {
         changedInRound = true; newlySolvedCount++; audio.playRowSolved();
         const color = THEMES[0].solvedColors[rIdx % THEMES[0].solvedColors.length];
-        activeColIndices.forEach(cIdx => { const tile = updatedGrid[rIdx][cIdx]; if (tile) updatedGrid[rIdx][cIdx] = { ...tile, status: 'solved', isSolved: true, color }; });
+        activeCols.forEach(cIdx => { const tile = updatedGrid[rIdx][cIdx]; if (tile) updatedGrid[rIdx][cIdx] = { ...tile, status: 'solved', isSolved: true, color }; });
       }
     });
     if (changedInRound) setGridData(updatedGrid);
     else if (wasSwap) setMistakes(m => m + 1);
-    if (newlySolvedCount === activeRowIndices.length) {
-      if (round < ROUND_TARGETS.length) setTimeout(() => expandGrid(), 1000);
-      else if (!isComplete) { audio.playWin(); setIsComplete(true); const finalTime = Date.now() - startTimeRef.current; setTimeout(() => onComplete({ timeMs: finalTime, moves, mistakes, solvedCategoryIds: csvData.slice(0, MAX_ROWS).map((c:any)=>`${c.id} | ${c.name}`), solvedWords: updatedGrid.flat().filter(t => t?.status === 'solved').map(t => `${t!.word}|${t!.categoryName}`) }), 1000); }
+    if (newlySolvedCount === activeRows.length) {
+      if (isExpandingRef.current || isCompleteRef.current) return;
+      if (roundRef.current < ROUND_TARGETS.length) setTimeout(() => expandGrid(), 1000);
+      else if (!isCompleteRef.current) { audio.playWin(); setIsComplete(true); const finalTime = Date.now() - startTimeRef.current; setTimeout(() => onCompleteRef.current({ timeMs: finalTime, moves: movesRef.current, mistakes: mistakesRef.current, solvedCategoryIds: csvData.slice(0, MAX_ROWS).map((c:any)=>`${c.id} | ${c.name}`), solvedWords: updatedGrid.flat().filter(t => t?.status === 'solved').map(t => `${t!.word}|${t!.categoryName}`) }), 1000); }
     }
-  }, [activeRowIndices, activeColIndices, round, isComplete, moves, mistakes, onComplete, csvData]);
+  }, [csvData]);
 
   const expandGrid = useCallback(() => {
-    const nextRound = round + 1; if (nextRound > ROUND_TARGETS.length) return;
+    if (isExpandingRef.current || isCompleteRef.current) return;
+    const nextRound = roundRef.current + 1; if (nextRound > ROUND_TARGETS.length) return;
+    isExpandingRef.current = true;
     setIsExpanding(true); audio.playLevelStart();
     const target = ROUND_TARGETS[nextRound - 1];
     setGridData(prev => {
       const next = prev.map(row => [...row]);
-      // Phase 1: Convert solved tiles to flipping-out to trigger
-      // the card-flip CSS animation, revealing they're now unsolved.
+      const nonSolvedIndices: [number, number][] = []; const nonSolvedTiles: TileData[] = [];
+      for (let r = 0; r < target.rows; r++) for (let c = 0; c < target.cols; c++) { const t = next[r][c]; if (!t || t.status !== 'solved') { nonSolvedIndices.push([r, c]); if (t) nonSolvedTiles.push(t); } }
+      const scrambled = shuffleArray(nonSolvedTiles);
+      nonSolvedIndices.forEach(([r, c], i) => { if (scrambled[i]) next[r][c] = scrambled[i]; });
+
+      // Prevent auto-solved rows after expansion
       for (let r = 0; r < target.rows; r++) {
+        const rowNonSolved: { c: number; tile: TileData }[] = [];
         for (let c = 0; c < target.cols; c++) {
           const t = next[r][c];
-          if (t && t.status === 'solved') {
-            next[r][c] = { ...t, status: 'flipping-out' };
+          if (t && t.status !== 'solved') rowNonSolved.push({ c, tile: t });
+        }
+        if (rowNonSolved.length < 2) continue;
+        const firstCat = rowNonSolved[0].tile.categoryId;
+        if (rowNonSolved.every(item => item.tile.categoryId === firstCat)) {
+          let swapped = false;
+          const lastIdx = rowNonSolved.length - 1;
+          const swapC = rowNonSolved[lastIdx].c;
+          for (let sr = 0; sr < target.rows && !swapped; sr++) {
+            if (sr === r) continue;
+            for (let sc = 0; sc < target.cols && !swapped; sc++) {
+              const st = next[sr][sc];
+              if (st && st.status !== 'solved' && st.categoryId !== firstCat) {
+                next[r][swapC] = st;
+                next[sr][sc] = rowNonSolved[lastIdx].tile;
+                swapped = true;
+              }
+            }
           }
         }
       }
       return next;
     });
-
-    // Phase 2: After flip animation (450ms), replace tiles with
-    // neutral copies, scramble everything, and expand the grid.
-    const TILE_FLIP_DURATION_MS = 450;
-    setTimeout(() => {
-      setGridData(prev => {
-        const next = prev.map(row => [...row]);
-        for (let r = 0; r < target.rows; r++) {
-          for (let c = 0; c < target.cols; c++) {
-            const t = next[r][c];
-            if (t) next[r][c] = { ...t, status: 'neutral' as const, isSolved: false, color: undefined };
-          }
-        }
-        const allIndices: [number, number][] = []; const allTiles: TileData[] = [];
-        for (let r = 0; r < target.rows; r++) for (let c = 0; c < target.cols; c++) { const t = next[r][c]; if (t) { allIndices.push([r, c]); allTiles.push(t); } }
-        const scrambled = shuffleArray(allTiles);
-        allIndices.forEach(([r, c], i) => { if (scrambled[i]) next[r][c] = scrambled[i]; });
-
-        for (let r = 0; r < target.rows; r++) {
-          const rowTiles: { c: number; tile: TileData }[] = [];
-          for (let c = 0; c < target.cols; c++) {
-            const t = next[r][c];
-            if (t) rowTiles.push({ c, tile: t });
-          }
-          if (rowTiles.length < 2) continue;
-          const firstCat = rowTiles[0].tile.categoryId;
-          if (rowTiles.every(item => item.tile.categoryId === firstCat)) {
-            let swapped = false;
-            const lastIdx = rowTiles.length - 1;
-            const swapC = rowTiles[lastIdx].c;
-            for (let sr = 0; sr < target.rows && !swapped; sr++) {
-              if (sr === r) continue;
-              for (let sc = 0; sc < target.cols && !swapped; sc++) {
-                const st = next[sr][sc];
-                if (st && st.categoryId !== firstCat) {
-                  next[r][swapC] = st;
-                  next[sr][sc] = rowTiles[lastIdx].tile;
-                  swapped = true;
-                }
-              }
-            }
-          }
-        }
-        return next;
-      });
-      setActiveRowIndices(Array.from({ length: target.rows }, (_, i) => i));
-      setActiveColIndices(Array.from({ length: target.cols }, (_, i) => i));
-      setRound(nextRound); setIsExpanding(false);
-    }, TILE_FLIP_DURATION_MS);
-  }, [round]);
+    setActiveRowIndices(Array.from({ length: target.rows }, (_, i) => i));
+    setActiveColIndices(Array.from({ length: target.cols }, (_, i) => i));
+    setRound(nextRound);
+    isExpandingRef.current = false;
+    setIsExpanding(false);
+  }, []);
 
   const handleTileClick = useCallback((r: number, c: number) => {
     if (isComplete || isSwapping || isExpanding || isReviewing) return;
@@ -191,27 +183,29 @@ const Level7_Expansion_Medium: React.FC<any> = ({
       }, 50);
     }
   }, [isComplete, isSwapping, isExpanding, isReviewing, gridData, selectedPos, checkMatches]);
+  
+  useEffect(() => { handleTileClickRef.current = handleTileClick; }, [handleTileClick]);
 
   useEffect(() => {
-    if (!isAutoPlaying || isComplete || isSwapping || isExpanding || isReviewing) return;
-    const timer = setTimeout(() => {
-      if (definitionTestPhaseRef.current) {
-        const allTiles = gridData.flat().filter(t => t !== null) as TileData[];
-        const unsolvedTiles = allTiles.filter(t => t.status !== 'solved' && t.definition && !definitionTestedRef.current.has(t.id));
-        const targetTestCount = Math.ceil(allTiles.filter(t => t.status !== 'solved').length / 2);
-        const hasDefinitions = unsolvedTiles.length > 0 && unsolvedTiles.some(t => t.definition && t.definition.trim().length > 0);
-        if (!hasDefinitions) { definitionTestPhaseRef.current = false; setDefinitionTestId(null); return; }
-        if (definitionTestedRef.current.size < targetTestCount && unsolvedTiles.length > 0) { if (definitionTestId === null) { const pickTile = unsolvedTiles[Math.floor(Math.random() * unsolvedTiles.length)]; setDefinitionTestId(pickTile.id); } return; }
-        definitionTestPhaseRef.current = false; setDefinitionTestId(null); return;
-      }
-      for (let rIdx of activeRowIndices) { const row = activeColIndices.map(cIdx => gridData[rIdx][cIdx]); if (row.some(t => !t) || row.every(t => t?.status === 'solved')) continue; const targetCatId = csvData[rIdx]?.id; if (row.every(t => t?.categoryId === targetCatId)) { checkMatches(gridData); return; } }
-      for (let rIdx of activeRowIndices) { const row = activeColIndices.map(cIdx => gridData[rIdx][cIdx]); if (row.some(t => !t) || row.every(t => t?.status === 'solved')) continue; const targetCatId = csvData[rIdx]?.id; const wrongIdxInRow = row.findIndex(t => t?.categoryId !== targetCatId); if (wrongIdxInRow !== -1) { const wrongPos = { r: rIdx, c: activeColIndices[wrongIdxInRow] }; let correctPos: { r: number, c: number } | null = null; for (let rr of activeRowIndices) { for (let cc of activeColIndices) { const t = gridData[rr][cc]; if (t && t.status !== 'solved' && t.categoryId === targetCatId && rr !== rIdx) { correctPos = { r: rr, c: cc }; break; } } if (correctPos) break; } if (correctPos) { if (!selectedPos) handleTileClick(wrongPos.r, wrongPos.c); else handleTileClick(correctPos.r, correctPos.c); return; } } }
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [isAutoPlaying, isComplete, isSwapping, isExpanding, isReviewing, gridData, selectedPos, handleTileClick, activeRowIndices, activeColIndices, csvData, checkMatches, definitionTestId]);
+    if (!isAutoPlaying || isComplete || isReviewing) return;
+    let isCancelled = false;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    const autoTick = () => {
+      if (isCancelled || isCompleteRef.current || isReviewingRef.current) return;
+      if (isSwappingRef.current || isExpandingRef.current) { timerId = setTimeout(autoTick, 300); return; }
+      const currentGrid = gridDataRef.current;
+      const activeRows = activeRowIndicesRef.current;
+      const activeCols = activeColIndicesRef.current;
+      let foundSelected = false;
+      for (let rr of activeRows) { for (let cc of activeCols) { const t = currentGrid[rr]?.[cc]; if (t && t.status === 'selected') { foundSelected = true; break; } } if (foundSelected) break; }
+      for (let rIdx of activeRows) { const row = activeCols.map(cIdx => currentGrid[rIdx]?.[cIdx]); if (row.some(t => !t) || row.every(t => t?.status === 'solved')) continue; const targetCatId = csvData[rIdx]?.id; if (row.every(t => t?.categoryId === targetCatId)) { checkMatches(currentGrid); timerId = setTimeout(autoTick, 200); return; } }
+      for (let rIdx of activeRows) { const row = activeCols.map(cIdx => currentGrid[rIdx]?.[cIdx]); if (row.some(t => !t) || row.every(t => t?.status === 'solved')) continue; const targetCatId = csvData[rIdx]?.id; const wrongIdxInRow = row.findIndex(t => t?.categoryId !== targetCatId); if (wrongIdxInRow !== -1) { const wrongPos = { r: rIdx, c: activeCols[wrongIdxInRow] }; let correctPos: { r: number, c: number } | null = null; for (let rr of activeRows) { for (let cc of activeCols) { const t = currentGrid[rr]?.[cc]; if (t && t.status !== 'solved' && t.categoryId === targetCatId && rr !== rIdx) { correctPos = { r: rr, c: cc }; break; } } if (correctPos) break; } if (correctPos) { if (foundSelected) { handleTileClickRef.current(correctPos.r, correctPos.c); timerId = setTimeout(autoTick, 250); return; } else if (!isSwappingRef.current) { handleTileClickRef.current(wrongPos.r, wrongPos.c); timerId = setTimeout(autoTick, 250); return; } } } }
+      timerId = setTimeout(autoTick, 200);
+    };
+    timerId = setTimeout(autoTick, 200);
+    return () => { isCancelled = true; if (timerId) clearTimeout(timerId); };
+  }, [isAutoPlaying, isComplete, isReviewing]);
 
-  useEffect(() => { if (!isAutoPlaying || definitionTestId === null) return; const timer = setTimeout(() => { definitionTestedRef.current.add(definitionTestId); setDefinitionTestId(null); }, 800); return () => clearTimeout(timer); }, [isAutoPlaying, definitionTestId]);
-  useEffect(() => { if (!isAutoPlaying) { definitionTestedRef.current.clear(); definitionTestPhaseRef.current = true; setDefinitionTestId(null); } }, [isAutoPlaying, csvData]);
 
   const performHint = useCallback(() => {
     const currentGrid = gridDataRef.current; const activeRows = activeRowIndicesRef.current; const activeCols = activeColIndicesRef.current;
@@ -314,13 +308,13 @@ const Level7_Expansion_Medium: React.FC<any> = ({
                   {solved && <SolvedRowBackground seed={firstTile?.categoryId || rIdx} />}
                   {solved && (
                     <div className="absolute top-0 left-6 z-[100] transform -translate-y-full">
-                      <div className="px-3 py-1 text-[10px] font-black uppercase bg-black border-2 border-white text-white rounded-t-lg shadow-[0_-4px_12px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                      <div className="px-5 py-2 text-[clamp(0.75rem,3vw,0.9375rem)] font-black uppercase bg-black border-2 border-white text-white rounded-t-lg shadow-[0_-4px_12px_rgba(0,0,0,0.8)] whitespace-nowrap">
                         <CategoryTabLabel name={firstTile?.categoryName || ''} catDict={csvData?.find((r: any) => r.id === firstTile?.categoryId)?.catDict || ''} />
                       </div>
                     </div>
                   )}
                   <div className={`grid gap-0.5 w-full h-full relative z-10 transition-all duration-300 ${solved ? 'p-[10px]' : 'p-0.5'}`} style={{ gridTemplateColumns: `repeat(${activeColIndices.length}, 1fr)` }}>
-                    {rowTiles.map((t, cIdx) => (t && <Tile key={t.id} data={t} onClick={() => handleTileClick(rIdx, cIdx)} isNarrow={activeColIndices.length > 4} showDefinitionOverride={t.id === definitionTestId} gridEntryDelay={0.05 + rIdx * 0.1} ref={el => { if(el) tileRefs.current.set(t.id, el); }} />))}
+                    {rowTiles.map((t, cIdx) => (t && <Tile key={t.id} data={t} onClick={() => handleTileClick(rIdx, cIdx)} isNarrow={activeColIndices.length > 4} isExpansion gridEntryDelay={0.05 + rIdx * 0.1} ref={el => { if(el) tileRefs.current.set(t.id, el); }} />))}
                   </div>
                </div>
              );

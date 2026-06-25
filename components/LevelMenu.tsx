@@ -50,7 +50,7 @@ export const LevelMenu: React.FC<MenuProps> = ({
             <img 
               src="/logo.svg" 
               alt="WORD PAIRING MACHINE" 
-              className="w-full max-w-[320px] md:max-w-[450px] h-auto object-contain"
+              className="w-full max-w-[352px] md:max-w-[495px] h-auto object-contain"
             />
         </div>
 

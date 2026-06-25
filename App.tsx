@@ -31,7 +31,7 @@ import {
   shouldThrottleForBattery,
   PowerManagementState
 } from './plugins/powerManagement';
-import { AdMob, BannerAdSize, BannerAdPosition, AdmobConsentStatus } from '@capacitor-community/admob';
+import { AdMob, BannerAdSize, BannerAdPosition, AdmobConsentStatus, RewardAdPluginEvents } from '@capacitor-community/admob';
 import { ensureDataInitialized, waitForDataInit } from './services/csvData';
 import { waitForSynonymDataInit } from './services/synonymData';
 import { getAvailableHints, useHint as useHintService, addHints, checkAndAwardStarHint } from './services/hintService';
@@ -64,7 +64,7 @@ const Level7_Expansion_Medium = lazy(() => import('./components/Level7_Expansion
 const LevelExpansionTest = lazy(() => import('./components/LevelExpansionTest'));
 const LevelExpansionTest_Easy = lazy(() => import('./components/LevelExpansionTest_Easy'));
 const LevelExpansionTest_Medium = lazy(() => import('./components/LevelExpansionTest_Medium'));
-const Level8_Cascade = lazy(() => import('./components/Level8_Cascade'));
+const Level_Themed = lazy(() => import('./components/Level_Themed'));
 const BANNER_AD_ID = 'ca-app-pub-4096368901415767/2019330695';
 const INTERSTITIAL_AD_ID = 'ca-app-pub-4096368901415767/1153913539';
 const REWARDED_AD_ID = 'ca-app-pub-4096368901415767/2572185411';
@@ -136,6 +136,7 @@ export const App: React.FC = () => {
   const [showHintAd, setShowHintAd] = useState(false);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [isAdLoading, setIsAdLoading] = useState(false);
+
 
 
   // Layout dimension validation guard: prevent rendering game content
@@ -244,10 +245,6 @@ export const App: React.FC = () => {
       try {
         // Initial power status check
         const status = await getPowerManagementStatus();
-        if (status.isIgnoringBatteryOptimizations === false) {
-          // App is not whitelisted from battery optimizations — log for awareness
-          console.warn('PowerManagement: App not whitelisted from battery optimizations');
-        }
         if (status.isDeviceIdleMode) {
           console.info('PowerManagement: Device is in Doze/idle mode');
         }
@@ -451,7 +448,6 @@ export const App: React.FC = () => {
     const nextLevel = levelIndex + 1;
     setLevelIndex(nextLevel);
     saveLevel(nextLevel);
-    setForcedMode(undefined);
     setMode(getLevelMode(nextLevel, enabledModes));
     setIsReviewing(false);
     setCurrentSummary(null);
@@ -524,14 +520,14 @@ export const App: React.FC = () => {
             case GameMode.LEVEL_SYNONYMS:
               return <Level1_Standard key={`std-${diffTier}-${levelIndex}`} csvData={data} mode={mode} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} themeName={themeName} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
             
+            case GameMode.LEVEL_THEME:
+              return <Level_Themed key={`theme-${levelIndex}`} csvData={data} mode={mode} levelIndex={levelIndex} onComplete={handleLevelComplete} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} themeName={themeName} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
+            
             case GameMode.LEVEL_EMOJI:
               return <Level1_Emoji key={`emo-${diffTier}-${levelIndex}`} csvData={data} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
             
             case GameMode.LEVEL_MIND_MATCH:
               return <Level5_Group key={`mm-${diffTier}-${levelIndex}`} csvData={data} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
-            
-            case GameMode.LEVEL_CASCADE:
-              return <Level8_Cascade key={`cas-${diffTier}-${levelIndex}`} csvData={data} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} onOpenSettings={() => setShowSettings(true)} setHintsEnabled={setHintsEnabled} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
             
             default:
               return <Level2_Filter key={`filt-${diffTier}-${levelIndex}`} csvData={data} levelIndex={levelIndex} difficulty={avgDiff} category={mainCategory} onComplete={handleLevelComplete} onGameOver={() => handleLevelComplete({ timeMs: 0, moves: 0, failed: true })} onExit={() => setMode(GameMode.MENU)} hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled} onOpenSettings={() => setShowSettings(true)} isReviewing={isReviewing} onNext={proceedToNextLevel} isAutoPlaying={isAutoPlaying} stars={currentSummary?.stars} hintCount={hintCount} onHintClick={handleHintClick} hintsDisabledForLevel={hintsBlocked} />;
@@ -553,6 +549,7 @@ export const App: React.FC = () => {
     setSelectedDifficulty(diff);
     saveSelectedDifficulty(diff);
   };
+
 
   // Hint system handlers
   // Two-step flow: click dispatches hint-used, level component applies the hint
@@ -624,7 +621,7 @@ export const App: React.FC = () => {
     setIsAdLoading(true);
 
     // Listen for the reward event BEFORE showing the ad
-    const rewardHandler = AdMob.addListener('onRewardedVideoAdReward', () => {
+    const rewardHandler = AdMob.addListener(RewardAdPluginEvents.Rewarded, () => {
       const next = addHints(3);
       setHintCount(next);
       adInFlightRef.current = false;
@@ -633,7 +630,7 @@ export const App: React.FC = () => {
     });
 
     // Listen for dismiss (user closed without reward)
-    const dismissHandler = AdMob.addListener('onRewardedVideoAdDismissed', () => {
+    const dismissHandler = AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
       adInFlightRef.current = false;
       setIsAdLoading(false);
       dismissHandler.then(h => h.remove()).catch(() => {});
@@ -697,13 +694,14 @@ export const App: React.FC = () => {
           toggleMode={(m) => { let next = enabledModes.includes(m) ? (enabledModes.length > 1 ? enabledModes.filter(x => x !== m) : enabledModes) : [...enabledModes, m]; setEnabledModes(next); saveEnabledModes(next); }} 
           onSelectMode={(m) => { setForcedMode(m); setMode(m); setShowSettings(false); }} 
           hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled}
-          isAutoPlaying={isAutoPlaying} toggleAutoPlay={() => { setIsAutoPlaying(prev => { const next = !prev; saveAutoPlay(next); return next; }); }}
           onResetProgress={() => { localStorage.clear(); window.location.reload(); }} 
+          onStats={() => { setShowSettings(false); setShowStats(true); }}
           categories={activeCategories} privacyOptionsRequired={privacyOptionsRequired} 
           onShowPrivacyOptions={async () => { if (Capacitor.isNativePlatform()) await AdMob.showPrivacyOptionsForm().catch(() => {}); }}
           selectedDifficulty={selectedDifficulty}
           unlockedDifficulties={unlockedDifficulties}
           onDifficultyChange={handleDifficultyChange}
+
         />}
         {showCategorySelector && <CategorySelectionOverlay isOpen={showCategorySelector} onClose={() => setShowCategorySelector(false)} selectedIds={customPoolIds} onToggle={(ids) => { setCustomPoolIds(ids); saveCustomPool(ids); }} />}
         {showStats && <StatsOverlay onClose={() => setShowStats(false)} />}

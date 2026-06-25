@@ -5,7 +5,6 @@ import {
   SELECTION_VARIANTS, 
   TEXT_VARIANTS,
   ARCADE_OUTLINE, 
-  CASCADE_OUTLINE,
   EMOJI_OUTLINE,
   SOLVED_OUTLINE,
   getTileStatusClasses, 
@@ -20,11 +19,11 @@ interface TileProps {
   onClick: (id: string) => void;
   disabled?: boolean;
   targetColor?: string; 
-  isCascade?: boolean;
   isNarrow?: boolean;
   rowCount?: number;
   showDefinitionOverride?: boolean;
   gridEntryDelay?: number;
+  isExpansion?: boolean;
 }
 
 const LONG_PRESS_DURATION = 600; // ms
@@ -34,7 +33,7 @@ const FONT_STYLE = {
   backfaceVisibility: 'hidden' as const,
 };
 
-const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disabled, targetColor, isCascade, isNarrow, rowCount, showDefinitionOverride, gridEntryDelay, ...props }, ref) => {
+const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disabled, targetColor, isNarrow, rowCount, showDefinitionOverride, gridEntryDelay, isExpansion, ...props }, ref) => {
   const [showDefinition, setShowDefinition] = useState(false);
   const [isShining, setIsShining] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,8 +54,8 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   const isFlippingOut = data.status === 'flipping-out';
   const isFallingOut = data.status === 'falling-out';
 
-  const statusClasses = getTileStatusClasses(data.status, (isCascade || isSolved) ? (data.color || targetColor) : undefined);
-  const textClasses = getTypographicClasses(data.word, data.isEmoji, isSolved, isCascade, isNarrow, rowCount);
+  const statusClasses = getTileStatusClasses(data.status, isSolved ? (data.color || targetColor) : undefined);
+  const textClasses = getTypographicClasses(data.word, data.isEmoji, isSolved, false, isNarrow, rowCount);
   
   let styleOverride: React.CSSProperties = {};
   
@@ -200,7 +199,8 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   // Build additional CSS classes for new animations
   const animClasses: string[] = [];
   if (isHint) animClasses.push('tile-hint');
-  if (isSolved) animClasses.push('tile-flip-lock');
+  if (isSolved && isExpansion) animClasses.push('solved-tile-expansion');
+  else if (isSolved) animClasses.push('tile-flip-lock');
   if (isFlippingOut) animClasses.push('expansion-tile-unsolve');
   if (isFallingOut) animClasses.push('animate-tile-fall-out');
   if (gridEntryDelay !== undefined && gridEntryDelay >= 0) animClasses.push('tile-grid-entry');
@@ -223,16 +223,16 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
       onClick={handleCloseDefinition}
     >
       <m.div
-        initial={{ scale: 0.85, opacity: 0 }}
+        initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.85, opacity: 0 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-        className="rounded-large px-8 py-8 mx-6 max-w-[90vw] w-full surface-card"
-        style={{ maxWidth: '400px', borderColor: 'var(--color-border-strong)', boxShadow: '0 0 40px rgba(0,229,255,0.12)' }}
+        exit={{ scale: 0.5, opacity: 0 }}
+        transition={{ duration: 0.6, ease: [0.39, 0.575, 0.565, 1.0] }}
+        className="rounded-large px-8 py-8 mx-6 max-w-[90vw] w-full bg-black border-2 border-white"
+        style={{ maxWidth: '400px', boxShadow: '0 0 40px rgba(0,229,255,0.12)' }}
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
         {/* Word heading */}
-        <h2 className="text-[clamp(1.25rem,5vw,2rem)] font-black font-raleway uppercase text-white text-center tracking-wider leading-tight mb-1">
+        <h2 className="text-[clamp(1.25rem,5vw,2rem)] font-black font-raleway uppercase text-white text-center tracking-wider leading-tight mb-1 animate-focus-in-expand" style={{ animationDelay: '0.25s' }}>
           {data.word}
         </h2>
 
@@ -361,23 +361,40 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
            </div>
          )}
 
-         <AnimatePresence mode="wait">
+         {isFlippingOut ? (
            <m.span 
               key={data.word} 
               variants={TEXT_VARIANTS}
-              initial="initial"
-              animate={data.status}
-              exit="exit"
+              initial="neutral"
+              animate="neutral"
               className={`${textClasses} text-white z-30 text-center px-2 pointer-events-none w-full flex flex-col items-center justify-center max-w-full`}
               style={{
-                ...(data.isEmoji ? EMOJI_OUTLINE : isSolved ? SOLVED_OUTLINE : isCascade ? CASCADE_OUTLINE : ARCADE_OUTLINE),
+                ...(data.isEmoji ? EMOJI_OUTLINE : isSolved ? SOLVED_OUTLINE : ARCADE_OUTLINE),
                 ...emojiFilterStyle,
                 maxHeight: '100%'
               }}
            >
              {renderWordContent()}
            </m.span>
-         </AnimatePresence>
+         ) : (
+           <AnimatePresence mode="wait">
+             <m.span 
+                key={data.word} 
+                variants={TEXT_VARIANTS}
+                initial="initial"
+                animate={data.status}
+                exit="exit"
+                className={`${textClasses} text-white z-30 text-center px-2 pointer-events-none w-full flex flex-col items-center justify-center max-w-full`}
+                style={{
+                  ...(data.isEmoji ? EMOJI_OUTLINE : isSolved ? SOLVED_OUTLINE : ARCADE_OUTLINE),
+                  ...emojiFilterStyle,
+                  maxHeight: '100%'
+                }}
+             >
+               {renderWordContent()}
+             </m.span>
+           </AnimatePresence>
+         )}
       </m.div>
 
       {/* DEFINITION OVERLAY - RENDERED VIA PORTAL TO AVOID CLIPPING */}

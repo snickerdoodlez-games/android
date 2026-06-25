@@ -1,7 +1,9 @@
-- [x] Analyze codebase for performance issues
-- [x] App_Startup_Time: Add loading splash screen during CSV data init
-- [x] Rendering_Performance: Optimize Tile.tsx (remove layout, simplify animations)
-- [x] Rendering_Performance: Memoize computed values in App.tsx renderContent
-- [x] Rendering_Performance: Optimize Level1_Standard.tsx checkMatches
-- [x] StrictMode_Compliance: Ensure no side effects during render phases
-- [x] Verify all changes build successfully
+- [x] Read all three expansion files (Level7_Expansion.tsx, _Easy, _Medium)
+- [x] Read old working version from "Howdy" commit (eee781c5)
+- [x] Analyze git diff between Howdy and Expansion Test commits
+- [x] Identify root cause of unsolvable puzzle bug
+- [x] Identify root cause of board reversion bug
+- [ ] Fix Level7_Expansion.tsx (Hard) - anti-auto-solve includes solved tiles
+- [ ] Fix Level7_Expansion_Easy.tsx - anti-auto-solve + stale closure (round ref)
+- [ ] Fix Level7_Expansion_Medium.tsx - anti-auto-solve + stale closure (round ref)
+- [ ] Verify build passes

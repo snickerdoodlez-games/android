@@ -1,7 +1,7 @@
 import { CSVRow } from '../types';
 
 export const MAX_WORD_LENGTH = 50;
-export const MAX_CHARACTERS_PER_LINE = 14;
+export const MAX_CHARACTERS_PER_LINE = 13;
 
 // Fisher-Yates shuffle algorithm for unbiased randomization
 // This ensures every element has an equal probability of being selected.
