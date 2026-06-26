@@ -14,9 +14,6 @@ public class MainActivity extends BridgeActivity {
         // Compose Material 3 Adaptive's currentWindowAdaptiveInfo()
         registerPlugin(WindowSizeClassPlugin.class);
 
-        // Register the PowerManagement plugin for Doze / App Standby support
-        registerPlugin(PowerManagementPlugin.class);
-
         // Register the TestLab plugin for Firebase Test Lab result file writing
         registerPlugin(TestLabPlugin.class);
 

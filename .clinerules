@@ -1,4 +1,3 @@
-```text
 # Word Pairing: Category Match — .clinerules
 
 ## Project Overview
@@ -20,8 +19,10 @@
 - **Animation:** Framer Motion 11.15
 - **Styling:** Tailwind CSS (via CDN in index.html)
 - **Ads:** @capacitor-community/admob
-- **Font:** Oswald (Google Fonts)
+- **Font:** Oswald, Raleway (Google Fonts)
 - **UI Theme:** Neon arcade color scheme with dark background
+- **Testing:** Vitest
+- **CI/CD:** GitHub Actions (android-ci.yml)
 
 ---
 
@@ -33,35 +34,40 @@
 | `npm run dev` | Start Vite dev server (port 3000) |
 | `npm run build` | Production build to `dist/` |
 | `npm run preview` | Preview production build |
+| `npm test` | Run test suite |
+| `npm run test:watch` | Run tests in watch mode |
 | `npx cap copy android` | Copy web assets to Android |
 | `npx cap open android` | Open Android Studio |
 
---
+---
 
 
 ## Project Structure
 c:/Users/DD/New folder/gitttt/
 ├── App.tsx                    # Root React component + game state machine
 ├── index.tsx                  # Entry point
-├── index.html                 # HTML shell with Tailwind CDN + Oswald font
+├── index.html                 # HTML shell with Tailwind CDN + Oswald/Raleway fonts
 ├── types.ts                   # Shared TypeScript types, enums, game constants
 ├── vite.config.ts             # Vite configuration (aliases, GEMINI_API_KEY)
 ├── capacitor.config.json      # Capacitor config (outputs to dist/)
 ├── metadata.json              # AI Studio metadata
+├── vitest.config.ts           # Vitest test configuration
+├── tsconfig.json              # TypeScript configuration
 ├── components/                # React components
-│   ├── Level1_Standard.tsx    # Classic / Synonyms mode
+│   ├── Level1_Standard.tsx    # Classic mode
 │   ├── Level1_Emoji.tsx       # Emoji mode
 │   ├── Level2_Filter.tsx      # Filter mode
 │   ├── Level5_Group.tsx       # Mind Match mode
-│   ├── Level6_Hidden.tsx      # Hidden tiles mode
 │   ├── Level7_Expansion.tsx   # Expansion mode (hard)
 │   ├── Level7_Expansion_Easy.tsx
 │   ├── Level7_Expansion_Medium.tsx
-│   ├── Level8_Cascade.tsx     # Cascade mode
+│   ├── LevelExpansionTest.tsx # Expansion Test mode (hard)
+│   ├── LevelExpansionTest_Easy.tsx
+│   ├── LevelExpansionTest_Medium.tsx
 │   ├── Level_Themed.tsx       # Themed categories mode
 │   ├── LevelLayout.tsx        # Shared level layout wrapper
 │   ├── LevelMenu.tsx          # Main menu
-│   ├── LevelSuccessScreen.tsx # Level completion overlay (stub)
+│   ├── LevelSuccessScreen.tsx # Level completion overlay
 │   ├── Tile.tsx               # Game tile component
 │   ├── Header.tsx             # Level header (NEXT LEVEL button + hint lightbulb)
 │   ├── Footer.tsx             # Ad banner footer
@@ -85,9 +91,11 @@ c:/Users/DD/New folder/gitttt/
 │   └── WindowSizeClassProvider.tsx # Window size detection
 ├── services/                  # Data & utility services
 │   ├── csvData.ts             # Main CSV data loader
-│   ├── csvPoolData1-13.ts     # Pool data files USED IN CLASSIC, EXPANSION, MIND MATCH, HIDDEN, FILTER, GROUP, CASCADE
+│   ├── csvPoolData1-13.ts     # Pool data files USED IN CLASSIC, EXPANSION, MIND MATCH, FILTER
 │   ├── csvThemeData1-9.ts     # Theme data files USED IN THEMED LEVELS
 │   ├── csvThemeDataLoader.ts  # Theme data loader
+│   ├── csvExpansionData.csv   # Expansion Test data
+│   ├── csvExpansionDataLoader.ts # Expansion Test data loader
 │   ├── CSV_SYNONYMS_1-4.ts    # Synonyms data USED IN SYNONYMS LEVEL
 │   ├── csvEasy.ts             # Easy difficulty CSV
 │   ├── csvMedium.ts           # Medium difficulty CSV
@@ -114,13 +122,27 @@ c:/Users/DD/New folder/gitttt/
 │   ├── privacy.ts             # Privacy options
 │   ├── testLab.ts             # Firebase Test Lab integration
 │   └── windowSizeClass.ts     # Window size class
+├── __tests__/                 # Test suite
+│   ├── setup.ts               # Test environment setup (localStorage mock, etc.)
+│   ├── smoke.test.ts          # Smoke test
+│   ├── csvData.test.ts        # CSV data loading tests
+│   ├── csvUtils.test.ts       # CSV utility tests
+│   ├── levelContent.test.ts   # Level content generation tests
+│   └── storage.test.ts        # Storage persistence tests
 ├── android/                   # Android/Capacitor native project
 ├── app/                       # App build directory
 ├── assets/                    # Build assets
+├── compose/                   # Jetpack Compose native Android components (Kotlin)
+│   └── src/                   # Native Kotlin sources (App.kt, state machine, types, UI)
 ├── build-pipeline-mcp-server/ # MCP build pipeline server
 ├── mcp-server/                # MCP server
+├── distribution/              # Play Store assets
+│   └── playstore/             # Feature graphic, screenshots, metadata
+├── docs/                      # Documentation (changes log, custom workflows)
+├── .github/workflows/         # GitHub Actions CI/CD
+│   └── android-ci.yml         # CI pipeline for build/deploy
 ├── public/                    # Public static assets
-└── src/                       # Source styles
+└── src/                       # Source styles (styles.css)
 
 ```
 
@@ -151,8 +173,43 @@ c:/Users/DD/New folder/gitttt/
 - **Neon color palette** is defined in `index.html` tailwind config and `types.ts`.
 - Use `bg-neon-*`, `shadow-[0_0_15px_#COLOR,...]` patterns for glowing effects.
 - **Always use the existing neon color scheme.** Never introduce new color systems.
-- Never change the font (Oswald) without explicit instruction.
+- Never change the font (Oswald or Raleway) without explicit instruction.
 - **Strict Visual Hard Borders:** Do not use soft, blurred, or diffused shadows/borders on container boxes, panels, or custom layouts. Always prioritize crisp outline strokes, solid inline fills, and high-contrast bounding configurations to align cleanly with the retro arcade aesthetic.
+
+### Typographic Architecture
+
+The app uses a rigid 3-tier typographic hierarchy to ensure "glanceability" — the ability to read data in under a second.
+
+#### Tier 1 — Primary Display (Key Metrics)
+- **Font:** Oswald (`font-oswald`) — condensed sans-serif for maximum vertical height in compact containers
+- **Weight:** `font-black` (900)
+- **Letter-spacing:** `tracking-tight` (-0.025em) — compact to fit large numbers without wrapping
+- **Numbers:** Always use `tabular-nums` so that changing values (scores, timers, counters) maintain column alignment
+- **Sizes:** Minimum `text-xl` for metric values; scale up to `text-4xl` for the most prominent displays
+- **Applied to:** Level numbers (LVL X), timer displays, hint count badges, total score, star counts, rank, mastery counts (X / Y), tile word text, NEXT LEVEL button, START button, RANK label value
+
+**Key marker classes:** `font-black tracking-tight tabular-nums`
+
+#### Tier 2 — Secondary Labels (Sub-headers, Labels)
+- **Font:** Raleway (`font-raleway`) — lighter, open contrast against Oswald's condensed display face
+- **Weight:** `font-light` (300) — creates visual breathability around dense primary metrics
+- **Letter-spacing:** `tracking-wider` (0.05em) — slightly open tracking reinforces the separation from Tier 1
+- **Applied to:** Stat labels (TOTAL SCORE, STARS ACHIEVED, etc.), section headers (BROAD CATEGORY MASTERY, ROW MASTERY, WORD MASTERY), RANK label, mode name sub-labels, definition overlay word heading, TAP TO CLOSE button
+
+**Key marker classes:** `font-raleway font-light tracking-wider`
+
+#### Tier 3 — List Typography (Data Scanning)
+- **Numbers:** Raleway + `tabular-nums` for fixed-width numeric columns — allows vertical scanning to compare values instantly
+- **Labels:** Consistent fixed-width column layout via CSS grid with equal fractional units
+- **Alignment:** Numbers are right-aligned or centered in equal-width columns; labels are left-aligned
+- **Applied to:** StatsOverlay progress bars and mastery ratios, future LeaderboardOverlay score columns, future ScoreBreakdownOverlay data rows, future CategoryListOverlay grouped lists
+
+**Key marker classes:** `tabular-nums` on all numeric columns
+
+#### Font Pairing Rule
+- **Oswald** = data, metrics, numbers, buttons, navigation, game tiles
+- **Raleway** = labels, descriptions, sub-headers, definition overlay body text, secondary UI annotations
+- Never swap these roles. Raleway is exclusively for Tier 2 and Tier 3 labels/annotations. Oswald is exclusively for Tier 1 primary data display and interactive elements.
 
 ### CSV Data Format
 
@@ -162,22 +219,25 @@ id,Category Name,"Description",Word1,"Definition1",Word2,"Definition2",...,Diffi
 
 ```
 - Each row: id | name | description | (word + definition) pairs | difficulty | broadCategory
-- Words: alternating word-definition pairs after the description; words MUST NOT exceed a **13 character maximum limit per line	**.
+- Words: alternating word-definition pairs after the description; words MUST NOT exceed a **13 character maximum limit per line**.
 - Difficulty: numeric (1=easy, 3=medium, 5=hard)
-- BroadCategory: one of Nature, Animals, Astronomy, Food, History, Geography, Religion, Technology, Science, Music, Literature, Movies, Television, Economics, Politics, Lifestyle, Gaming, Cars, Sports, Art, Mythology
+- BroadCategory: one of Nature, Animals, Astronomy, Food, History, Geography, Religion, Technology, Science, Music, Literature, Movies, Television, Economics, Politics, Lifestyle, Gaming, Cars, Sports, Art, Mythology, Education, Health, Language, Transportation
 
-### Game Modes (from GameMode enum)
+### Game Modes (from GameMode enum in types.ts)
 - `CLASSIC` - Group 4 related word tiles. Uses `csvPoolData*.ts` for game data
+- `LEVEL_THEME` - Themed categories. Uses `csvThemeData*.ts` for game data
 - `LEVEL_EMOJI` - Emoji tiles instead of words. Uses `emojiData.ts` for game data
 - `LEVEL_MIND_MATCH` - Timed matching rounds (20 tiles, 4 per match, 3 rounds, 3 errors). Uses `csvPoolData*.ts` for game data
 - `LEVEL_SYNONYMS` - Group by meaning. Uses `CSV_SYNONYMS_*.ts` for game data
-- `LEVEL_THEMED` - Themed categories. Uses `csvThemeData*.ts` for game data
 - `LEVEL_EXPANSION` - Progressive grid expansion across 3 stages. Uses `csvPoolData*.ts` for game data. Difficulty auto-selects by star count: <20 stars = Easy (2→3→5 rows), 20-49 stars = Medium (2→4→6 rows), 50+ stars = Hard (3→5→7 rows). ExpandGrid mechanic: solved tiles stay LOCKED in position, ~50% randomly flip (card-flip animation) to unsolved, only neutral tiles scramble.
-- `LEVEL_EXPANSION_TEST` - Expansion variant using `csvExpansionData.csv` for game data. Same 3-stage mechanics as LEVEL_EXPANSION.
-- `LEVEL_CASCADE` - Uses `csvPoolData*.ts` for game data
+- `LEVEL_EXPANSION_TEST` - Expansion variant using `csvExpansionData.csv` for game data. Same 3-stage mechanics as LEVEL_EXPANSION (3→5→7 rows × 2→3→4 cols).
 - `LEVEL_FILTER` - Filter mode. Uses `csvPoolData*.ts` for game data
-- `LEVEL_GROUP` - Group mode. Uses `csvPoolData*.ts` for game data
-- `LEVEL_HIDDEN` - Tiles start hidden, revealed when row solved. Uses `csvPoolData*.ts` for game data
+
+### Level Sequence
+The level sequence is deterministic and defined in `types.ts` as `DETERMINISTIC_LEVEL_SEQUENCE`. The base cycle is:
+`CLASSIC → LEVEL_THEME → LEVEL_EMOJI → LEVEL_MIND_MATCH → LEVEL_SYNONYMS → LEVEL_EXPANSION`
+
+Total levels: 72 (the cycle repeats 12 times).
 
 ---
 
@@ -280,16 +340,14 @@ Before invoking any file write, command execution, or asset modification, you mu
     - **CLASSIC level** → pulls data from **`csvPoolData*.ts`** files ONLY
     - **MIND MATCH level** → pulls data from **`csvPoolData*.ts`** files ONLY
     - **EXPANSION level** → pulls data from **`csvPoolData*.ts`** files ONLY
+    - **EXPANSION TEST level** → pulls data from **`csvExpansionData.csv`** ONLY
     - **EMOJI level** → pulls data from **`emojiData.ts`** ONLY
     - **SYNONYMS level** → pulls data from **`CSV_SYNONYMS_*.ts`** files ONLY
-    - **HIDDEN level** → pulls data from **`csvPoolData*.ts`** files ONLY
     - **FILTER level** → pulls data from **`csvPoolData*.ts`** files ONLY
-    - **GROUP level** → pulls data from **`csvPoolData*.ts`** files ONLY
-    - **CASCADE level** → pulls data from **`csvPoolData*.ts`** files ONLY
     These mappings must never be altered. Each game mode has a dedicated data source.
 12. **When a game tile or category tab is long pressed the definition of the word in the game tile appears.** (Implemented via `CategoryTabLabel.tsx` portal overlay and Tile long-press handler.)
-13. **Hints can only be used twice per level. Player starts the game with 2 hints. Rewarded hints net 2 new hints.** (Managed by `hintService.ts` with localStorage persistence. Hint counts are per-level; remaining hints carry forward. Stars earned also trigger milestone hint rewards every 30 stars.)
-14. **Expansion level mechanic (Level7_Expansion*.tsx):** When all rows are solved in a stage, the grid expands to the next stage. Solved tiles stay LOCKED in their positions — ~50% randomly flip via card-flip CSS animation (`expansionUnsolveFlip`) to unsolved neutral tiles. Only neutral (unsolved) tiles get scrambled, leaving previously solved rows partially intact while adding new tiles in expanded rows/columns.
+13. **Hints are not limited per level. Player starts the game with 2 hints. Rewarded hints net 3 new hints.** (Managed by `hintService.ts` with localStorage persistence. Hint counts carry forward across levels. Star milestones trigger +2 hints every 100 total stars.)
+14. **Expansion level mechanic (Level7_Expansion*.tsx and LevelExpansionTest*.tsx):** When all rows are solved in a stage, the grid expands to the next stage. Solved tiles stay LOCKED in their positions — ~50% randomly flip via card-flip CSS animation (`expansionUnsolveFlip`) to unsolved neutral tiles. Only neutral (unsolved) tiles get scrambled, leaving previously solved rows partially intact while adding new tiles in expanded rows/columns.
 15. **Expansion solved tiles display neon colors** via `data.color` from `SOLVED_COLORS` array. The `solved-tile-expansion` CSS class applies a 5-color cycling animation. Solved tiles locked from previous expansion stages retain their neon colors.
 
 ---
@@ -297,10 +355,11 @@ Before invoking any file write, command execution, or asset modification, you mu
 ## Hint System
 
 - **Service:** `services/hintService.ts` — manages `getAvailableHints()`, `useHint()`, `addHints()`, `checkAndAwardStarHint()`
-- **Storage:** Persisted in localStorage under `hints-available` key
+- **Storage:** Persisted in localStorage under `wpm_hints_available` key
 - **Flow:** App.tsx `handleHintClick` → dispatches `'hint-used'` CustomEvent → level component listener applies hint → dispatches `'hint-applied'` → App decrements counter
-- **Ad reward:** `addHints(2)` called after successful rewarded ad
-- **Star milestones:** Every 30 total stars, awards +2 hints (checked on level completion)
+- **Ad reward:** `addHints(3)` called after successful rewarded ad
+- **Star milestones:** Every 100 total stars, awards +2 hints (checked on level completion)
+- **No per-level hint limit.** Hints carry forward globally.
 
 ---
 
@@ -310,10 +369,13 @@ The following MCP tools are available to assist with this project:
 
 ### Project-Specific MCP Tools (word-pairing-mcp)
 - **search_game_content** - Search across all CSV data files for matching words, categories, or definitions
-- **validate_manifest** - Validate metadata.json and level structure
-- **analyze_level_progression** - Analyze the deterministic level sequence
-- **audit_csv_consistency** - Check for duplicate entries or structural issues in CSV files
-- **find_unused_categories** - Find categories in data that aren't referenced by any level
+- **validate_manifest** - Validate metadata.json and level structure for consistency
+- **analyze_level_progression** - Analyze the deterministic level sequence to understand mode distribution and progression
+- **audit_csv_consistency** - Check for duplicate entries, missing fields, or structural issues in CSV data files
+- **find_unused_categories** - Find categories in the CSV data that aren't referenced by any level
+- **audit_component_conventions** - Workflow 1: Scan all React components for .clinerules compliance — import ordering, touch targets (min-w-[48px] min-h-[48px]), aria-labels on icon-only buttons, neon color scheme usage, and naming conventions
+- **validate_data_pipeline** - Workflow 2: Cross-validate localStorage schema, game-mode-to-data-source mappings (rule #11), CSV format spec adherence, and word tile uniqueness (rule #8)
+- **audit_level_coverage** - Workflow 3: Cross-reference DETERMINISTIC_LEVEL_SEQUENCE against component files, verify data-source mappings exist, detect stub/incomplete components, and produce a prioritized PORTING_ROADMAP.md coverage gap report
 
 ### Build Pipeline MCP Tools (build-pipeline-mcp-server)
 - **bump_version** - Bump the app version in capacitor.config.json, package.json, and build.gradle
@@ -351,6 +413,11 @@ The following MCP tools are available to assist with this project:
 2. Game runs on `http://localhost:3000`
 3. Level sequence is deterministic (see `DETERMINISTIC_LEVEL_SEQUENCE` in types.ts)
 
+### Running Tests
+1. `npm test` — runs all Vitest tests once
+2. `npm run test:watch` — runs tests in watch mode for development
+3. Test files are in `__tests__/` with `vitest.config.ts` configuration
+
 ### Debugging
 - Check `LevelPrecheckLog.txt` for level validation issues
 - Use `LevelPreCheck` service warnings for CSV data problems
@@ -360,6 +427,7 @@ The following MCP tools are available to assist with this project:
 1. Verify touch target sizes: All interactive buttons must have `min-w-[48px] min-h-[48px]`
 2. Verify content descriptions: Check for `aria-label` on all icon-only buttons and interactive elements
 3. Check color contrast: Ensure text on dark backgrounds uses bright neon or white colors
+4. Use `audit_component_conventions` MCP tool to automate these checks
 
 ### Adding Sound Effects
 1. Add a new method to `AudioService` class in `services/audioService.ts`
@@ -367,5 +435,3 @@ The following MCP tools are available to assist with this project:
 3. Export the singleton `audio` instance and call the method where the sound should trigger
 4. All sounds are procedurally synthesized — no audio files needed
 5. The `isMuted` flag is respected automatically via `playTone()` early return
-
-```

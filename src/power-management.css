@@ -1,0 +1,26 @@
+/*
+ * Power Management: Pause ALL CSS animations when the
+ * app is backgrounded to stop GPU compositor wakeups.
+ * Controlled by plugins/powerManagement.ts via class toggling
+ * on <html> element.
+ */
+html.animation-paused *,
+html.animation-paused *::before,
+html.animation-paused *::after {
+  animation-play-state: paused !important;
+  transition-duration: 0s !important;
+}
+
+/*
+ * Respect user's system-level reduced motion preference.
+ * Disables all non-essential animations and transitions.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

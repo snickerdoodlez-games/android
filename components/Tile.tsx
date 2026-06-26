@@ -150,7 +150,8 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
     };
   }, [showDefinition]);
 
-  // RANDOM SHINE: schedule a brief shimmer on neutral tiles at random intervals
+  // RANDOM SHINE: schedule a brief shimmer on neutral tiles at random intervals.
+  // Paused when page is hidden to save battery.
   useEffect(() => {
     const isNeutral = data.status === 'neutral';
     if (!isNeutral || disabled) {
@@ -160,7 +161,15 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
       return;
     }
 
+    let pausedByVisibility = false;
+
     const scheduleShine = () => {
+      // Don't schedule if page is hidden
+      if (document.visibilityState === 'hidden') {
+        pausedByVisibility = true;
+        return;
+      }
+      pausedByVisibility = false;
       const delay = 4000 + Math.random() * 10000; // 4-14 seconds between shines
       shineTimerRef.current = setTimeout(() => {
         setIsShining(true);
@@ -173,9 +182,19 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
 
     scheduleShine();
 
+    // Resume shine scheduling when page becomes visible again
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && pausedByVisibility) {
+        pausedByVisibility = false;
+        scheduleShine();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
     return () => {
       if (shineTimerRef.current) clearTimeout(shineTimerRef.current);
       if (shineEndTimerRef.current) clearTimeout(shineEndTimerRef.current);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [data.status, disabled]);
 
@@ -231,8 +250,8 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
         style={{ maxWidth: '400px', boxShadow: '0 0 40px rgba(0,229,255,0.12)' }}
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
-        {/* Word heading */}
-        <h2 className="text-[clamp(1.25rem,5vw,2rem)] font-black font-raleway uppercase text-white text-center tracking-wider leading-tight mb-1 animate-focus-in-expand" style={{ animationDelay: '0.25s' }}>
+        {/* Word heading — larger for emojis */}
+        <h2 className={`font-black font-raleway uppercase definition-text text-center tracking-wider leading-tight mb-1 animate-focus-in-expand ${data.isEmoji ? 'text-[clamp(3rem,12vw,6rem)]' : 'text-[clamp(1.25rem,5vw,2rem)]'}`} style={{ animationDelay: '0.1s' }}>
           {data.word}
         </h2>
 
@@ -241,8 +260,8 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
           <>
             <div className="w-12 h-0.5 mx-auto my-4" style={{ backgroundColor: 'var(--accent-active)', boxShadow: '0 0 8px rgba(0,229,255,0.5)' }} />
             
-            {/* Definition text — LINE LENGTH limited to 65ch for readability */}
-            <p className="text-[clamp(0.8125rem,3.5vw,1.125rem)] leading-relaxed text-white font-raleway text-center whitespace-normal break-words max-w-[65ch] mx-auto">
+            {/* Definition text — larger for emojis */}
+            <p className={`leading-relaxed definition-text font-raleway text-center whitespace-normal break-words max-w-[65ch] mx-auto animate-focus-in-expand ${data.isEmoji ? 'text-[clamp(1.25rem,5vw,2rem)]' : 'text-[clamp(0.8125rem,3.5vw,1.125rem)]'}`} style={{ animationDelay: '0.5s' }}>
               {data.definition}
             </p>
           </>

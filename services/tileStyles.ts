@@ -169,12 +169,12 @@ export const getTypographicClasses = (word: string, isEmoji?: boolean, isSolved?
     const isCompact = rowCount >= 7;
     if (isCompact) {
       return isSolved 
-        ? "text-[clamp(1.25rem,5vw,3rem)]" 
-        : "text-[clamp(1.5rem,6vw,3.5rem)]";
+        ? "text-[clamp(1.5rem,6vw,3.5rem)]" 
+        : "text-[clamp(2rem,8vw,4.5rem)]";
     }
     return isSolved 
-      ? "text-[clamp(1.5rem,6vw,3.5rem)]" 
-      : "text-[clamp(1.75rem,7vw,4rem)]";
+      ? "text-[clamp(2rem,8vw,4.5rem)]" 
+      : "text-[clamp(2.5rem,10vw,5.5rem)]";
   }
   
   const words = (word || '').trim().split(/\s+/);

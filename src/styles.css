@@ -314,6 +314,10 @@ img, svg { image-rendering: -webkit-optimize-contrast; image-rendering: crisp-ed
 [data-theme="light"] .text-zinc-700 { color: #FFFFFF !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important; }
 [data-theme="light"] .text-zinc-800 { color: #FFFFFF !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important; }
 [data-theme="light"] .text-black { color: #000000 !important; text-shadow: none !important; }
+
+/* Definition overlay text: white on dark, solid black on light */
+.definition-text { color: #FFFFFF; }
+[data-theme="light"] .definition-text { color: #000000 !important; text-shadow: none !important; }
 [data-theme="light"] .border-zinc-800 { border-color: var(--color-border) !important; }
 [data-theme="light"] .border-zinc-900 { border-color: var(--color-panel-border) !important; }
 [data-theme="light"] .border-zinc-700 { border-color: var(--color-border) !important; }

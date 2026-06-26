@@ -53,12 +53,25 @@ jobs:
           workload_identity_provider: 'projects/1079794258930/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           service_account: 'github-actions@word-pairing-category-match.iam.gserviceaccount.com'
 
-      # 4. Make gradlew executable
+      # 4. Decode google-services.json from secret (required for Firebase Crashlytics native symbol upload)
+      - name: Decode google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
+            echo "google-services.json decoded successfully."
+          else
+            echo "::warning::GOOGLE_SERVICES_JSON_BASE64 secret not set. Firebase Crashlytics native symbol upload will be skipped."
+          fi
+
+      # 5. Make gradlew executable
       - name: Make gradlew executable
         working-directory: android
         run: chmod +x gradlew
 
-      # 5. Build the Bundle (uses key file from repo + password secrets)
+      # 6. Build the Bundle (Firebase Crashlytics Gradle plugin uploads native debug symbols
+      #    automatically when google-services.json is present and nativeSymbolUploadEnabled=true)
       - name: Build Release Bundle
         working-directory: android
         env:
@@ -68,7 +81,7 @@ jobs:
           MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.MYAPP_RELEASE_KEY_PASSWORD }}
         run: ./gradlew bundleRelease
 
-      # 6. Upload to Google Play
+      # 7. Upload to Google Play
       - name: Release to Play Store
         uses: r0adkll/upload-google-play@v1
         with:
@@ -76,3 +89,4 @@ jobs:
           packageName: com.snickerdoodlez.wordpairing
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
+          mappingFile: android/app/build/outputs/mapping/release/mapping.txt

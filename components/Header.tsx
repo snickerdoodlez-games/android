@@ -126,7 +126,18 @@ const Header: React.FC<HeaderProps> = ({
         setCycleIndex((prev) => (prev + 1) % NEON_CYCLE_COLORS.length);
       }, 1500);
       
-      return () => clearInterval(interval);
+      // Clear interval when page becomes hidden to save battery
+      const handleVisibility = () => {
+        if (document.visibilityState === 'hidden') {
+          clearInterval(interval);
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibility);
+      
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener('visibilitychange', handleVisibility);
+      };
     }
   }, [isReviewing]);
 
@@ -201,7 +212,7 @@ const Header: React.FC<HeaderProps> = ({
               />
               {/* Hint count badge — never greyed out */}
               <span 
-                className="absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center rounded-full text-[11px] font-black font-oswald leading-none"
+                className="absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center rounded-full text-[11px] font-black font-oswald tabular-nums leading-none"
                 style={{
                   backgroundColor: '#F9FF00',
                   color: '#000000',

@@ -53,7 +53,7 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
         <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
           <div className="flex flex-col items-start leading-none">
               <h2 className="text-3xl font-black text-neon-blue uppercase tracking-tighter italic">HALL OF FAME</h2>
-              <span className="text-neon-yellow text-sm font-bold tracking-widest uppercase">RANK: {playerRank.name}</span>
+              <span className="text-neon-yellow text-sm font-raleway font-light tracking-wider uppercase">RANK: {playerRank.name}</span>
           </div>
           <button onClick={onClose} className="text-zinc-500 hover:text-white p-2 min-w-[48px] min-h-[48px] flex items-center justify-center" aria-label="Close statistics">
              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -62,19 +62,19 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
 
         {/* PROMINENT METRICS GRID */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-           <StatBox label="TOTAL SCORE" value={stats.totalScore.toLocaleString()} color="text-neon-green" />
-           <StatBox label="STARS ACHIEVED" value={`${stats.totalStars || 0} ★`} color="text-neon-yellow" isLarge={true} />
-           <StatBox label="AVG RATING" value={`${averageRating} ★`} color="text-zinc-400" />
-           <StatBox label="LEVELS BEAT" value={stats.levelsCompleted} color="text-neon-pink" />
-           <div className="col-span-2">
-             <StatBox label="TOTAL TIME PLAYED" value={timeStr} color="text-white" />
-           </div>
+             <StatBox label="TOTAL SCORE" value={stats.totalScore.toLocaleString()} color="text-neon-green" numeric={true} />
+            <StatBox label="STARS ACHIEVED" value={`${stats.totalStars || 0} ★`} color="text-neon-yellow" isLarge={true} />
+            <StatBox label="AVG RATING" value={`${averageRating} ★`} color="text-zinc-400" />
+            <StatBox label="LEVELS BEAT" value={stats.levelsCompleted} color="text-neon-pink" numeric={true} />
+            <div className="col-span-2">
+              <StatBox label="TOTAL TIME PLAYED" value={timeStr} color="text-white" />
+            </div>
         </div>
 
         <div className="mt-2 p-3 bg-black/50 border border-zinc-800 rounded-medium flex flex-col gap-4 overflow-y-auto max-h-[40vh] no-scrollbar">
            <div>
-               <h3 className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mb-1">BROAD CATEGORY MASTERY</h3>
-               <div className="text-2xl font-black text-neon-blue leading-none mb-1">{stats.solvedBroadCategories?.length || 0} / {BROAD_CATEGORIES.length}</div>
+                <h3 className="text-[10px] text-zinc-600 font-raleway font-light uppercase tracking-wider mb-1">BROAD CATEGORY MASTERY</h3>
+                <div className="text-2xl font-black tabular-nums text-neon-blue leading-none mb-1">{stats.solvedBroadCategories?.length || 0} / {BROAD_CATEGORIES.length}</div>
                <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-neon-blue shadow-[0_0_10px_#00E5FF]" 
@@ -84,8 +84,8 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
            </div>
 
            <div>
-               <h3 className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mb-1">ROW MASTERY</h3>
-               <div className="text-2xl font-black text-neon-yellow leading-none mb-1">{stats.solvedCategoryIds.length} / {totalCategories}</div>
+                <h3 className="text-[10px] text-zinc-600 font-raleway font-light uppercase tracking-wider mb-1">ROW MASTERY</h3>
+                <div className="text-2xl font-black tabular-nums text-neon-yellow leading-none mb-1">{stats.solvedCategoryIds.length} / {totalCategories}</div>
                <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-neon-yellow shadow-[0_0_10px_#F9FF00]" 
@@ -95,8 +95,8 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
            </div>
 
            <div>
-               <h3 className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mb-1">WORD MASTERY</h3>
-               <div className="text-2xl font-black text-neon-purple leading-none mb-1">{stats.solvedWords ? stats.solvedWords.length : 0} / {totalWords}</div>
+                <h3 className="text-[10px] text-zinc-600 font-raleway font-light uppercase tracking-wider mb-1">WORD MASTERY</h3>
+                <div className="text-2xl font-black tabular-nums text-neon-purple leading-none mb-1">{stats.solvedWords ? stats.solvedWords.length : 0} / {totalWords}</div>
                <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-neon-purple shadow-[0_0_10px_#D400FF]" 
@@ -117,10 +117,10 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
   );
 };
 
-const StatBox = ({ label, value, color, isLarge = false }: { label: string, value: string | number, color: string, isLarge?: boolean }) => (
+const StatBox = ({ label, value, color, isLarge = false, numeric = false }: { label: string, value: string | number, color: string, isLarge?: boolean, numeric?: boolean }) => (
   <div className="flex flex-col gap-0.5">
-    <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest leading-none">{label}</span>
-    <span className={`${isLarge ? 'text-2xl' : 'text-xl'} font-black ${color} tracking-tight`}>{value}</span>
+    <span className="text-[9px] font-raleway font-light text-zinc-600 uppercase tracking-wider leading-none">{label}</span>
+    <span className={`${isLarge ? 'text-2xl' : 'text-xl'} font-black ${numeric ? 'tabular-nums ' : ''}${color} tracking-tight`}>{value}</span>
   </div>
 );
 

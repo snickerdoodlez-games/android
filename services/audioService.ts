@@ -35,9 +35,28 @@ class AudioService {
     this.isMuted = !enabled;
     if (this.isMuted) {
       this.stopNodes();
+      this.suspendContext();
     } else {
       this.resume();
     }
+  }
+
+  /**
+   * Suspend the AudioContext to release audio hardware.
+   * Call when app goes to background to save battery.
+   */
+  suspendContext() {
+    const ctx = this.ctx;
+    if (ctx && ctx.state === 'running') {
+      ctx.suspend().catch(() => {});
+    }
+  }
+
+  /**
+   * Check if the AudioContext is currently suspended.
+   */
+  isSuspended(): boolean {
+    return this.ctx ? this.ctx.state === 'suspended' : false;
   }
 
   private playTone(

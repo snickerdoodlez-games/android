@@ -1,36 +1,41 @@
-Enter the neon-lit world of Word Pairing: Category Match — a sleek, dark-mode word association puzzle that challenges your mind across six unique game modes.
+Word Pairing: Category Match is a sleek, dark-mode word association puzzle game that challenges your brain with 72 handcrafted levels across six distinct game modes. Group related word tiles, crack hidden categories, and watch the neon arcade grid light up as you solve each puzzle.
 
-🧩 GAME MODES
-• CLASSIC — Group 4 related word tiles into their shared category. Simple to learn, hard to master.
-• THEMED — Dive into curated categories spanning Nature, Animals, Food, History, Technology, Science, Music, Movies, Sports, and more.
-• EMOJI — Words become emojis! Decode visual clues to find the connecting theme.
-• MIND MATCH — Race against the clock in timed matching rounds. 20 tiles, 4 per match, 3 rounds — speed and accuracy are everything.
-• SYNONYMS — Group words by meaning. Expand your vocabulary while you play.
-• EXPANSION — The grid grows as you solve! Each cleared stage expands the board, with solved tiles locking in place and the challenge scaling up.
+━━━━━━━━━━━━━━━━━━━━
+🎮 SIX UNIQUE GAME MODES
+━━━━━━━━━━━━━━━━━━━━
+• CLASSIC — Find the common thread linking 4 word tiles. Simple to learn, endlessly satisfying to solve.
+• THEMED — Every category in a level shares a single broad theme. Can you spot what connects them all?
+• EMOJI — Words become emojis! Decode visual symbols and group them by hidden meaning.
+• MIND MATCH — Timed rounds push your speed and accuracy. 3 rounds, 20 tiles per round, 3 mistakes allowed.
+• SYNONYMS — Group words by shared meaning. A vocabulary workout that tests your depth.
+• EXPANSION — The grid grows with every stage! Solved tiles lock in place as new rows and columns appear. 3 stages of escalating difficulty.
 
-🎮 FEATURES
-• Dynamic grid layouts that expand, reveal hidden tiles, or filter as you play
-• Neon arcade aesthetic with crisp glowing borders, vibrant colors, and smooth animations
-• Haptic tile interactions: select, swap, solve, and watch words flip and fade with satisfying feedback
-• Hint system: Start with 2 free hints, earn more by watching rewarded ads or hitting star milestones
-• Procedural sound effects synthesized in real-time — correct matches chime, errors buzz, victories fanfare
-• Long-press any tile to see its definition — learn as you play
-• Player stats, star rankings, and a Hall of Fame track your progress from NOVICE to LEGEND
-• Offline play supported — no internet required to solve puzzles
+━━━━━━━━━━━━━━━━━━━━
+✨ FEATURES
+━━━━━━━━━━━━━━━━━━━━
+• 72 Deterministic Levels — Curated and balanced progression through 21 broad categories.
+• 8 Player Ranks — Climb from NOVICE through GRANDMASTER to LEGEND by earning score points.
+• Star Rating System — Earn up to 3 stars per level based on speed and accuracy. Every 100 stars awards +2 bonus hints.
+• Hints System — Start with 2 free hints and earn more through star milestones or rewarded video ads.
+• Neon Arcade Aesthetic — Vibrant neon colors on deep black backgrounds with crisp, high-contrast visuals.
+• Smooth Animations — Fluid Framer Motion transitions for tile swaps, row solves, grid expansions, and card flips.
+• Procedural Sound Effects — Synthesized audio with unique sounds for every action: taps, matches, errors, and victories. No audio files needed.
+• Accessibility First — 48dp minimum touch targets, aria-labels on all buttons, and strong visual contrast throughout.
+• Long-Press Definitions — Hold any tile to reveal its definition before committing your guess.
+• Offline Play — No internet required. Play anywhere, anytime.
+• Ad-Supported Free — Full game available with non-intrusive banner ads. Optional rewarded video ads for extra hints.
+• Native Android — Built with Capacitor + React for smooth, battery-friendly performance on any Android device.
 
-🌟 STAR RANKS
-Earn stars for speed and accuracy. Climb the ranks: NOVICE → SEMI-PRO → PRO → VETERAN → ELITE → MASTER → GRANDMASTER → LEGEND
+━━━━━━━━━━━━━━━━━━━━
+🧩 HOW TO PLAY
+━━━━━━━━━━━━━━━━━━━━
+1. Study the word tiles arranged on the neon grid.
+2. Tap tiles to select them — look for a hidden category that links 4 words together.
+3. Group 4 related tiles and submit your answer.
+4. Solve every category on the board to complete the level.
+5. Long-press any tile to peek at its definition.
+6. Earn stars for fast, mistake-free solves and climb the ranks.
 
-🏆 CHALLENGES
-• 21 broad categories ensure endless variety
-• Difficulty scales naturally — easy, medium, and hard levels unlock as your star count grows
-• Expansions reveal new rows and columns while locking solved tiles in place
-• Hidden tiles mode keeps you guessing until each row is cracked
+Progress through the 72-level sequence spanning 21 broad categories: Nature, Animals, Astronomy, Food, History, Geography, Religion, Technology, Science, Music, Literature, Movies, Television, Economics, Politics, Lifestyle, Gaming, Cars, Sports, Art, and Mythology.
 
-🎨 DESIGN
-Dark mode by default with a custom neon color palette. Crisp outline strokes, high-contrast text, and glowing tile effects create a premium retro arcade feel. Optimized for phones and tablets with adaptive touch targets (minimum 48dp) and screen reader support.
-
-🚀 BUILT FOR ANDROID
-Native Android performance via Capacitor. Smooth 60fps animations powered by Framer Motion. Responsive layouts adapt to any screen size.
-
-Word Pairing: Category Match is free to play with optional rewarded ads for extra hints. No forced interstitials mid-game — your flow stays uninterrupted.
+Whether you have 2 minutes or 2 hours, Word Pairing: Category Match delivers bite-sized brain training with a neon arcade punch. Download now and light up the grid!

@@ -59,8 +59,16 @@ const Level1_Emoji: React.FC<any> = ({
   useEffect(() => {
     const newTiles: TileData[] = [];
     csvData.forEach((cat: any) => {
-        cat.words.slice(0, 3).forEach((emoji: string) => {
-             newTiles.push({ id: Math.random().toString(36).substr(2, 9), word: emoji, categoryId: cat.id, categoryName: cat.name, status: 'neutral', isEmoji: true, isSolved: false });
+        // If >3 emojis, randomly pick 3
+        let selectedEmojis: string[] = cat.words.slice(0, 3);
+        let selectedDefs: (string | undefined)[] = (cat.definitions || []).slice(0, 3);
+        if (cat.words.length > 3) {
+          const indices = shuffleArray(Array.from(cat.words, (_, i) => i)).slice(0, 3);
+          selectedEmojis = indices.map((i: number) => cat.words[i]);
+          selectedDefs = indices.map((i: number) => (cat.definitions || [])[i]);
+        }
+        selectedEmojis.forEach((emoji: string, idx: number) => {
+             newTiles.push({ id: Math.random().toString(36).substr(2, 9), word: emoji, categoryId: cat.id, categoryName: cat.name, status: 'neutral', isEmoji: true, isSolved: false, definition: selectedDefs[idx] });
         });
     });
     setTiles(distributeTilesAcrossRows(newTiles, GRID_WIDTH));
@@ -87,8 +95,8 @@ const Level1_Emoji: React.FC<any> = ({
       setTimeout(() => {
           setTiles(p => {
               const n = [...p]; const t1 = n[idx1]; const t2 = n[idx2];
-              n[idx1] = { ...t1, word: t2.word, categoryId: t2.categoryId, categoryName: t2.categoryName, isEmoji: t2.isEmoji };
-              n[idx2] = { ...t2, word: t1.word, categoryId: t1.categoryId, categoryName: t1.categoryName, isEmoji: t1.isEmoji };
+              n[idx1] = { ...t1, word: t2.word, definition: t2.definition, categoryId: t2.categoryId, categoryName: t2.categoryName, isEmoji: t2.isEmoji };
+              n[idx2] = { ...t2, word: t1.word, definition: t1.definition, categoryId: t1.categoryId, categoryName: t1.categoryName, isEmoji: t1.isEmoji };
               return n;
           });
           setTimeout(() => {
@@ -241,7 +249,7 @@ const Level1_Emoji: React.FC<any> = ({
              const solved = row.every(t => t.status === 'solved');
              const firstTile = row[0];
              const catRow = csvData && csvData.length > 0 ? csvData.find((cr: any) => cr.id === firstTile.categoryId) : null;
-             const catDict = catRow?.catDict || '';
+              const catDict = catRow?.catDict || catRow?.definitions?.[0] || '';
              return (
                <div key={r} className="flex-1 relative min-h-0 overflow-visible">
                   {solved && <SolvedRowBackground seed={firstTile.categoryId} />}

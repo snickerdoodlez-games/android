@@ -25,6 +25,12 @@ export interface SettingsMenuProps {
   unlockedDifficulties?: DifficultyLevel[];
   onDifficultyChange?: (diff: DifficultyLevel) => void;
   onSelectExpansionTest?: () => void;
+
+  // Development Menu
+  isAutoPlaying?: boolean;
+  onToggleAutoPlay?: () => void;
+  levelIndex?: number;
+  onLevelChange?: (index: number) => void;
 }
 
 const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
@@ -50,6 +56,11 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
   unlockedDifficulties = [],
   onDifficultyChange,
   onSelectExpansionTest,
+
+  isAutoPlaying,
+  onToggleAutoPlay,
+  levelIndex,
+  onLevelChange,
 }) => {
   const { theme, toggleTheme } = useTheme();
 
@@ -135,6 +146,44 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
           >
             STATS
           </button>
+        )}
+
+
+        {/* Developer Menu */}
+        {(onToggleAutoPlay || onLevelChange) && (
+          <div className="flex flex-col gap-1 shrink-0 border-t border-zinc-800 pt-2">
+            <h3 className="text-neon-lime font-oswald text-xs uppercase tracking-[0.2em] font-black pb-0.5 drop-shadow-[0_0_2px_rgba(57,255,20,0.5)]">DEV MENU</h3>
+            {onToggleAutoPlay && (
+              <button
+                onClick={onToggleAutoPlay}
+                className={`w-full py-2 min-h-[40px] rounded-medium border-2 transition-all font-bold font-raleway text-sm uppercase ${isAutoPlaying ? 'bg-neon-lime/20 border-neon-lime text-neon-lime' : 'bg-black border-zinc-800 text-zinc-600'}`}
+                aria-label={`Auto-play ${isAutoPlaying ? 'on' : 'off'}`}
+              >
+                AUTO-PLAY: {isAutoPlaying ? 'ON' : 'OFF'}
+              </button>
+            )}
+            {onLevelChange && levelIndex !== undefined && (
+              <div className="flex items-center gap-2">
+                <span className="text-white font-oswald text-xs uppercase tracking-wider">LVL {levelIndex}</span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => onLevelChange(Math.max(0, levelIndex - 1))}
+                    className="min-w-[40px] min-h-[40px] bg-zinc-900 border border-zinc-700 text-white rounded-small font-black text-lg active:scale-95 transition-all"
+                    aria-label="Decrease level index"
+                  >
+                    −
+                  </button>
+                  <button
+                    onClick={() => onLevelChange(levelIndex + 1)}
+                    className="min-w-[40px] min-h-[40px] bg-zinc-900 border border-zinc-700 text-white rounded-small font-black text-lg active:scale-95 transition-all"
+                    aria-label="Increase level index"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         <div className="mt-auto flex flex-col gap-2 pt-2 shrink-0">

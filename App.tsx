@@ -25,20 +25,20 @@ import {
 import { getLevelPackage, getLevelMode, LevelPackage } from './services/levelContent';
 import { audio } from './services/audioService';
 import { Capacitor } from '@capacitor/core';
-import { 
-  getPowerManagementStatus, 
-  monitorPowerState, 
-  shouldThrottleForBattery,
-  PowerManagementState
-} from './plugins/powerManagement';
 import { AdMob, BannerAdSize, BannerAdPosition, AdmobConsentStatus, RewardAdPluginEvents } from '@capacitor-community/admob';
 import { ensureDataInitialized, waitForDataInit } from './services/csvData';
 import { waitForSynonymDataInit } from './services/synonymData';
 import { getAvailableHints, useHint as useHintService, addHints, checkAndAwardStarHint } from './services/hintService';
 import { isTestLabRun, writeTestLabResults } from './plugins/testLab';
+import { initPowerManagement } from './plugins/powerManagement';
 
 // Kick off async CSV data initialization immediately to minimize wait time
 ensureDataInitialized();
+
+// Initialize power management: pauses animations and suspends audio when app is backgrounded
+if (typeof window !== 'undefined') {
+  initPowerManagement();
+}
 
 // Static UI Components
 import HowToPlay from './components/HowToPlay';
@@ -237,48 +237,6 @@ export const App: React.FC = () => {
     initializeAds();
   }, []);
 
-  // Power Management: Monitor Doze, App Standby, and battery state
-  useEffect(() => {
-    let cleanup: (() => void) | null = null;
-
-    const initPowerManagement = async () => {
-      try {
-        // Initial power status check
-        const status = await getPowerManagementStatus();
-        if (status.isDeviceIdleMode) {
-          console.info('PowerManagement: Device is in Doze/idle mode');
-        }
-        if (status.isPowerSaveMode) {
-          console.info('PowerManagement: Device is in power save mode');
-        }
-
-        // Monitor power state changes (30s polling)
-        cleanup = monitorPowerState((state: PowerManagementState) => {
-          if (state.isDeviceIdleMode) {
-            // Device entered Doze — pause non-critical operations
-            // The visibilitychange handler already saves state
-          }
-          if (shouldThrottleForBattery(state.batteryLevel, state.isCharging, state.isPowerSaveMode)) {
-            // Battery low and not charging, or power save mode active
-            // Throttle non-essential game timers / animations
-            if (!state.isCharging && state.batteryLevel >= 0 && state.batteryLevel < 0.15) {
-              console.info('PowerManagement: Low battery — throttling non-essential operations');
-            }
-          }
-        });
-      } catch (e) {
-        // Power management not available (non-native or unsupported)
-        console.debug('PowerManagement: Not available on this platform');
-      }
-    };
-
-    initPowerManagement();
-
-    return () => {
-      if (cleanup) cleanup();
-    };
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
     const loadPackage = async () => {
@@ -300,6 +258,8 @@ export const App: React.FC = () => {
       if (document.visibilityState === 'hidden') {
         // App is going to background — save state for restoration
         updateLastActiveTimestamp();
+        // Suspend audio to release audio hardware and save battery
+        audio.suspendContext();
         saveAppState({
           mode: mode,
           levelIndex: levelIndex,
@@ -329,6 +289,8 @@ export const App: React.FC = () => {
         showHowToPlay: showHowToPlay,
         timestamp: Date.now()
       });
+      // Suspend audio when page is hidden to save battery
+      audio.suspendContext();
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -439,8 +401,8 @@ export const App: React.FC = () => {
       setTimeout(() => setShowDifficultyToast(false), 3500);
     }
 
-    // Fire-and-forget: show interstitial without blocking the level transition
-    if (Capacitor.isNativePlatform()) {
+    // Fire-and-forget: show interstitial every 3rd level to reduce network/battery drain
+    if (Capacitor.isNativePlatform() && levelIndex % 3 === 0) {
         AdMob.showInterstitial().catch(() => {});
         AdMob.prepareInterstitial({ adId: INTERSTITIAL_AD_ID, isTesting: false }).catch(() => {});
     }
@@ -701,7 +663,10 @@ export const App: React.FC = () => {
           selectedDifficulty={selectedDifficulty}
           unlockedDifficulties={unlockedDifficulties}
           onDifficultyChange={handleDifficultyChange}
-
+          isAutoPlaying={isAutoPlaying}
+          onToggleAutoPlay={() => { const next = !isAutoPlaying; setIsAutoPlaying(next); saveAutoPlay(next); }}
+          levelIndex={levelIndex}
+          onLevelChange={(idx: number) => { setForcedMode(undefined); setLevelIndex(idx); saveLevel(idx); }}
         />}
         {showCategorySelector && <CategorySelectionOverlay isOpen={showCategorySelector} onClose={() => setShowCategorySelector(false)} selectedIds={customPoolIds} onToggle={(ids) => { setCustomPoolIds(ids); saveCustomPool(ids); }} />}
         {showStats && <StatsOverlay onClose={() => setShowStats(false)} />}

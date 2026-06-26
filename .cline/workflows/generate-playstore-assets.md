@@ -17,7 +17,7 @@ Create a new directory at `distribution/playstore/metadata/en-US/` and generate 
     * Key features list (mentioning dynamic grids, themed levels, smooth native performance).
     * Call-to-actions for players (Max 4000 characters).
 
-x`## Phase 3: Visual Screenshot Mapping & Execution
+## Phase 3: Visual Screenshot Mapping & Execution
 1. Check if the terminal can access `capture_store_assets.bat`.
 2. Inform the user in chat that the script is about to run and that they should watch their running emulator screen.
 3. Execute the script natively using Cline's local terminal integration wrapper:
