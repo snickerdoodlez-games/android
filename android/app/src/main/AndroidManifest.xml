@@ -54,6 +54,10 @@
         android:requestLegacyExternalStorage="true">
 
         <meta-data
+            android:name="com.google.android.gms.games.APP_ID"
+            android:value="@string/game_services_project_id"/>
+
+        <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-4096368901415767~5414939789"/>
 
@@ -191,6 +195,10 @@
             android:initOrder="100"
             android:directBootAware="true"
             tools:targetApi="24"/>
+
+        <meta-data
+            android:name="com.google.android.gms.nearby.connection.STRATEGY"
+            android:value="P2P_CLUSTER"/>
 
         <meta-data
             android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"

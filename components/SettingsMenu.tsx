@@ -149,8 +149,8 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
         )}
 
 
-        {/* Developer Menu */}
-        {(onToggleAutoPlay || onLevelChange) && (
+        {/* Developer Menu — tree-shaken in production builds */}
+        {import.meta.env.DEV && (onToggleAutoPlay || onLevelChange) && (
           <div className="flex flex-col gap-1 shrink-0 border-t border-zinc-800 pt-2">
             <h3 className="text-neon-lime font-oswald text-xs uppercase tracking-[0.2em] font-black pb-0.5 drop-shadow-[0_0_2px_rgba(57,255,20,0.5)]">DEV MENU</h3>
             {onToggleAutoPlay && (

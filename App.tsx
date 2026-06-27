@@ -450,9 +450,9 @@ export const App: React.FC = () => {
 
     const totalStars = getStats().totalStars;
     const effectiveStars = (isReviewing && currentSummary) ? (totalStars - currentSummary.stars) : totalStars;
-    // Use user-selected difficulty for Expansion variant + component keys; fall back to star-based if not selected
-    const diffTier = selectedDifficulty || (effectiveStars < 20 ? 'easy' : (effectiveStars < 50 ? 'med' : 'hard'));
-    const expTier = selectedDifficulty || (effectiveStars < 20 ? 'easy' : (effectiveStars < 50 ? 'medium' : 'hard'));
+    // Always default to easy unless user has explicitly selected a different difficulty
+    const diffTier = selectedDifficulty || 'easy';
+    const expTier = selectedDifficulty || 'easy';
 
     return (
 
@@ -636,7 +636,7 @@ export const App: React.FC = () => {
               </h2>
               <div className="mt-6 bg-[#BED739] px-4 py-1 skew-x-[-12deg]">
                 <p className="text-black font-black text-lg md:text-xl uppercase italic font-oswald skew-x-[12deg]">
-                  {totalStars >= 50 ? "7-Row Grid Activated" : "Medium Mode Active"}
+                  {totalStars >= 50 ? "Hard Difficulty Unlocked" : "Medium Difficulty Unlocked"}
                 </p>
               </div>
             </div>
@@ -663,10 +663,12 @@ export const App: React.FC = () => {
           selectedDifficulty={selectedDifficulty}
           unlockedDifficulties={unlockedDifficulties}
           onDifficultyChange={handleDifficultyChange}
-          isAutoPlaying={isAutoPlaying}
-          onToggleAutoPlay={() => { const next = !isAutoPlaying; setIsAutoPlaying(next); saveAutoPlay(next); }}
-          levelIndex={levelIndex}
-          onLevelChange={(idx: number) => { setForcedMode(undefined); setLevelIndex(idx); saveLevel(idx); }}
+          {...(!import.meta.env.PROD ? {
+            isAutoPlaying,
+            onToggleAutoPlay: () => { const next = !isAutoPlaying; setIsAutoPlaying(next); saveAutoPlay(next); },
+            levelIndex,
+            onLevelChange: (idx: number) => { setForcedMode(undefined); setLevelIndex(idx); saveLevel(idx); }
+          } : {})}
         />}
         {showCategorySelector && <CategorySelectionOverlay isOpen={showCategorySelector} onClose={() => setShowCategorySelector(false)} selectedIds={customPoolIds} onToggle={(ids) => { setCustomPoolIds(ids); saveCustomPool(ids); }} />}
         {showStats && <StatsOverlay onClose={() => setShowStats(false)} />}

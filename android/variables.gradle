@@ -23,6 +23,7 @@ ext {
     capacitorAndroidVersion = '7.4.5'
     capacitorCommunityAdmobVersion = '7.2.0'
     playServicesAdsVersion = '24.9.0'
+    playServicesGamesVersion = '20.0.0'
     userMessagingPlatformVersion = '4.0.0'
 
     kotlin_version = '2.1.20'

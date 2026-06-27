@@ -51,11 +51,8 @@ const LevelSuccessScreen: React.FC<LevelSuccessScreenProps> = ({
 					className="mb-4"
 				/>
 
-				{/* Next Level button (above stars — swapped order) */}
-				<NextLevelButton onClick={onNext} className="mb-4" />
-
 				{/* Stars earned display */}
-				<div className="mb-6">
+				<div className="mb-4">
 					<div className="text-5xl mb-2 tracking-wider">
 						{'★'.repeat(Math.max(1, starsEarned))}
 					</div>
@@ -63,6 +60,9 @@ const LevelSuccessScreen: React.FC<LevelSuccessScreenProps> = ({
 						{starsEarned} STAR{starsEarned !== 1 ? 'S' : ''} EARNED
 					</div>
 				</div>
+
+				{/* Next Level button */}
+				<NextLevelButton onClick={onNext} className="mb-6" />
 
 				{/* Secondary actions */}
 				<div className="flex gap-2 justify-center">

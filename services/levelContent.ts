@@ -250,11 +250,8 @@ const computeRowCount = (stars: number, selectedDifficulty?: string): number => 
         ? MEDIUM_ROW_COUNT
         : HARD_ROW_COUNT;
   }
-  return stars >= STAR_THRESHOLD_HARD
-    ? HARD_ROW_COUNT
-    : stars >= STAR_THRESHOLD_MEDIUM
-      ? MEDIUM_ROW_COUNT
-      : DEFAULT_ROW_COUNT;
+  // Default to easy — difficulty should only change when user explicitly selects it
+  return DEFAULT_ROW_COUNT;
 };
 
 /**
@@ -267,7 +264,8 @@ const computeTargetDifficulty = (
   selectedDifficulty?: string,
 ): number => {
   const fromLabel = difficultyValue(selectedDifficulty);
-  return fromLabel > 0 ? fromLabel : getTargetDifficulty(levelIndex, stars);
+  // Default to easy (1) — difficulty should only change when user explicitly selects it
+  return fromLabel > 0 ? fromLabel : 1;
 };
 
 // ─── Mode helpers ────────────────────────────────────────────────────────────
@@ -351,16 +349,15 @@ const filterPoolByDifficulty = (
 ): CSVRow[] => {
   const hardOrMaster = (row: CSVRow): boolean => {
     const rowDiff = row.difficulty ?? 1;
-    // Mastery override: 50+ stars unlocks hard + medium unconditionally
-    if (stars >= STAR_THRESHOLD_HARD) return rowDiff === 5 || rowDiff === 3;
-    // Medium gate
+    // Gate harder rows behind star thresholds
     if (rowDiff === 3 && stars < STAR_THRESHOLD_MEDIUM) return false;
-    // Hard gate
     if (rowDiff === 5) {
+      // Hard requires 50+ stars AND at least 2 three-star ratings in the broad category
+      if (stars < STAR_THRESHOLD_HARD) return false;
       const progress = categoryStarProgress[row.broadCategory ?? 'General'];
       if (!progress || progress.rating3ThreeStarCount < 2) return false;
     }
-    return rowDiff === targetDiff;
+    return rowDiff <= targetDiff;
   };
 
   // Try exact difficulty match first

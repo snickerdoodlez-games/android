@@ -237,21 +237,9 @@ const Header: React.FC<HeaderProps> = ({
       </div>
 
       {isReviewing && onNext && (
-        <div className="relative flex flex-col items-center justify-center py-4 md:py-6 w-full">
-          <button 
-            onClick={handleNextClick} 
-            className={`px-10 py-5 min-w-[48px] min-h-[48px] text-white font-black font-oswald text-3xl md:text-4xl uppercase rounded-medium border-4 border-white shadow-[0_0_25px_rgba(255,255,255,0.6)] active:scale-95 animate-border-pulse transition-colors duration-[1500ms] ease-linear relative z-[1] ${nextButtonBurst ? 'scale-110 shadow-[0_0_45px_rgba(255,255,255,0.9)]' : ''}`}
-            style={{
-              ...ARCADE_OUTLINE,
-              backgroundColor: NEON_CYCLE_COLORS[cycleIndex],
-              transition: nextButtonBurst ? 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease-out, background-color 1500ms ease-linear' : 'background-color 1500ms ease-linear',
-            }}
-          >
-            NEXT LEVEL
-          </button>
-
-          {/* Star Display — cascading pop animation with sound, stars appear one at a time. Overlaps button slightly via negative margin and higher z-index. */}
-          <div className="flex gap-3 -mt-2 relative z-[9999]">
+        <div className="relative flex flex-col items-center justify-center pb-2 md:pb-3 w-full">
+          {/* Star Display — cascading pop animation with sound, stars appear one at a time. */}
+          <div className="flex gap-3 mb-3 relative z-[9999]">
             {[1, 2, 3].map((s) => {
               const earned = s <= visibleStars;
               const totalEarned = s <= (stars || 0);
@@ -279,6 +267,18 @@ const Header: React.FC<HeaderProps> = ({
               );
             })}
           </div>
+
+          <button 
+            onClick={handleNextClick} 
+            className={`px-10 py-5 min-w-[48px] min-h-[48px] text-white font-black font-oswald text-3xl md:text-4xl uppercase rounded-medium border-4 border-white shadow-[0_0_25px_rgba(255,255,255,0.6)] active:scale-95 animate-border-pulse transition-colors duration-[1500ms] ease-linear relative z-[1] ${nextButtonBurst ? 'scale-110 shadow-[0_0_45px_rgba(255,255,255,0.9)]' : ''}`}
+            style={{
+              ...ARCADE_OUTLINE,
+              backgroundColor: NEON_CYCLE_COLORS[cycleIndex],
+              transition: nextButtonBurst ? 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease-out, background-color 1500ms ease-linear' : 'background-color 1500ms ease-linear',
+            }}
+          >
+            NEXT LEVEL
+          </button>
         </div>
       )}
 

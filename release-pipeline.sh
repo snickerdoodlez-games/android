@@ -11,19 +11,21 @@ echo "===================================================="
 # STEP 1: Dev Menu Verification and Removal
 # ----------------------------------------------------------
 echo "--> Checking for Dev Menu visibility settings..."
-CONFIG_FILE="./android/app/src/main/java/com/snickerdoodlez/wordpairing/MainActivity.java"
 
-if [ -f "$CONFIG_FILE" ]; then
-    if grep -q "developerMenuEnabled = true" "$CONFIG_FILE"; then
-        echo "   [!] Dev Menu is active. Disabling for production..."
-        sed -i.bak 's/developerMenuEnabled = true/developerMenuEnabled = false/g' "$CONFIG_FILE"
-        rm -f "${CONFIG_FILE}.bak"
-        echo "   [✓] Dev Menu disabled."
+# The dev menu is controlled entirely in React/TypeScript (App.tsx passing
+# isAutoPlaying / onToggleAutoPlay / levelIndex / onLevelChange props to
+# SettingsMenu.tsx). The pipeline checks that no dev-menu props leak into
+# the production JS bundle by looking for the dev-menu identifier string.
+BUILD_JS=$(find ./dist -name '*.js' 2>/dev/null | head -1)
+if [ -n "$BUILD_JS" ]; then
+    if grep -q "DEV MENU" "$BUILD_JS" 2>/dev/null; then
+        echo "   [!] Dev Menu strings still present in production bundle. Aborting."
+        exit 1
     else
-        echo "   [✓] Dev Menu is not enabled in configuration."
+        echo "   [✓] Dev Menu strings absent from production bundle."
     fi
 else
-    echo "   [i] Configuration target file not found, skipping inline flag check."
+    echo "   [i] No production bundle found to scan; run 'npm run build' first."
 fi
 
 # ----------------------------------------------------------

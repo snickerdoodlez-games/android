@@ -218,8 +218,7 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   // Build additional CSS classes for new animations
   const animClasses: string[] = [];
   if (isHint) animClasses.push('tile-hint');
-  if (isSolved && isExpansion) animClasses.push('solved-tile-expansion');
-  else if (isSolved) animClasses.push('tile-flip-lock');
+  if (isSolved) animClasses.push('tile-flip-lock');
   if (isFlippingOut) animClasses.push('expansion-tile-unsolve');
   if (isFallingOut) animClasses.push('animate-tile-fall-out');
   if (gridEntryDelay !== undefined && gridEntryDelay >= 0) animClasses.push('tile-grid-entry');

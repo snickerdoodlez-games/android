@@ -24,6 +24,11 @@
 -keep class com.google.firebase.** { *; }
 -dontwarn com.google.firebase.**
 
+# Play Games Services v2
+-keep class com.google.android.gms.games.** { *; }
+-keep class com.google.android.gms.auth.** { *; }
+-dontwarn com.google.android.gms.tasks.**
+
 # AdMob
 -keep public class com.google.android.gms.ads.** {
    public *;
