@@ -104,6 +104,7 @@ private val DIFFICULTY_COLORS: Map<DifficultyLevel, Pair<Color, Color>> = mapOf(
  * @param isAutoPlaying Whether auto-play is active.
  * @param toggleAutoPlay Toggles auto-play on/off.
  * @param onResetProgress Resets all game progress.
+ * @param onDeleteMyData Deletes all user data (for Data Safety compliance).
  * @param categories List of current goal categories with solved status.
  * @param privacyOptionsRequired Whether privacy consent is required.
  * @param onShowPrivacyOptions Opens the privacy options form.
@@ -128,6 +129,7 @@ fun SettingsMenu(
     isAutoPlaying: Boolean,
     toggleAutoPlay: () -> Unit,
     onResetProgress: () -> Unit,
+    onDeleteMyData: () -> Unit,
     categories: List<CategoryItem> = emptyList(),
     privacyOptionsRequired: Boolean = false,
     onShowPrivacyOptions: (() -> Unit)? = null,
@@ -467,6 +469,35 @@ fun SettingsMenu(
                     onClick = onResetProgress,
                     contentDesc = "Reset all game progress",
                     shadowColor = NeonColors.Red,
+                    minHeight = 48,
+                )
+
+                // mirrors DELETE MY DATA
+                SettingsButton(
+                    text = "DELETE MY DATA",
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = NeonColors.Black,
+                    foregroundColor = NeonColors.White,
+                    borderColor = NeonColors.White,
+                    onClick = onDeleteMyData,
+                    contentDesc = "Delete all my data",
+                    shadowColor = NeonColors.White,
+                    minHeight = 48,
+                )
+
+                // mirrors PRIVACY POLICY
+                SettingsButton(
+                    text = "PRIVACY POLICY",
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = NeonColors.Black,
+                    foregroundColor = NeonColors.Zinc600,
+                    borderColor = NeonColors.Zinc700,
+                    onClick = {
+                        // Note: On native Android, hyperlinks in WebView content
+                        // navigate externally. The React layer (App.tsx) renders an <a> tag.
+                        // This button serves as a visual parity placeholder.
+                    },
+                    contentDesc = "View privacy policy",
                     minHeight = 48,
                 )
 

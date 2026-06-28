@@ -13,14 +13,25 @@ android {
         applicationId "com.snickerdoodlez.wordpairing"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5005943
-        versionName "5005943"
+        // Version code auto-increment: CI passes VERSION_CODE env var derived from
+        // git rev-list --count (total commits). Falls back to hardcoded value for local builds.
+        def ciVersionCode = System.getenv("VERSION_CODE")
+        versionCode ciVersionCode != null ? Integer.parseInt(ciVersionCode) : 5005956
+        versionName ciVersionCode != null ? ciVersionCode : "5005958"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
     }
+    // Load keystore properties from a local file (NOT committed to git).
+    // CI provides credentials via environment variables instead.
+    def keystorePropertiesFile = rootProject.file('keystore.properties')
+    def keystoreProperties = new Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+
     signingConfigs {
         release {
-            // Read environment variables passed by GitHub Actions
+            // Primary: environment variables (GitHub Actions CI)
             def envStoreFile = System.getenv("MYAPP_RELEASE_KEYSTORE_PATH")
             def envStorePassword = System.getenv("MYAPP_RELEASE_STORE_PASSWORD")
             def envKeyAlias = System.getenv("MYAPP_RELEASE_KEY_ALIAS")
@@ -33,11 +44,23 @@ android {
                 storePassword = envStorePassword
                 keyAlias = envKeyAlias
                 keyPassword = envKeyPassword
+            } else if (keystoreProperties.containsKey('storeFile')) {
+                // Fallback: local keystore.properties file (gitignored)
+                storeFile = file(keystoreProperties['storeFile'])
+                storePassword = keystoreProperties['storePassword']
+                keyAlias = keystoreProperties['keyAlias']
+                keyPassword = keystoreProperties['keyPassword']
             } else {
-                storeFile = file('../../key')
-                storePassword = 'Proto123@'
-                keyAlias = 'key0'
-                keyPassword = 'Proto123@'
+                // Final fallback: debug keystore for local dev/pipeline builds.
+                // Produces a self-signed AAB suitable for local testing only.
+                // Production Play Store signing requires CI env vars or keystore.properties.
+                def debugKeystore = file(System.getProperty('user.home') + '/.android/debug.keystore')
+                if (debugKeystore.exists()) {
+                    storeFile = debugKeystore
+                    storePassword = 'android'
+                    keyAlias = 'androiddebugkey'
+                    keyPassword = 'android'
+                }
             }
         }
     }
@@ -45,6 +68,7 @@ android {
         release {
             signingConfig signingConfigs.release
             minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             ndk {
                 debugSymbolLevel 'SYMBOL_TABLE'

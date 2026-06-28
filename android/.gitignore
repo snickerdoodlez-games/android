@@ -67,3 +67,6 @@ fastlane/test_output
 # Bitrise
 bitrise.yml
 distribution/
+base*
+b64.txt
+key*

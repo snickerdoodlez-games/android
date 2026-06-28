@@ -24,6 +24,8 @@ dist-ssr
 *.sw?
 wordpairing-release.keystore  
 gradle.properties
+keystore.properties
 *.jks
 *.keystore
 distribution/
+*key

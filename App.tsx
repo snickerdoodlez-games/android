@@ -31,6 +31,8 @@ import { waitForSynonymDataInit } from './services/synonymData';
 import { getAvailableHints, useHint as useHintService, addHints, checkAndAwardStarHint } from './services/hintService';
 import { isTestLabRun, writeTestLabResults } from './plugins/testLab';
 import { initPowerManagement } from './plugins/powerManagement';
+import Consent from './plugins/consent';
+import Review from './plugins/review';
 
 // Kick off async CSV data initialization immediately to minimize wait time
 ensureDataInitialized();
@@ -220,11 +222,9 @@ export const App: React.FC = () => {
       if (!Capacitor.isNativePlatform()) return;
       try {
         await AdMob.initialize({});
-        const consentInfo = await AdMob.requestConsentInfo();
-        if (consentInfo.isConsentFormAvailable && consentInfo.status === AdmobConsentStatus.REQUIRED) {
-          await AdMob.showConsentForm();
-        }
-        if (consentInfo.privacyOptionsRequirementStatus === 'REQUIRED') setPrivacyOptionsRequired(true);
+        // Use Consent module for GDPR/UMP consent flow
+        await Consent.initializeConsent();
+        setPrivacyOptionsRequired(Consent.isPrivacyOptionsRequired());
         await AdMob.showBanner({
           adId: BANNER_AD_ID,
           adSize: BannerAdSize.BANNER,
@@ -408,6 +408,12 @@ export const App: React.FC = () => {
     }
 
     const nextLevel = levelIndex + 1;
+
+    // Google Play In-App Review: prompt at milestone levels (6, 16, 26, ...)
+    if (Review.shouldPromptForLevel(nextLevel)) {
+      Review.requestReview().catch(() => {});
+    }
+
     setLevelIndex(nextLevel);
     saveLevel(nextLevel);
     setMode(getLevelMode(nextLevel, enabledModes));
@@ -657,9 +663,10 @@ export const App: React.FC = () => {
           onSelectMode={(m) => { setForcedMode(m); setMode(m); setShowSettings(false); }} 
           hintsEnabled={hintsEnabled} setHintsEnabled={setHintsEnabled}
           onResetProgress={() => { localStorage.clear(); window.location.reload(); }} 
+          onDeleteMyData={() => { if (confirm('Are you sure you want to permanently delete all your data? This action cannot be undone.')) { localStorage.clear(); window.location.reload(); } }} 
           onStats={() => { setShowSettings(false); setShowStats(true); }}
           categories={activeCategories} privacyOptionsRequired={privacyOptionsRequired} 
-          onShowPrivacyOptions={async () => { if (Capacitor.isNativePlatform()) await AdMob.showPrivacyOptionsForm().catch(() => {}); }}
+          onShowPrivacyOptions={async () => { await Consent.showPrivacyOptionsForm().catch(() => {}); }}
           selectedDifficulty={selectedDifficulty}
           unlockedDifficulties={unlockedDifficulties}
           onDifficultyChange={handleDifficultyChange}

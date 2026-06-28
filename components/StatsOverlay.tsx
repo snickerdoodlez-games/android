@@ -64,7 +64,7 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
         <div className="grid grid-cols-2 gap-x-4 gap-y-6">
              <StatBox label="TOTAL SCORE" value={stats.totalScore.toLocaleString()} color="text-neon-green" numeric={true} />
             <StatBox label="STARS ACHIEVED" value={`${stats.totalStars || 0} ★`} color="text-neon-yellow" isLarge={true} />
-            <StatBox label="AVG RATING" value={`${averageRating} ★`} color="text-zinc-400" />
+            <StatBox label="AVG RATING" value={`${averageRating} ★`} color="text-white" />
             <StatBox label="LEVELS BEAT" value={stats.levelsCompleted} color="text-neon-pink" numeric={true} />
             <div className="col-span-2">
               <StatBox label="TOTAL TIME PLAYED" value={timeStr} color="text-white" />
@@ -73,7 +73,7 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
 
         <div className="mt-2 p-3 bg-black/50 border border-zinc-800 rounded-medium flex flex-col gap-4 overflow-y-auto max-h-[40vh] no-scrollbar">
            <div>
-                <h3 className="text-[10px] text-zinc-600 font-raleway font-light uppercase tracking-wider mb-1">BROAD CATEGORY MASTERY</h3>
+                <h3 className="text-[10px] text-white font-raleway font-light uppercase tracking-wider mb-1">BROAD CATEGORY MASTERY</h3>
                 <div className="text-2xl font-black tabular-nums text-neon-blue leading-none mb-1">{stats.solvedBroadCategories?.length || 0} / {BROAD_CATEGORIES.length}</div>
                <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                   <div 
@@ -84,7 +84,7 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
            </div>
 
            <div>
-                <h3 className="text-[10px] text-zinc-600 font-raleway font-light uppercase tracking-wider mb-1">ROW MASTERY</h3>
+                <h3 className="text-[10px] text-white font-raleway font-light uppercase tracking-wider mb-1">ROW MASTERY</h3>
                 <div className="text-2xl font-black tabular-nums text-neon-yellow leading-none mb-1">{stats.solvedCategoryIds.length} / {totalCategories}</div>
                <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                   <div 
@@ -95,7 +95,7 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
            </div>
 
            <div>
-                <h3 className="text-[10px] text-zinc-600 font-raleway font-light uppercase tracking-wider mb-1">WORD MASTERY</h3>
+                <h3 className="text-[10px] text-white font-raleway font-light uppercase tracking-wider mb-1">WORD MASTERY</h3>
                 <div className="text-2xl font-black tabular-nums text-neon-purple leading-none mb-1">{stats.solvedWords ? stats.solvedWords.length : 0} / {totalWords}</div>
                <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                   <div 
@@ -119,7 +119,7 @@ const StatsOverlay: React.FC<StatsOverlayProps> = ({ onClose }) => {
 
 const StatBox = ({ label, value, color, isLarge = false, numeric = false }: { label: string, value: string | number, color: string, isLarge?: boolean, numeric?: boolean }) => (
   <div className="flex flex-col gap-0.5">
-    <span className="text-[9px] font-raleway font-light text-zinc-600 uppercase tracking-wider leading-none">{label}</span>
+    <span className="text-[12px] font-raleway font-light text-white/80 uppercase tracking-wider leading-none">{label}</span>
     <span className={`${isLarge ? 'text-2xl' : 'text-xl'} font-black ${numeric ? 'tabular-nums ' : ''}${color} tracking-tight`}>{value}</span>
   </div>
 );

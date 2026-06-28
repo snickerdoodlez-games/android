@@ -218,7 +218,8 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
   // Build additional CSS classes for new animations
   const animClasses: string[] = [];
   if (isHint) animClasses.push('tile-hint');
-  if (isSolved) animClasses.push('tile-flip-lock');
+  if (isSolved && isExpansion) animClasses.push('solved-tile-expansion');
+  else if (isSolved) animClasses.push('tile-flip-lock');
   if (isFlippingOut) animClasses.push('expansion-tile-unsolve');
   if (isFallingOut) animClasses.push('animate-tile-fall-out');
   if (gridEntryDelay !== undefined && gridEntryDelay >= 0) animClasses.push('tile-grid-entry');
@@ -379,12 +380,22 @@ const Tile = React.forwardRef<HTMLDivElement, TileProps>(({ data, onClick, disab
            </div>
          )}
 
-         {isFlippingOut ? (
-           <m.span 
-              key={data.word} 
-              variants={TEXT_VARIANTS}
-              initial="neutral"
-              animate="neutral"
+          {/* SOLVE SHINE SWEEP — white streak sweeps left→right across the solved tile */}
+          {isSolved && (
+            <div className="absolute inset-0 z-25 pointer-events-none overflow-hidden rounded-small">
+              <div 
+                className="absolute top-0 h-full w-[30%] bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-[-20deg]"
+                style={{ animation: 'shine-sweep 0.55s ease-out forwards' }}
+              />
+            </div>
+          )}
+
+          {isFlippingOut ? (
+            <m.span 
+               key={data.word} 
+               variants={TEXT_VARIANTS}
+               initial="neutral"
+               animate="neutral"
               className={`${textClasses} text-white z-30 text-center px-2 pointer-events-none w-full flex flex-col items-center justify-center max-w-full`}
               style={{
                 ...(data.isEmoji ? EMOJI_OUTLINE : isSolved ? SOLVED_OUTLINE : ARCADE_OUTLINE),

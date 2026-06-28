@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history needed for git rev-list --count
 
       # 0. Set up Node.js and build frontend
       - name: Set up Node.js
@@ -65,12 +67,19 @@ jobs:
             echo "::warning::GOOGLE_SERVICES_JSON_BASE64 secret not set. Firebase Crashlytics native symbol upload will be skipped."
           fi
 
-      # 5. Make gradlew executable
+      # 5. Compute auto-increment version code from git commit count
+      - name: Compute version code
+        run: |
+          VERSION_CODE=$(git rev-list --count HEAD)
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
+          echo "Version code set to $VERSION_CODE"
+
+      # 6. Make gradlew executable
       - name: Make gradlew executable
         working-directory: android
         run: chmod +x gradlew
 
-      # 6. Build the Bundle (Firebase Crashlytics Gradle plugin uploads native debug symbols
+      # 7. Build the Bundle (Firebase Crashlytics Gradle plugin uploads native debug symbols
       #    automatically when google-services.json is present and nativeSymbolUploadEnabled=true)
       - name: Build Release Bundle
         working-directory: android
@@ -79,9 +88,10 @@ jobs:
           MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.MYAPP_RELEASE_STORE_PASSWORD }}
           MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.MYAPP_RELEASE_KEY_ALIAS }}
           MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.MYAPP_RELEASE_KEY_PASSWORD }}
+          VERSION_CODE: ${{ env.VERSION_CODE }}
         run: ./gradlew bundleRelease
 
-      # 7. Upload to Google Play
+      # 8. Upload to Google Play
       - name: Release to Play Store
         uses: r0adkll/upload-google-play@v1
         with:

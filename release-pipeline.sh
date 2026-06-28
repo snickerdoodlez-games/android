@@ -46,16 +46,22 @@ echo "--> Auto-incrementing VersionCode and VersionName..."
 GRADLE_FILE="./android/app/build.gradle"
 
 if [ -f "$GRADLE_FILE" ]; then
-    CURRENT_VERSION_CODE=$(grep -E "versionCode\s+[0-9]+" "$GRADLE_FILE" | awk '{print $2}')
-    CURRENT_VERSION_NAME=$(grep -E "versionName\s+\"[0-9]+\"" "$GRADLE_FILE" | head -n 1 | awk -F'"' '{print $2}')
+    # Extract fallback versionCode from Groovy ternary:  ... ? ... : 5005944
+    CURRENT_VERSION_CODE=$(grep 'versionCode' "$GRADLE_FILE" | grep -oE '[0-9]+$')
+    # Extract fallback versionName from Groovy ternary:  ... ? ... : "5005944"
+    CURRENT_VERSION_NAME=$(grep 'versionName' "$GRADLE_FILE" | grep -oE '"([0-9]+)"' | tr -d '"')
 
-    NEXT_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
-    NEXT_VERSION_NAME=$((CURRENT_VERSION_NAME + 1))
+    if [ -n "$CURRENT_VERSION_CODE" ] && [ -n "$CURRENT_VERSION_NAME" ]; then
+        NEXT_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
+        NEXT_VERSION_NAME=$((CURRENT_VERSION_NAME + 1))
 
-    sed -i.bak "s/versionCode $CURRENT_VERSION_CODE/versionCode $NEXT_VERSION_CODE/g" "$GRADLE_FILE"
-    sed -i.bak "s/versionName \"$CURRENT_VERSION_NAME\"/versionName \"$NEXT_VERSION_NAME\"/g" "$GRADLE_FILE"
-    rm -f "${GRADLE_FILE}.bak"
-    echo "   [✓] Updated to Version $NEXT_VERSION_NAME (Code: $NEXT_VERSION_CODE)"
+        sed -i.bak "s/: $CURRENT_VERSION_CODE\$/: ${NEXT_VERSION_CODE}/" "$GRADLE_FILE"
+        sed -i.bak "s/\"$CURRENT_VERSION_NAME\"/\"$NEXT_VERSION_NAME\"/" "$GRADLE_FILE"
+        rm -f "${GRADLE_FILE}.bak"
+        echo "   [✓] Updated to Version $NEXT_VERSION_NAME (Code: $NEXT_VERSION_CODE)"
+    else
+        echo "   [i] Could not parse version from build.gradle; skipping auto-increment."
+    fi
 fi
 
 # ----------------------------------------------------------

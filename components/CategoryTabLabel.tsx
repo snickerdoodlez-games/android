@@ -1,8 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-
-const m = motion as any;
+import { AnimatePresence, motion } from 'framer-motion';
 
 const LONG_PRESS_DURATION = 600;
 
@@ -52,16 +50,17 @@ const CategoryTabLabel: React.FC<CategoryTabLabelProps> = ({ name, catDict, clas
       >
         {name}
       </div>
-      {showDef && catDict && createPortal(
+      {createPortal(
         <AnimatePresence>
-        <m.div
+        {showDef && catDict && (
+        <motion.div
           key="cat-def-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
           className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80" onClick={() => setShowDef(false)}>
-          <m.div
+          <motion.div
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
@@ -72,8 +71,9 @@ const CategoryTabLabel: React.FC<CategoryTabLabelProps> = ({ name, catDict, clas
             <p className="text-[clamp(0.8125rem,3.5vw,1.125rem)] leading-relaxed definition-text font-raleway text-center whitespace-normal break-words max-w-[65ch] mx-auto animate-focus-in-expand" style={{ animationDelay: '0.5s' }}>{catDict}</p>
             <div className="mt-6 mb-4 w-full h-px bg-zinc-800" />
             <button className="block mx-auto px-8 py-2 min-h-[48px] bg-white text-black font-black font-raleway text-[clamp(0.75rem,3vw,1rem)] uppercase rounded-medium hover:scale-105 active:scale-95 transition-all" onClick={() => setShowDef(false)} aria-label="Close definition overlay">TAP TO CLOSE</button>
-          </m.div>
-        </m.div>
+          </motion.div>
+        </motion.div>
+        )}
         </AnimatePresence>, document.body)}
     </>
   );

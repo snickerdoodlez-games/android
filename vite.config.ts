@@ -63,6 +63,27 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve('.'),
         }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks(id) {
+              // Split monolithic CSV data into separate chunks for better caching
+              if (id.includes('services/masterData')) return 'masterData';
+              if (id.includes('services/csvExpansionData')) return 'csvExpansion';
+              if (id.includes('services/csvThemeData')) return 'csvThemes';
+              if (id.includes('services/CSV_SYNONYMS')) return 'csvSynonyms';
+              if (id.includes('services/emojiData')) return 'emojiData';
+              if (id.includes('services/csvPoolData')) return 'csvPool';
+              // Keep framer-motion in its own chunk (large lib)
+              if (id.includes('framer-motion')) return 'vendor-framer';
+              // Group all other node_modules into a vendor chunk
+              if (id.includes('node_modules')) return 'vendor';
+            },
+          },
+        },
+        // Raise threshold so only truly enormous chunks trigger warnings
+        chunkSizeWarningLimit: 1000,
       }
     };
 });

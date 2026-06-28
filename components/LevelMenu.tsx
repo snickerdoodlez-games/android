@@ -46,7 +46,7 @@ export const LevelMenu: React.FC<MenuProps> = ({
       <div className="flex-1 flex flex-col items-center justify-center w-full">
 
         {/* Logo Image */}
-        <div className="flex flex-col items-center justify-center mb-10 w-full animate-zoom-in">
+        <div className="flex flex-col items-center justify-center mb-10 w-full animate-zoom-in mt-6">
             <img 
               src="/logo.svg" 
               alt="WORD PAIRING MACHINE" 

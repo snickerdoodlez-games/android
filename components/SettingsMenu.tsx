@@ -16,6 +16,7 @@ export interface SettingsMenuProps {
   hintsEnabled: boolean;
   setHintsEnabled: (val: boolean) => void;
   onResetProgress: () => void;
+  onDeleteMyData: () => void;
   onStats?: () => void;
 
   categories?: { name: string, isSolved: boolean }[];
@@ -48,7 +49,7 @@ const DIFFICULTY_COLORS: Record<DifficultyLevel, string> = {
 const SettingsMenu: React.FC<SettingsMenuProps> = ({ 
   isOpen, onClose, onMainMenu, isMusicOn, toggleMusic, 
   enabledModes, toggleMode, onSelectMode, hintsEnabled, setHintsEnabled,
-  onResetProgress, onStats, categories = [],
+  onResetProgress, onDeleteMyData, onStats, categories = [],
 
   privacyOptionsRequired,
   onShowPrivacyOptions,
@@ -80,7 +81,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
   return (
     <div className="absolute inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-2 animate-fade-in font-oswald">
-      <div className="w-full max-sm bg-zinc-950 border-4 border-white ring-2 ring-white ring-offset-0 rounded-large p-4 shadow-[0_0_50px_rgba(255,255,255,0.3)] flex flex-col gap-3 overflow-hidden max-h-[95vh]">
+      <div className="w-full max-sm bg-zinc-950 border-4 border-white ring-2 ring-white ring-offset-0 rounded-large p-4 shadow-[0_0_50px_rgba(255,255,255,0.3)] flex flex-col gap-3 overflow-y-auto max-h-[85vh]">
         <div className="relative flex justify-center items-center border-b-2 border-zinc-800 pb-2 shrink-0">
           <h2 className="text-xl font-black text-white uppercase tracking-[0.3em] font-oswald not-italic">SETTINGS</h2>
           <button className="absolute right-0 text-zinc-400 hover:text-neon-red transition-colors p-1 min-w-[48px] min-h-[48px] flex items-center justify-center" onClick={onClose} aria-label="Close settings">
@@ -191,6 +192,8 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
               <button onClick={handleConsent} className="py-2 min-h-[48px] bg-zinc-900 border border-zinc-600 text-zinc-400 rounded-medium font-bold text-lg font-raleway uppercase hover:text-white hover:border-white transition-all" aria-label="Open privacy consent options">CONSENT</button>
             )}
             <button onClick={onResetProgress} className="w-full py-2 min-h-[48px] bg-black border border-neon-red text-neon-red rounded-medium font-bold text-lg font-raleway uppercase shadow-[0_0_5px_rgba(255,7,58,0.2)]" aria-label="Reset all game progress">RESET PROGRESS</button>
+            <button onClick={onDeleteMyData} className="w-full py-2 min-h-[48px] bg-black border-2 border-white text-white rounded-medium font-bold text-lg font-raleway uppercase shadow-[0_0_10px_rgba(255,255,255,0.3)] hover:bg-zinc-900 transition-all" aria-label="Delete all my data">DELETE MY DATA</button>
+            <a href="https://snickerdoodlez.online/privacy_policy/privacy_policy.html" target="_blank" rel="noopener noreferrer" className="w-full py-2 min-h-[48px] bg-black border border-zinc-600 text-zinc-400 rounded-medium font-bold text-lg font-raleway uppercase hover:text-white hover:border-white transition-all text-center flex items-center justify-center" aria-label="View privacy policy">PRIVACY POLICY</a>
             <button onClick={onClose} className="w-full py-3.5 min-h-[48px] bg-white text-black font-black font-raleway text-4xl uppercase rounded-medium active:scale-95 transition-all shadow-[0_0_20px_white]">RESUME PLAY</button>
         </div>
       </div>

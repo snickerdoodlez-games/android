@@ -135,3 +135,6 @@ fastlane/test_output
 
 # Bitrise
 bitrise.yml
+
+local.properties
+key*

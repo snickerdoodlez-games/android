@@ -7,6 +7,7 @@
         android:targetSdkVersion="35"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID"/>
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION"/>
@@ -51,7 +52,16 @@
         android:allowBackup="true"
         android:supportsRtl="true"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:requestLegacyExternalStorage="true">
+        android:requestLegacyExternalStorage="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:isAccessibilityTool="false">
+
+        <!-- Accessibility declaration: informs Google Play Data Safety & discoverability
+             that this app supports screen readers, large touch targets (48dp+), and
+             content descriptions/aria-labels on all interactive elements. -->
+        <meta-data
+            android:name="com.google.android.accessibility.app_features"
+            android:value="screenReader,largeTouchTargets,contentDescriptions"/>
 
         <meta-data
             android:name="com.google.android.gms.games.APP_ID"
@@ -267,6 +277,7 @@
             android:enabled="@bool/enable_system_foreground_service_default"
             android:exported="false"
             android:directBootAware="false"
+            android:foregroundServiceType="dataSync"
             tools:targetApi="24"/>
 
         <receiver
