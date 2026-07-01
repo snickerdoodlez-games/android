@@ -343,13 +343,12 @@ Before invoking any file write, command execution, or asset modification, you mu
     - **EXPANSION TEST level** → pulls data from **`csvExpansionData.csv`** ONLY
     - **EMOJI level** → pulls data from **`emojiData.ts`** ONLY
     - **SYNONYMS level** → pulls data from **`CSV_SYNONYMS_*.ts`** files ONLY
-    - **FILTER level** → pulls data from **`csvPoolData*.ts`** files ONLY
     These mappings must never be altered. Each game mode has a dedicated data source.
 12. **When a game tile or category tab is long pressed the definition of the word in the game tile appears.** (Implemented via `CategoryTabLabel.tsx` portal overlay and Tile long-press handler.)
 13. **Hints are not limited per level. Player starts the game with 2 hints. Rewarded hints net 3 new hints.** (Managed by `hintService.ts` with localStorage persistence. Hint counts carry forward across levels. Star milestones trigger +2 hints every 100 total stars.)
 14. **Expansion level mechanic (Level7_Expansion*.tsx and LevelExpansionTest*.tsx):** When all rows are solved in a stage, the grid expands to the next stage. Solved tiles stay LOCKED in their positions — ~50% randomly flip via card-flip CSS animation (`expansionUnsolveFlip`) to unsolved neutral tiles. Only neutral (unsolved) tiles get scrambled, leaving previously solved rows partially intact while adding new tiles in expanded rows/columns.
 15. **Expansion solved tiles display neon colors** via `data.color` from `SOLVED_COLORS` array. The `solved-tile-expansion` CSS class applies a 5-color cycling animation. Solved tiles locked from previous expansion stages retain their neon colors.
-
+16.  **Duplicate words** in the csv only matter when they are on the same row.  Definitions of words are not to be counted when looking for duplicate words.
 ---
 
 ## Hint System

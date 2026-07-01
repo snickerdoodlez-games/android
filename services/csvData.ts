@@ -1,6 +1,29 @@
 import { CSVRow } from '../types';
 import { parseCSV, MAX_WORD_LENGTH, shuffleArray } from './csvUtils';
 
+// Static imports of pool data files — Vite bundles these into one chunk (no duplication)
+import { CSV_POOL_1 } from './csvPoolData1';
+import { CSV_POOL_2 } from './csvPoolData2';
+import { CSV_POOL_3 } from './csvPoolData3';
+import { CSV_POOL_4 } from './csvPoolData4';
+import { CSV_POOL_5 } from './csvPoolData5';
+import { CSV_POOL_6 } from './csvPoolData6';
+import { CSV_POOL_7 } from './csvPoolData7';
+import { CSV_POOL_8 } from './csvPoolData8';
+import { CSV_POOL_9 } from './csvPoolData9';
+import { CSV_POOL_10 } from './csvPoolData10';
+import { CSV_POOL_11 } from './csvPoolData11';
+import { CSV_POOL_12 } from './csvPoolData12';
+import { CSV_POOL_13 } from './csvPoolData13';
+
+// Concatenate all pool files into a single master string at module scope
+// Note: CSV_POOL_1 includes the header row. Subsequent pools do not.
+export const MASTER_CSV_DATA = [
+  CSV_POOL_1, CSV_POOL_2, CSV_POOL_3, CSV_POOL_4, CSV_POOL_5,
+  CSV_POOL_6, CSV_POOL_7, CSV_POOL_8, CSV_POOL_9, CSV_POOL_10,
+  CSV_POOL_11, CSV_POOL_12, CSV_POOL_13,
+].join('\n');
+
 export { MAX_WORD_LENGTH };
 
 // Module-level caches to ensure parsing only happens once
@@ -33,8 +56,8 @@ export const ensureDataInitialized = (): void => {
 
     initPromise = (async () => {
         try {
-            // Dynamic imports - Vite transforms these lazily
-            const { MASTER_CSV_DATA } = await import('./masterData');
+            // Use locally-concatenated MASTER_CSV_DATA (avoids duplicate chunk)
+            // Only globalCSV is dynamically imported
             const { GLOBAL_CSV_DATA } = await import('./globalCSV');
 
             // Parse pool-only data (csvPoolData1-13, without famous people)

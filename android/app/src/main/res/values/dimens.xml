@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ===========================
+         BORDER RADII (from Tailwind config)
+         =========================== -->
+    <dimen name="radius_small">8dp</dimen>
+    <dimen name="radius_medium">14dp</dimen>
+    <dimen name="radius_large">22dp</dimen>
+
+    <!-- ===========================
+         TYPOGRAPHY — Font sizes (sp)
+         Tier 1 Primary Display: Oswald, black 900, tracking=-0.025em
+         Tier 2 Secondary Labels: Raleway, light 300, tracking=0.05em
+         Tier 3 Data Scanning: Raleway, tabular-nums
+         =========================== -->
+    <dimen name="font_display_4xl">36sp</dimen>     <!-- LVL X, total score, rank value -->
+    <dimen name="font_display_3xl">30sp</dimen>
+    <dimen name="font_display_2xl">24sp</dimen>     <!-- timer, hint count badge -->
+    <dimen name="font_display_xl">20sp</dimen>       <!-- tile word text, NEXT LEVEL button -->
+    <dimen name="font_larger">22sp</dimen>           <!-- kept for compat -->
+    <dimen name="font_large">18sp</dimen>            <!-- section headers, RANK label -->
+    <dimen name="font_normal">15sp</dimen>           <!-- stat labels, mode sub-labels -->
+    <dimen name="font_small">13sp</dimen>            <!-- detail labels, captions -->
+    <dimen name="font_tiny">11sp</dimen>
+
+    <!-- ===========================
+         TYPOGRAPHY — Letter spacing (em, converted to approximate sp)
+         Tier 1: tracking-tight ~ -0.025em
+         Tier 2: tracking-wider ~ 0.05em
+         =========================== -->
+    <dimen name="letter_spacing_tight">0dp</dimen>
+    <dimen name="letter_spacing_wider">0dp</dimen>
+    <dimen name="letter_spacing_normal">0dp</dimen>
+
+    <!-- ===========================
+         SPACING
+         =========================== -->
+    <dimen name="spacing_huge">40dp</dimen>
+    <dimen name="spacing_large">24dp</dimen>
+    <dimen name="spacing_normal">14dp</dimen>
+    <dimen name="spacing_small">10dp</dimen>
+    <dimen name="spacing_tiny">4dp</dimen>
+    <dimen name="spacing_micro">2dp</dimen>
+
+    <!-- ===========================
+         BUTTON SIZES
+         =========================== -->
+    <dimen name="button_height_tall">60dp</dimen>
+    <dimen name="button_height_normal">40dp</dimen>
+    <dimen name="button_height_short">32dp</dimen>
+
+    <!-- ===========================
+         TOUCH TARGETS (accessibility)
+         =========================== -->
+    <dimen name="touch_target_min">48dp</dimen>
+
+    <!-- ===========================
+         TILE SIZES
+         =========================== -->
+    <dimen name="tile_min_height">48dp</dimen>
+    <dimen name="tile_padding">12dp</dimen>
+
+    <!-- ===========================
+         GLOW / SHADOW RADII (neon effects)
+         =========================== -->
+    <dimen name="glow_radius_small">8dp</dimen>
+    <dimen name="glow_radius_medium">15dp</dimen>
+    <dimen name="glow_radius_large">20dp</dimen>
+
+</resources>

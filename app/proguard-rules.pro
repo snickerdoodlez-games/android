@@ -45,3 +45,9 @@
 
 # Capacitor Community AdMob
 -keep class com.getcapacitor.community.admob.** { *; }
+
+# Keep classes used via reflection
+-keep class com.snickerdoodlez.wordpairing.models.** { *; }
+
+# Keep specific library interfaces
+-keep interface com.example.lib.** { *; }

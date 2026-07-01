@@ -12,9 +12,32 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/favicon.ico" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700;800;900&family=Raleway:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- DNS prefetch for CDN domains to parallelize resolution and avoid
+         render-blocking DNS timeouts on the main thread (ERR_NAME_NOT_RESOLVED ANR contributors) -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+    <!-- Google Fonts loaded asynchronously via print-then-all trick to prevent
+         render-blocking on slow/flaky DNS. The fonts swap to the custom typeface
+         once loaded, but the page paints immediately with fallback fonts. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700;800;900&family=Raleway:wght@200;300;400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700;800;900&family=Raleway:wght@200;300;400;500;600;700;800;900&display=swap"></noscript>
+    <link rel="stylesheet" href="/text-shadow.css" />
+    <!-- Tailwind CSS via CDN. Fallback inline: if the CDN <script> fails to load
+         (ERR_NAME_NOT_RESOLVED DNS timeout), inject minimal dark-mode reset CSS
+         so the app remains functional. The error listener MUST be registered
+         BEFORE the CDN script tag so it catches immediate load failures. -->
+    <script>
+      window.addEventListener('error', function(e) {
+        var target = e.target;
+        if (target && target.tagName === 'SCRIPT' &&
+            target.src && target.src.indexOf('tailwindcss') !== -1) {
+          var style = document.createElement('style');
+          style.textContent = 'body{background:#000;color:#fff;font-family:sans-serif}*{box-sizing:border-box}';
+          document.head.appendChild(style);
+        }
+      }, true);
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -70,13 +93,14 @@
               'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
               'shimmer': 'shimmer 2.5s linear infinite',
               'pulse-highlight': 'pulse-highlight 5s ease-in-out infinite',
-              'border-pulse': 'borderPulse 0.6s ease-in-out infinite',
+              'border-pulse': 'borderPulse 2s ease-in-out infinite',
               'rainbow-bg': 'rainbow-bg 3s linear infinite',
               'scale-up-center': 'scale-up-center 0.6s cubic-bezier(0.39, 0.575, 0.565, 1.000) forwards',
               'scale-down-center': 'scale-down-center 0.6s cubic-bezier(0.39, 0.575, 0.565, 1.000) forwards',
-              'focus-in-expand': 'focus-in-expand 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
-              'shine-sweep': 'shine-sweep 0.55s ease-out forwards',
-            },
+                'focus-in-expand': 'focus-in-expand 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
+                'text-reveal': 'text-reveal 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
+               'text-shadow-pop-tr': 'text-shadow-pop-tr 0.8s both',
+             },
             keyframes: {
               pop: { '0%': { transform: 'scale(0.8)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
               fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
@@ -97,16 +121,11 @@
                 '100%': { borderColor: 'rgba(255,255,255,0.4)' }
               },
               /* Added rainbow-bg keyframes */
-               'rainbow-bg': {
-                 '0%': { backgroundPosition: '0% 50%' },
-                 '50%': { backgroundPosition: '100% 50%' },
-                 '100%': { backgroundPosition: '0% 50%' },
-               },
-               'shine-sweep': {
-                 '0%': { left: '-100%' },
-                 '40%': { left: '100%' },
-                 '100%': { left: '100%' },
-               },
+              'rainbow-bg': {
+                '0%': { backgroundPosition: '0% 50%' },
+                '50%': { backgroundPosition: '100% 50%' },
+                '100%': { backgroundPosition: '0% 50%' },
+              },
               'scale-up-center': {
                 '0%': { transform: 'scale(0.5)' },
                 '100%': { transform: 'scale(1)' },
@@ -115,11 +134,15 @@
                 '0%': { transform: 'scale(1)' },
                 '100%': { transform: 'scale(0.5)' },
               },
-              'focus-in-expand': {
-                '0%': { letterSpacing: '-0.5em', filter: 'blur(12px)', opacity: '0' },
-                '100%': { filter: 'blur(0)', opacity: '1' },
-              }
-            }
+                'focus-in-expand': {
+                  '0%': { letterSpacing: '-0.3em', opacity: '0', transform: 'scale(0.95)' },
+                  '100%': { opacity: '1', transform: 'scale(1)' },
+                },
+                'text-reveal': {
+                  '0%': { opacity: '0', transform: 'translateY(4px)' },
+                  '100%': { opacity: '1', transform: 'translateY(0)' },
+                }
+             }
           }
         }
       }

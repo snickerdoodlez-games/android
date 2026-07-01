@@ -46,7 +46,7 @@ export const LevelMenu: React.FC<MenuProps> = ({
       <div className="flex-1 flex flex-col items-center justify-center w-full">
 
         {/* Logo Image */}
-        <div className="flex flex-col items-center justify-center mb-10 w-full animate-zoom-in mt-6">
+        <div className="flex flex-col items-center justify-center mb-10 w-full animate-zoom-in">
             <img 
               src="/logo.svg" 
               alt="WORD PAIRING MACHINE" 
@@ -68,7 +68,7 @@ export const LevelMenu: React.FC<MenuProps> = ({
                     key={diff}
                     onClick={() => onDifficultyChange(diff)}
                     className={`
-                      flex-1 py-2.5 min-h-[48px] rounded-medium border-2 transition-all font-oswald
+                      flex-1 py-2.5 min-w-[48px] min-h-[48px] rounded-medium border-2 transition-all font-oswald
                       flex items-center justify-center gap-1 text-xs uppercase font-bold tracking-wider
                       ${isSelected
                         ? `${DIFFICULTY_COLORS[diff]} bg-zinc-900`

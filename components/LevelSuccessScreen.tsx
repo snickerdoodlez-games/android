@@ -1,8 +1,8 @@
 import React from 'react';
-import ArcadeStyledText from './ArcadeStyledText';
-import NextLevelButton from './NextLevelButton';
 import { GameOverlay } from '../types';
 import ArcadeIcon from './ArcadeIcon';
+import ArcadeStyledText from './ArcadeStyledText';
+import NextLevelButton from './NextLevelButton';
 
 interface LevelSuccessScreenProps {
 	starsEarned: number;

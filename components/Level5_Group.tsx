@@ -248,7 +248,7 @@ export default function Level5_Group({
             <h2 className="text-[clamp(1.25rem,5vw,2rem)] font-black font-raleway uppercase text-white text-center tracking-wider leading-tight mb-1">{categoryDefTab.name}</h2>
             {categoryDefTab.catDict && <><div className="w-12 h-0.5 bg-neon-aqua mx-auto my-4 shadow-[0_0_8px_#00FFFF]" /><p className="text-[clamp(0.8125rem,3.5vw,1.125rem)] leading-relaxed text-white font-raleway text-center whitespace-normal break-words max-w-[65ch] mx-auto">{categoryDefTab.catDict}</p></>}
             <div className="mt-6 mb-4 w-full h-px bg-zinc-800" />
-            <button className="block mx-auto px-8 py-2 min-h-[48px] bg-white text-black font-black font-raleway text-[clamp(0.75rem,3vw,1rem)] uppercase rounded-medium hover:scale-105 active:scale-95 transition-all" onClick={() => setCategoryDefTab(null)} aria-label="Close definition overlay">TAP TO CLOSE</button>
+            <button className="block mx-auto px-8 py-2 min-w-[48px] min-h-[48px] bg-white text-black font-black font-raleway text-[clamp(0.75rem,3vw,1rem)] uppercase rounded-medium hover:scale-105 active:scale-95 transition-all" onClick={() => setCategoryDefTab(null)} aria-label="Close definition overlay">TAP TO CLOSE</button>
           </div>
         </div>, document.body)}
     </div>

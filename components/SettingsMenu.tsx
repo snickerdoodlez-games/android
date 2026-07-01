@@ -81,7 +81,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
   return (
     <div className="absolute inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-2 animate-fade-in font-oswald">
-      <div className="w-full max-sm bg-zinc-950 border-4 border-white ring-2 ring-white ring-offset-0 rounded-large p-4 shadow-[0_0_50px_rgba(255,255,255,0.3)] flex flex-col gap-3 overflow-y-auto max-h-[85vh]">
+      <div className="w-full max-sm bg-zinc-950 border-4 border-white ring-2 ring-white ring-offset-0 rounded-large p-4 shadow-[0_0_50px_rgba(255,255,255,0.3)] flex flex-col gap-3 overflow-hidden max-h-[95vh]">
         <div className="relative flex justify-center items-center border-b-2 border-zinc-800 pb-2 shrink-0">
           <h2 className="text-xl font-black text-white uppercase tracking-[0.3em] font-oswald not-italic">SETTINGS</h2>
           <button className="absolute right-0 text-zinc-400 hover:text-neon-red transition-colors p-1 min-w-[48px] min-h-[48px] flex items-center justify-center" onClick={onClose} aria-label="Close settings">

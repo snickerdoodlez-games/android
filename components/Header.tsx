@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { HEADER_MIN_HEIGHT } from '../types';
 import { ARCADE_OUTLINE } from '../services/tileStyles';
 import { audio } from '../services/audioService';
-import ArcadeStyledText from './ArcadeStyledText';
 import ArcadeIcon from './ArcadeIcon';
+import ArcadeStyledText from './ArcadeStyledText';
 
 interface HeaderProps {
   modeName: string;

@@ -219,10 +219,18 @@
             android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="false"/>
 
+        <!-- WebView pre-initialization: spawns the isolated renderer process
+             during app startup to prevent cold-start ANR when CapacitorWebView
+             is first inflated in BridgeActivity.onCreate().
+             ProcessWebViewInitializer is declared as a meta-data entry inside
+             InitializationProvider (correct pattern per AndroidX Startup docs). -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:exported="false"
             android:authorities="com.snickerdoodlez.wordpairing.androidx-startup">
+            <meta-data
+                android:name="androidx.webkit.ProcessWebViewInitializer"
+                android:value="androidx.startup"/>
             <meta-data
                 android:name="androidx.emoji2.text.EmojiCompatInitializer"
                 android:value="androidx.startup"/>

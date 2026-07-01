@@ -12,10 +12,6 @@ echo "===================================================="
 # ----------------------------------------------------------
 echo "--> Checking for Dev Menu visibility settings..."
 
-# The dev menu is controlled entirely in React/TypeScript (App.tsx passing
-# isAutoPlaying / onToggleAutoPlay / levelIndex / onLevelChange props to
-# SettingsMenu.tsx). The pipeline checks that no dev-menu props leak into
-# the production JS bundle by looking for the dev-menu identifier string.
 BUILD_JS=$(find ./dist -name '*.js' 2>/dev/null | head -1)
 if [ -n "$BUILD_JS" ]; then
     if grep -q "DEV MENU" "$BUILD_JS" 2>/dev/null; then
@@ -32,7 +28,6 @@ fi
 # STEP 2: Truth-First Verification
 # ----------------------------------------------------------
 echo "--> Running Truth-First Verifier..."
-# Scan for any remaining TODO placeholders in the source code
 if grep -r "TODO" ./android/app/src/main/java/ | grep -q ".java"; then
     echo "   [!] FAILURE: Incomplete code (TODO) found. Build aborted." && exit 1
 else
@@ -40,33 +35,17 @@ else
 fi
 
 # ----------------------------------------------------------
-# STEP 3: Auto-Increment VersionCode and VersionName
+# STEP 3: Versioning (Skipping auto-increment for dynamic Gradle)
 # ----------------------------------------------------------
-echo "--> Auto-incrementing VersionCode and VersionName..."
-GRADLE_FILE="./android/app/build.gradle"
-
-if [ -f "$GRADLE_FILE" ]; then
-    # Extract fallback versionCode from Groovy ternary:  ... ? ... : 5005944
-    CURRENT_VERSION_CODE=$(grep 'versionCode' "$GRADLE_FILE" | grep -oE '[0-9]+$')
-    # Extract fallback versionName from Groovy ternary:  ... ? ... : "5005944"
-    CURRENT_VERSION_NAME=$(grep 'versionName' "$GRADLE_FILE" | grep -oE '"([0-9]+)"' | tr -d '"')
-
-    if [ -n "$CURRENT_VERSION_CODE" ] && [ -n "$CURRENT_VERSION_NAME" ]; then
-        NEXT_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
-        NEXT_VERSION_NAME=$((CURRENT_VERSION_NAME + 1))
-
-        sed -i.bak "s/: $CURRENT_VERSION_CODE\$/: ${NEXT_VERSION_CODE}/" "$GRADLE_FILE"
-        sed -i.bak "s/\"$CURRENT_VERSION_NAME\"/\"$NEXT_VERSION_NAME\"/" "$GRADLE_FILE"
-        rm -f "${GRADLE_FILE}.bak"
-        echo "   [✓] Updated to Version $NEXT_VERSION_NAME (Code: $NEXT_VERSION_CODE)"
-    else
-        echo "   [i] Could not parse version from build.gradle; skipping auto-increment."
-    fi
-fi
+echo "--> Skipping auto-increment (using dynamic CI versioning)..."
 
 # ----------------------------------------------------------
 # STEP 4: Quality Control & Build
 # ----------------------------------------------------------
+npm run build 2>&1
+npx cap copy android 2>&1
+npx cap sync android 2>&1
+
 echo "--> Stopping any lingering Gradle daemons..."
 pushd android > /dev/null
 ./gradlew --stop 2>/dev/null || true
@@ -75,9 +54,12 @@ echo "--> Running Lint and Unit Tests..."
 ./gradlew clean lintRelease testReleaseUnitTest || true
 popd > /dev/null
 
+echo "--> Cleaning stale web assets from Android..."
+rm -rf android/app/src/main/assets/public 2>/dev/null || true
+
 echo "--> Compiling Production AAB..."
 pushd android > /dev/null
-./gradlew bundleRelease
+./gradlew bundleRelease --stacktrace
 popd > /dev/null
 
 # ----------------------------------------------------------
@@ -86,6 +68,7 @@ popd > /dev/null
 echo "--> Packaging Native Debug Symbols..."
 AAB_DIR="./android/app/build/outputs/bundle/release"
 SYM_DIR="./android/app/build/outputs/native-debug-symbols/release"
+# NOTE: assembleRelease produces APK; bundleRelease produces AAB (required for Play Store)
 
 if [ -d "$SYM_DIR" ]; then
     cd "$SYM_DIR" && zip -r "../../bundle/release/native-debug-symbols.zip" ./* && cd ../../../../../

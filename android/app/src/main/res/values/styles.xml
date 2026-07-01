@@ -1,24 +1,240 @@
 <resources>
 
-    <!-- Base application theme: DayNight.NoActionBar for modern edge-to-edge support (Android 15+ / SDK 35).
-         enableEdgeToEdge() is called in MainActivity.kt to handle system bar insets. -->
+    <!-- ===========================
+         BASE APPLICATION THEME
+         DayNight.NoActionBar for edge-to-edge support (SDK 35+)
+         =========================== -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowTranslucentNavigation">false</item>
         <item name="android:windowTranslucentStatus">false</item>
-        <!-- LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS replaces deprecated SHORT_EDGES for SDK 35+ -->
         <item name="android:windowLayoutInDisplayCutoutMode">always</item>
+        <item name="android:windowBackground">@color/theme_background</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <!-- Splash Screen → App Theme transition -->
+    <!--
+         Mitigates cold-start ANR (Crashlytics issue 867deb38d2fe719ad76d86cf340eac86):
+         The CapacitorWebView inflates synchronously in BridgeActivity.onCreate(),
+         blocking the main thread while the chromium isolated renderer process forks.
+         The splash screen stays visible during this window, preventing the system
+         from tripping the 5-second ANR watchdog.
+    -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowContentOverlay">@null</item>
+        <item name="windowSplashScreenBackground">@color/theme_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo</item>
+        <!-- Duration of the icon reveal animation in ms (300ms = crisp fade-in) -->
+        <item name="windowSplashScreenAnimationDuration">300</item>
         <item name="postSplashScreenTheme">@style/AppTheme</item>
+    </style>
+
+    <!-- ===========================
+         3-TIER TYPOGRAPHY SYSTEM
+         Matching web: Tier1=Oswald black 900 tracking-tight | Tier2=Raleway light 300 tracking-wider | Tier3=Raleway tabular-nums
+         =========================== -->
+
+    <!-- Tier 1 — Primary Display: Oswald, font-black, tracking-tight, tabular-nums -->
+    <style name="Tier1.Display4xl" parent="TextAppearance.AppCompat.Display1">
+        <item name="android:textSize">@dimen/font_display_4xl</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.025</item>
+        <item name="android:textScaleX">0.975</item>
+    </style>
+
+    <style name="Tier1.Display3xl" parent="Tier1.Display4xl">
+        <item name="android:textSize">@dimen/font_display_3xl</item>
+    </style>
+
+    <style name="Tier1.Display2xl" parent="Tier1.Display4xl">
+        <item name="android:textSize">@dimen/font_display_2xl</item>
+    </style>
+
+    <style name="Tier1.DisplayXl" parent="Tier1.Display4xl">
+        <item name="android:textSize">@dimen/font_display_xl</item>
+    </style>
+
+    <!-- Tier 2 — Secondary Labels: Raleway, font-light, tracking-wider -->
+    <style name="Tier2.LabelLarge" parent="TextAppearance.AppCompat.Body1">
+        <item name="android:textSize">@dimen/font_large</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontWeight">300</item>
+        <item name="android:letterSpacing">0.05</item>
+    </style>
+
+    <style name="Tier2.LabelNormal" parent="Tier2.LabelLarge">
+        <item name="android:textSize">@dimen/font_normal</item>
+    </style>
+
+    <style name="Tier2.LabelSmall" parent="Tier2.LabelLarge">
+        <item name="android:textSize">@dimen/font_small</item>
+    </style>
+
+    <!-- Tier 3 — Data Scanning: Raleway, tabular-nums, fixed-width numeric columns -->
+    <style name="Tier3.DataTable" parent="TextAppearance.AppCompat.Small">
+        <item name="android:textSize">@dimen/font_small</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontWeight">400</item>
+        <item name="android:textScaleX">1.0</item>
+    </style>
+
+    <!-- ===========================
+         CONTENT TEXT (legacy compat — delegates to Tier2)
+         =========================== -->
+    <style name="ContentText" parent="Tier2.LabelNormal">
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <style name="ContentText.Small" parent="Tier2.LabelSmall">
+        <item name="android:textColor">@color/gray_light</item>
+    </style>
+
+    <style name="ContentText.Large" parent="Tier2.LabelLarge">
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- ===========================
+         NEON BUTTONS
+         =========================== -->
+
+    <!-- PrimaryButton — filled neon cyan, white text → black on press -->
+    <style name="PrimaryButton" parent="Widget.AppCompat.Button">
+        <item name="android:textSize">@dimen/font_display_xl</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:background">@color/neon_cyan</item>
+        <item name="android:minHeight">@dimen/button_height_normal</item>
+        <item name="android:minWidth">@dimen/touch_target_min</item>
+        <item name="android:paddingStart">@dimen/spacing_normal</item>
+        <item name="android:paddingEnd">@dimen/spacing_normal</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.025</item>
+    </style>
+
+    <!-- SecondaryButton — transparent bg, neon cyan border/text -->
+    <style name="SecondaryButton" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:textSize">@dimen/font_display_xl</item>
+        <item name="android:textColor">@color/neon_cyan</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:minHeight">@dimen/button_height_normal</item>
+        <item name="android:minWidth">@dimen/touch_target_min</item>
+        <item name="android:paddingStart">@dimen/spacing_normal</item>
+        <item name="android:paddingEnd">@dimen/spacing_normal</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.025</item>
+    </style>
+
+    <!-- NEXT LEVEL Button (rainbow-gradient border, white glow pulse) -->
+    <style name="NextLevelButton" parent="PrimaryButton">
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <!-- START Game Button (main menu hover: scale-105, active: scale-95) -->
+    <style name="StartButton" parent="PrimaryButton">
+        <item name="android:textSize">@dimen/font_display_2xl</item>
+        <item name="android:minHeight">@dimen/button_height_tall</item>
+    </style>
+
+    <!-- Hint Lightbulb Button -->
+    <style name="HintButton" parent="Widget.AppCompat.ImageButton">
+        <item name="android:minWidth">@dimen/touch_target_min</item>
+        <item name="android:minHeight">@dimen/touch_target_min</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:contentDescription">Hint</item>
+    </style>
+
+    <!-- ===========================
+         ICON BUTTON (settings hamburger, close X, etc.)
+         =========================== -->
+    <style name="IconButton" parent="Widget.AppCompat.ImageButton">
+        <item name="android:minWidth">@dimen/touch_target_min</item>
+        <item name="android:minHeight">@dimen/touch_target_min</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:scaleType">centerInside</item>
+    </style>
+
+    <!-- ===========================
+         GAME TILE
+         =========================== -->
+    <style name="GameTile" parent="Widget.AppCompat.Button">
+        <item name="android:textSize">@dimen/font_display_xl</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:background">@color/zinc_900</item>
+        <item name="android:minHeight">@dimen/tile_min_height</item>
+        <item name="android:minWidth">@dimen/touch_target_min</item>
+        <item name="android:padding">@dimen/tile_padding</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.025</item>
+    </style>
+
+    <!-- Game Tile — Selected state (neon cyan glow) -->
+    <style name="GameTile.Selected">
+        <item name="android:background">@color/neon_cyan</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <!-- Game Tile — Locked/Solved state (neon yellow glow) -->
+    <style name="GameTile.Solved">
+        <item name="android:background">@color/neon_yellow</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <!-- Game Tile — Error state (red shake) -->
+    <style name="GameTile.Error">
+        <item name="android:background">@color/neon_red</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <!-- ===========================
+         OVERLAY PANEL (stats, settings, how-to-play, etc.)
+         =========================== -->
+    <style name="OverlayPanel" parent="Theme.AppCompat.DayNight.Dialog">
+        <item name="android:windowBackground">@color/overlay_bg</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.85</item>
+    </style>
+
+    <!-- ===========================
+         CARD / CONTAINER
+         =========================== -->
+    <style name="CardContainer">
+        <item name="android:background">@color/surface_elevated</item>
+        <item name="android:padding">@dimen/spacing_normal</item>
+    </style>
+
+    <!-- ===========================
+         DIVIDER
+         =========================== -->
+    <style name="Divider">
+        <item name="android:background">@color/border_default</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+    </style>
+
+    <!-- ===========================
+         PROGRESS BAR
+         =========================== -->
+    <style name="ProgressBar" parent="Widget.AppCompat.ProgressBar.Horizontal">
+        <item name="android:progressBackgroundTint">@color/zinc_800</item>
+        <item name="android:progressTint">@color/neon_cyan</item>
+        <item name="android:minHeight">6dp</item>
+        <item name="android:maxHeight">8dp</item>
     </style>
 
 </resources>

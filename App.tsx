@@ -217,7 +217,12 @@ export const App: React.FC = () => {
   }, []);
 
 
+  // Defer AdMob + consent initialization until after layoutReady.
+  // The UMP consent SDK loads a WebView on the main thread via
+  // loadDataWithBaseURL, which can block long enough to trigger ANR
+  // if it overlaps with the initial DOM WebView measurement pass.
   useEffect(() => {
+    if (!layoutReady) return;
     const initializeAds = async () => {
       if (!Capacitor.isNativePlatform()) return;
       try {
@@ -235,7 +240,7 @@ export const App: React.FC = () => {
       } catch (e) { console.error("AdMob failed:", e); }
     };
     initializeAds();
-  }, []);
+  }, [layoutReady]);
 
   useEffect(() => {
     let cancelled = false;

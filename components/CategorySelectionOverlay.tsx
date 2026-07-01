@@ -98,7 +98,7 @@ const CategorySelectionOverlay: React.FC<Props> = ({ isOpen, onClose, selectedId
                         <button 
                             key={cat.id}
                             onClick={() => handleToggleId(cat.id)}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 min-h-[48px] rounded-medium border-2 transition-all ${isSelected ? 'bg-zinc-900 border-neon-blue text-white shadow-[0_0_8px_rgba(0,229,255,0.2)]' : 'bg-black border-zinc-800 text-zinc-600'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 min-w-[48px] min-h-[48px] rounded-medium border-2 transition-all ${isSelected ? 'bg-zinc-900 border-neon-blue text-white shadow-[0_0_8px_rgba(0,229,255,0.2)]' : 'bg-black border-zinc-800 text-zinc-600'}`}
                         >
                             <span className="font-bold text-[11px] uppercase tracking-tight truncate mr-2">{cat.name}</span>
                             <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-neon-blue bg-neon-blue shadow-[0_0_5px_#00E5FF]' : 'border-zinc-800'}`}>
@@ -111,9 +111,9 @@ const CategorySelectionOverlay: React.FC<Props> = ({ isOpen, onClose, selectedId
         </div>
 
         <div className="pt-2 border-t border-zinc-800 shrink-0">
-             <button 
+              <button 
                 onClick={onClose}
-                className="w-full py-3 min-h-[48px] bg-white text-black font-black text-lg uppercase rounded-medium active:scale-95 transition-all shadow-[0_0_15px_white]"
+                className="w-full py-3 min-w-[48px] min-h-[48px] bg-white text-black font-black text-lg uppercase rounded-medium active:scale-95 transition-all shadow-[0_0_15px_white]"
                 style={ARCADE_OUTLINE}
              >
                  CONFIRM POOL ({selectedIds.length})

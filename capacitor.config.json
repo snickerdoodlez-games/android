@@ -2,9 +2,5 @@
   "appId": "com.snickerdoodlez.wordpairing",
   "appName": "Word Pairing: Neon Puzzle Game",
   "webDir": "dist",
-  "server": {
-    "androidScheme": "https",
-    "hostname": "localhost",
-    "allowNavigation": []
-  }
+  "appVersion": "1.0.0"
 }

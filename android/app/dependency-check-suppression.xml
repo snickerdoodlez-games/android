@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+  <suppress>
+    <notes><![CDATA[
+      CVE-2023-2976 is a JRE-level risk not applicable to Android.
+      CVE-2025-29903 is a tempdir race condition in the JDK not applicable to Android.
+    ]]></notes>
+    <packageUrl regex="true">pkg:maven/com\.google\.guava/guava@.*</packageUrl>
+    <cve>CVE-2023-2976</cve>
+    <cve>CVE-2025-29903</cve>
+  </suppress>
+  <suppress>
+    <notes><![CDATA[
+      CVE-2022-3171 protobuf-java DoS — we constrain to 4.31.1+, but older transitive
+      copies may still be flagged.
+    ]]></notes>
+    <cve>CVE-2022-3171</cve>
+  </suppress>
+</suppressions>

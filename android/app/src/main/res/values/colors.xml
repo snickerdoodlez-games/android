@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ===========================
+         GRAYSCALE
+         =========================== -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="gray_light">#E0E0E0</color>
+    <color name="gray_medium">#9E9E9E</color>
+    <color name="gray_dark">#424242</color>
+
+    <!-- transparent -->
+    <color name="transparent">#00000000</color>
+
+    <!-- ===========================
+         FULL NEON PALETTE (15 colors from web CSS)
+         =========================== -->
+    <color name="neon_red">#FF073A</color>
+    <color name="neon_orange">#FF5F1F</color>
+    <color name="neon_yellow">#F9FF00</color>
+    <color name="neon_lime">#39FF14</color>
+    <color name="neon_green">#00F000</color>
+    <color name="neon_mint">#00FF9F</color>
+    <color name="neon_cyan">#00FFFF</color>
+    <color name="neon_sky_blue">#00BFFF</color>
+    <color name="neon_blue">#0066FF</color>
+    <color name="neon_violet">#B026FF</color>
+    <color name="neon_purple">#D400FF</color>
+    <color name="neon_deep_purple">#A020F0</color>
+    <color name="neon_magenta">#FF00FF</color>
+    <color name="neon_pink">#FF1FBF</color>
+    <color name="neon_rose">#FF0055</color>
+    <color name="neon_aqua">#00E5FF</color>
+
+    <!-- decoration -->
+    <color name="deco_gold">#FFD700</color>
+
+    <!-- ===========================
+         THEME COLORS (from Tailwind config)
+         =========================== -->
+    <color name="theme_primary">#00E5FF</color>
+    <color name="theme_secondary">#FF1FBF</color>
+    <color name="theme_tertiary">#FF9900</color>
+    <color name="theme_background">#000000</color>
+    <color name="theme_surface">#000000</color>
+    <color name="theme_outline">#00FF66</color>
+    <color name="theme_outline_variant">#D400FF</color>
+
+    <!-- ===========================
+         SURFACE & BACKGROUND COLORS
+         =========================== -->
+    <color name="surface_bg">#000000</color>
+    <color name="surface_elevated">#111111</color>
+    <color name="overlay_bg">#F2000000</color>       <!-- 95% black -->
+    <color name="settings_bg">#0A0A0A</color>
+    <color name="input_bg">#1A1A1A</color>
+    <color name="hover_bg">#222222</color>
+    <color name="header_bg">#000000</color>
+    <color name="footer_bg">#000000</color>
+
+    <!-- zinc palette (matching Tailwind zinc) -->
+    <color name="zinc_800">#27272A</color>
+    <color name="zinc_900">#18181B</color>
+    <color name="zinc_950">#0A0A0A</color>
+
+    <!-- ===========================
+         TEXT COLORS
+         =========================== -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#A0A0A0</color>
+    <color name="text_muted">#666666</color>
+
+    <!-- ===========================
+         BORDER COLORS
+         =========================== -->
+    <color name="border_default">#26FFFFFF</color>   <!-- 15% white -->
+    <color name="border_strong">#FFFFFF</color>
+    <color name="panel_border">#14FFFFFF</color>      <!-- 8% white -->
+
+    <!-- shimmer overlay -->
+    <color name="shimmer">#0FFFFFFF</color>           <!-- 6% white -->
+
+    <!-- ===========================
+         BRAND (legacy — kept for compat)
+         =========================== -->
+    <color name="colorPrimary">#FF1FBF</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="colorAccent">#00E5FF</color>
+</resources>

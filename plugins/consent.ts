@@ -156,14 +156,23 @@ const Consent = {
       // Step 2: If consent form is available and consent is required, show it
       if (consentInfo.isConsentFormAvailable && consentInfo.status === AdmobConsentStatus.REQUIRED) {
         try {
-          const formResult = await AdMob.showConsentForm();
+          // Race the consent form against a 10-second timeout to prevent ANR.
+          // The UMP SDK loads a WebView on the main thread via loadDataWithBaseURL,
+          // which can block long enough to trigger the ANR watchdog.
+          const CONSENT_FORM_TIMEOUT_MS = 10_000;
+          const formResult = await Promise.race([
+            AdMob.showConsentForm(),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('CONSENT_FORM_TIMEOUT')), CONSENT_FORM_TIMEOUT_MS)
+            ),
+          ]);
           persistConsentStatus(formResult.status);
           persistTCString(formResult.tcString);
         } catch (formError) {
-          console.warn('Consent form failed to show or was dismissed:', formError);
-          // User may have dismissed — store as OBTAINED (implicit consent via
-          // legitimate interest since we can't serve personalized ads without it)
-          persistConsentStatus(AdmobConsentStatus.OBTAINED);
+          console.warn('Consent form failed to show, timed out, or was dismissed:', formError);
+          // User dismissed or form failed — treat as no consent obtained.
+          // Ads will serve non-personalized by default when consent is missing.
+          persistConsentStatus(AdmobConsentStatus.NOT_REQUIRED);
         }
       } else {
         // Consent not required (e.g., non-EEA user) or form not available

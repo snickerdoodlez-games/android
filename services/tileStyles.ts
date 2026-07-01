@@ -9,19 +9,15 @@ export const TILE_ANIMATION_CURVE = [0.2, 0.8, 0.2, 1];
 export const SWAP_SPEED = 0.8; 
 
 // Machine-Precise Arcade Typography — whole-pixel text-shadows for crisp rendering
+// OPTIMIZED: Reduced from 11 to 4 text-shadow layers to prevent
+// GPU compositor pipe saturation (qemu_pipe_read ANR in emulators).
+// Retains strong arcade outline aesthetic with minimal compositing passes.
 export const ARCADE_OUTLINE = {
   textShadow: `
     1px 1px 0px #000, 
     -1px -1px 0px #000, 
     1px -1px 0px #000, 
-    -1px 1px 0px #000, 
-    2px 0 0px #000, 
-    -2px 0 0px #000, 
-    0 2px 0px #000, 
-    0 -2px 0px #000, 
-    3px 3px 2px rgba(0,0,0,1),
-    0 0 18px rgba(0,0,0,0.95),
-    0 0 8px rgba(0,0,0,0.9)
+    -1px 1px 0px #000
   `,
   paintOrder: 'stroke fill' as const,
   fontWeight: 700, 
@@ -79,19 +75,16 @@ export const SELECTION_VARIANTS = {
     borderWidth: '0px',
     transition: { duration: 0.4, ease: "easeInOut" } // Sped up from 0.8
   },
+  // OPTIMIZED: Removed boxShadow repeat:Infinity array to prevent
+  // continuous GPU compositing (qemu_pipe_read ANR). Uses static glow instead.
   'swap-target': { 
     scale: 1.1, 
     rotate: 0, 
     zIndex: 60,
     borderWidth: '0px',
-    boxShadow: [
-      'inset 0 0 10px rgba(255,255,255,0.4), 0 0 15px rgba(255,255,255,0.2)',
-      'inset 0 0 20px rgba(255,255,255,0.7), 0 0 25px rgba(255,255,255,0.5)',
-      'inset 0 0 10px rgba(255,255,255,0.4), 0 0 15px rgba(255,255,255,0.2)'
-    ],
+    boxShadow: 'inset 0 0 15px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.3)',
     transition: { 
-      boxShadow: { repeat: Infinity, duration: 0.6, ease: "easeInOut" }, // Sped up from 1.2
-      scale: { duration: 0.4, ease: "easeInOut" } // Sped up from 0.8
+      scale: { duration: 0.4, ease: "easeInOut" }
     }
   },
   solved: { 
@@ -101,18 +94,15 @@ export const SELECTION_VARIANTS = {
     borderWidth: '2px',
     transition: { duration: 0.4, ease: "easeOut" } // Sped up from 0.8
   },
+  // OPTIMIZED: Removed boxShadow repeat:Infinity array to prevent
+  // continuous GPU compositing. Uses Tailwind CSS shadow-[0_0_15px_#F9FF00] instead,
+  // which provides a comparable static neon glow.
   hint: {
     scale: 1.05,
     borderWidth: '4px',
     borderColor: '#F9FF00',
-    boxShadow: [
-      '0 0 0px #F9FF00',
-      '0 0 20px #F9FF00',
-      '0 0 0px #F9FF00'
-    ],
-    transition: {
-      boxShadow: { repeat: Infinity, duration: 0.5 } // Sped up from 1.0
-    }
+    boxShadow: '0 0 20px #F9FF00',
+    transition: {}
   },
   wrong: { 
     scale: 1,
@@ -122,7 +112,7 @@ export const SELECTION_VARIANTS = {
   'correct-preview': { 
     scale: 1.1, 
     zIndex: 25,
-    transition: { yoyo: Infinity, duration: 0.15 } // Sped up from 0.3
+    transition: { duration: 0.3, ease: "easeOut" }
   },
   locked: { 
     scale: 0.95, 

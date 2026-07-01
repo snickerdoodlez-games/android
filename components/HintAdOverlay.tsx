@@ -71,7 +71,7 @@ const HintAdOverlay: React.FC<HintAdOverlayProps> = ({
           {isNative ? (
             <button
               onClick={onWatchAd}
-              className="w-full px-6 py-3 min-h-[48px] bg-neon-yellow text-black font-black font-oswald text-lg uppercase rounded-medium border-2 border-white shadow-[0_0_20px_rgba(249,255,0,0.5)] active:scale-95 transition-all"
+              className="w-full px-6 py-3 min-w-[48px] min-h-[48px] bg-neon-yellow text-black font-black font-oswald text-lg uppercase rounded-medium border-2 border-white shadow-[0_0_20px_rgba(249,255,0,0.5)] active:scale-95 transition-all"
               aria-label="Watch an ad to earn 3 hints"
             >
               Watch Ad (+3 Hints)
@@ -82,7 +82,7 @@ const HintAdOverlay: React.FC<HintAdOverlayProps> = ({
                 // Simulate ad reward for non-native/dev environments
                 onWatchAd();
               }}
-              className="w-full px-6 py-3 min-h-[48px] bg-neon-yellow text-black font-black font-oswald text-lg uppercase rounded-medium border-2 border-white shadow-[0_0_20px_rgba(249,255,255,0.5)] active:scale-95 transition-all"
+              className="w-full px-6 py-3 min-w-[48px] min-h-[48px] bg-neon-yellow text-black font-black font-oswald text-lg uppercase rounded-medium border-2 border-white shadow-[0_0_20px_rgba(249,255,255,0.5)] active:scale-95 transition-all"
               aria-label="Earn 3 hints (dev mode)"
             >
               Earn 3 Hints (Dev)
@@ -91,7 +91,7 @@ const HintAdOverlay: React.FC<HintAdOverlayProps> = ({
 
           <button
             onClick={onClose}
-            className="w-full px-6 py-2 min-h-[48px] bg-transparent text-zinc-400 font-bold font-oswald text-sm uppercase rounded-medium border border-zinc-700 hover:text-white hover:border-white active:scale-95 transition-all"
+            className="w-full px-6 py-2 min-w-[48px] min-h-[48px] bg-transparent text-zinc-400 font-bold font-oswald text-sm uppercase rounded-medium border border-zinc-700 hover:text-white hover:border-white active:scale-95 transition-all"
             aria-label="Close hint ad overlay"
           >
             Maybe Later
