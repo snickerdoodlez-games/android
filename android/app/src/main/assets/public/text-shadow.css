@@ -1,0 +1,62 @@
+/* Per-letter neon coloring via background-clip gradient.
+   Each "chunk" of the gradient maps to one letter position
+   (up to 14 letters), cycling through the neon palette.
+   OPTIMIZED: Static-only — no keyframe animation.
+   Previously animated text-shadow-pop-tr was removed to prevent
+   GPU compositor pipe saturation (text-shadow + transform + background-clip
+   per-frame rasterization caused frame drops on mobile). */
+.per-letter-neon {
+  background: linear-gradient(
+    to right,
+    #FF073A 0%,      #FF073A 7.14%,      /* neon-red */
+    #FF5F1F 7.14%,   #FF5F1F 14.28%,     /* neon-orange */
+    #F9FF00 14.28%,  #F9FF00 21.42%,     /* neon-yellow */
+    #39FF14 21.42%,  #39FF14 28.57%,     /* neon-lime */
+    #00FFFF 28.57%,  #00FFFF 35.71%,     /* neon-cyan */
+    #B026FF 35.71%,  #B026FF 42.85%,     /* neon-violet */
+    #FF00FF 42.85%,  #FF00FF 50%,        /* neon-magenta */
+    #FF073A 50%,     #FF073A 57.14%,     /* neon-red */
+    #FF5F1F 57.14%,  #FF5F1F 64.28%,     /* neon-orange */
+    #F9FF00 64.28%,  #F9FF00 71.42%,     /* neon-yellow */
+    #39FF14 71.42%,  #39FF14 78.57%,     /* neon-lime */
+    #00FFFF 78.57%,  #00FFFF 85.71%,     /* neon-cyan */
+    #B026FF 85.71%,  #B026FF 92.85%,     /* neon-violet */
+    #FF00FF 92.85%,  #FF00FF 100%        /* neon-magenta */
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Combined class — per-letter neon gradient fill with static multi-color
+   neon text-shadow glow. No keyframe animation — renders once and stays.
+   Use on text elements where each letter glows in a different neon palette
+   color without per-frame GPU recompositing. */
+.text-shadow-pop-tr {
+  background: linear-gradient(
+    to right,
+    #FF073A 0%,      #FF073A 7.14%,      /* neon-red */
+    #FF5F1F 7.14%,   #FF5F1F 14.28%,     /* neon-orange */
+    #F9FF00 14.28%,  #F9FF00 21.42%,     /* neon-yellow */
+    #39FF14 21.42%,  #39FF14 28.57%,     /* neon-lime */
+    #00FFFF 28.57%,  #00FFFF 35.71%,     /* neon-cyan */
+    #B026FF 35.71%,  #B026FF 42.85%,     /* neon-violet */
+    #FF00FF 42.85%,  #FF00FF 50%,        /* neon-magenta */
+    #FF073A 50%,     #FF073A 57.14%,     /* neon-red */
+    #FF5F1F 57.14%,  #FF5F1F 64.28%,     /* neon-orange */
+    #F9FF00 64.28%,  #F9FF00 71.42%,     /* neon-yellow */
+    #39FF14 71.42%,  #39FF14 78.57%,     /* neon-lime */
+    #00FFFF 78.57%,  #00FFFF 85.71%,     /* neon-cyan */
+    #B026FF 85.71%,  #B026FF 92.85%,     /* neon-violet */
+    #FF00FF 92.85%,  #FF00FF 100%        /* neon-magenta */
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  text-shadow:
+    2px -2px 3px #FF073A, 4px -4px 3px #F9FF00,
+    6px -6px 3px #00FFFF, 8px -8px 3px #B026FF,
+    10px -10px 3px #FF00FF;
+}

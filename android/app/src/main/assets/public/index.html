@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Word Pairing Machine</title>
+    <link rel="manifest" href="/assets/manifest-CH1lwiZ-.json" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+    <!-- DNS prefetch for CDN domains to parallelize resolution and avoid
+         render-blocking DNS timeouts on the main thread (ERR_NAME_NOT_RESOLVED ANR contributors) -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+    <!-- Google Fonts loaded asynchronously via print-then-all trick to prevent
+         render-blocking on slow/flaky DNS. The fonts swap to the custom typeface
+         once loaded, but the page paints immediately with fallback fonts. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700;800;900&family=Raleway:wght@200;300;400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700;800;900&family=Raleway:wght@200;300;400;500;600;700;800;900&display=swap"></noscript>
+    <link rel="stylesheet" href="/text-shadow.css" />
+    <!-- Tailwind CSS via CDN. Fallback inline: if the CDN <script> fails to load
+         (ERR_NAME_NOT_RESOLVED DNS timeout), inject minimal dark-mode reset CSS
+         so the app remains functional. The error listener MUST be registered
+         BEFORE the CDN script tag so it catches immediate load failures. -->
+    <script>
+      window.addEventListener('error', function(e) {
+        var target = e.target;
+        if (target && target.tagName === 'SCRIPT' &&
+            target.src && target.src.indexOf('tailwindcss') !== -1) {
+          var style = document.createElement('style');
+          style.textContent = 'body{background:#000;color:#fff;font-family:sans-serif}*{box-sizing:border-box}';
+          document.head.appendChild(style);
+        }
+      }, true);
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              neon: {
+                red: '#FF073A',        // Fluorescent Red
+                orange: '#FF5F1F',     // Neon Orange
+                yellow: '#F9FF00',     // Lemon Glacier
+                lime: '#39FF14',       // Neon Lime
+                green: '#00F000',      // Electric Green
+                mint: '#00FF9F',       // Neon Mint
+                cyan: '#00FFFF',       // Electric Cyan
+                'sky-blue': '#00BFFF', // Deep Sky Blue
+                blue: '#0066FF',       // Electric Blue
+                violet: '#B026FF',     // Neon Violet
+                purple: '#D400FF',     // Electric Purple
+                'deep-purple': '#A020F0', // Deep Purple
+                magenta: '#FF00FF',    // Magenta
+                pink: '#FF1FBF',       // Shocking Pink
+                rose: '#FF0055',       // Neon Rose
+                white: '#FFFFFF',
+              },
+              'deco-gold': '#FFD700',
+              theme: {
+                primary: '#00E5FF',
+                secondary: '#FF1FBF',
+                tertiary: '#FF9900',
+                background: '#000000',
+                surface: '#000000',
+                outline: '#00FF66',
+                'outline-variant': '#D400FF',
+              }
+            },
+            borderRadius: {
+              'small': '8px',
+              'medium': '14px',
+              'large': '22px',
+            },
+            fontFamily: {
+              sans: ['Oswald', 'sans-serif'],
+              oswald: ['Oswald', 'sans-serif'],
+              raleway: ['Raleway', 'sans-serif']
+            },
+            animation: {
+              'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'fade-out': 'fadeOut 0.4s ease-out forwards',
+              'slide-up': 'slideUp 0.5s ease-out forwards',
+              'zoom-in': 'zoomIn 0.5s ease-out forwards',
+              'gradient-shift': 'gradient-shift 4s ease infinite',
+              'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'shimmer': 'shimmer 2.5s linear infinite',
+              'pulse-highlight': 'pulse-highlight 5s ease-in-out infinite',
+              'border-pulse': 'borderPulse 2s ease-in-out infinite',
+              'rainbow-bg': 'rainbow-bg 3s linear infinite',
+              'scale-up-center': 'scale-up-center 0.6s cubic-bezier(0.39, 0.575, 0.565, 1.000) forwards',
+              'scale-down-center': 'scale-down-center 0.6s cubic-bezier(0.39, 0.575, 0.565, 1.000) forwards',
+                'focus-in-expand': 'focus-in-expand 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
+                'text-reveal': 'text-reveal 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
+               'text-shadow-pop-tr': 'text-shadow-pop-tr 0.8s both',
+             },
+            keyframes: {
+              pop: { '0%': { transform: 'scale(0.8)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+              fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+              fadeOut: { '0%': { opacity: '1' }, '100%': { opacity: '0' } },
+              slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+              zoomIn: { '0%': { transform: 'scale(0.5)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+              shimmer: { '0%': { transform: 'translateX(-150%) skewX(-12deg)' }, '100%': { transform: 'translateX(150%) skewX(-12deg)' } },
+              'gradient-shift': { '0%': { backgroundPosition: '0% 50%' }, '50%': { backgroundPosition: '100% 50%' }, '100%': { backgroundPosition: '0% 50%' } },
+              'pulse-highlight': { 
+                '0%': { opacity: '0' }, 
+                '20%': { opacity: '0.3' }, 
+                '40%': { opacity: '0' }, 
+                '100%': { opacity: '0' } 
+              },
+              borderPulse: {
+                '0%': { borderColor: 'rgba(255,255,255,0.4)' },
+                '50%': { borderColor: 'rgba(255,255,255,1)' },
+                '100%': { borderColor: 'rgba(255,255,255,0.4)' }
+              },
+              /* Added rainbow-bg keyframes */
+              'rainbow-bg': {
+                '0%': { backgroundPosition: '0% 50%' },
+                '50%': { backgroundPosition: '100% 50%' },
+                '100%': { backgroundPosition: '0% 50%' },
+              },
+              'scale-up-center': {
+                '0%': { transform: 'scale(0.5)' },
+                '100%': { transform: 'scale(1)' },
+              },
+              'scale-down-center': {
+                '0%': { transform: 'scale(1)' },
+                '100%': { transform: 'scale(0.5)' },
+              },
+                'focus-in-expand': {
+                  '0%': { letterSpacing: '-0.3em', opacity: '0', transform: 'scale(0.95)' },
+                  '100%': { opacity: '1', transform: 'scale(1)' },
+                },
+                'text-reveal': {
+                  '0%': { opacity: '0', transform: 'translateY(4px)' },
+                  '100%': { opacity: '1', transform: 'translateY(0)' },
+                }
+             }
+          }
+        }
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-BMdGL6_M.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/emojiData-CUxAmkBY.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-B70yWhaF.js">
+    <link rel="modulepreload" crossorigin href="/assets/csvThemes-BTSBNVI2.js">
+    <link rel="modulepreload" crossorigin href="/assets/csvPool-DZXcCaPc.js">
+    <link rel="modulepreload" crossorigin href="/assets/csvExpansion--Swvm8BP.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-framer-BNmqLq9S.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-BHM6A9f-.css">
+  </head>
+  <body>
+    <div id="root"></div>
+</body>
+</html>
